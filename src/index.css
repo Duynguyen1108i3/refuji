@@ -24,10 +24,10 @@
 }
 
 @layer base {
-  html {
+  html, body {
     color-scheme: dark;
-    scrollbar-color: rgba(255, 255, 255, 0.18) #07070a;
-    scrollbar-width: thin;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
   }
   body {
     background-color: #07070a;
@@ -35,20 +35,11 @@
     font-family: 'Poppins', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 
-  /* Custom Luxury Dark Scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #07070a;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.18);
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.32);
+  /* Ẩn hoàn toàn thanh cuộn trên toàn bộ trình duyệt (Chrome, Safari, Opera, Edge) */
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 }
 
