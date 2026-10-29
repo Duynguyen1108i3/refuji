@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: dark;
   --system-glassness: 0.85;
   --glass-blur: 32px;
   --glass-bg-opacity: 0.32;
@@ -23,10 +24,31 @@
 }
 
 @layer base {
+  html {
+    color-scheme: dark;
+    scrollbar-color: rgba(255, 255, 255, 0.18) #07070a;
+    scrollbar-width: thin;
+  }
   body {
     background-color: #07070a;
     color: #F8FAFC;
     font-family: 'Poppins', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Custom Luxury Dark Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #07070a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.32);
   }
 }
 
