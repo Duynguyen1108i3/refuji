@@ -4,13 +4,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface GlassSearchBarProps {
   onSearch: (params: { category: string; mount: string; series: string; dates: string }) => void;
+  selectedDates?: string;
+  onOpenCalendar?: () => void;
 }
 
-export const GlassSearchBar: React.FC<GlassSearchBarProps> = ({ onSearch }) => {
+export const GlassSearchBar: React.FC<GlassSearchBarProps> = ({ 
+  onSearch, 
+  selectedDates,
+  onOpenCalendar 
+}) => {
   const [category, setCategory] = useState('Thân máy (Body)');
-  const [dates, setDates] = useState('29/10 — 31/10 (3 ngày)');
+  const [dates, setDates] = useState(selectedDates || '29/10 — 31/10 (3 ngày)');
   const [mount, setMount] = useState('Hệ ngàm X (APS-C)');
   const [series, setSeries] = useState('Tất cả dòng máy');
+
+  // Cập nhật khi selectedDates từ ngoài thay đổi (ví dụ từ CalendarModal)
+  React.useEffect(() => {
+    if (selectedDates && selectedDates !== dates) {
+      setDates(selectedDates);
+    }
+  }, [selectedDates]);
 
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -43,6 +56,11 @@ export const GlassSearchBar: React.FC<GlassSearchBarProps> = ({ onSearch }) => {
   };
 
   const handleSelectDates = (opt: string) => {
+    if (opt === 'Tùy chỉnh lịch' || opt.includes('Tùy chỉnh')) {
+      setActiveDropdown(null);
+      if (onOpenCalendar) onOpenCalendar();
+      return;
+    }
     setDates(opt);
     setActiveDropdown(null);
     onSearch({ category, mount, series, dates: opt });

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassSearchBar } from './GlassSearchBar';
 import { NavigationScrubber, NavScrubberItem } from './NavigationScrubber';
+import { CalendarModal } from './CalendarModal';
 import { CAMERAS, LENSES, ACCESSORIES } from '../data/mockData';
 import { CameraModel, LensModel, AccessoryModel } from '../types';
 import { 
@@ -39,7 +40,7 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
   });
   
   // Trạng thái mở xem chi tiết lịch và bộ lọc theo loại trong lịch
-  const [showMatrix, setShowMatrix] = useState(true);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [calendarCategory, setCalendarCategory] = useState<'ALL' | 'BODY' | 'LENS' | 'ACCESSORY'>('BODY');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
@@ -255,7 +256,11 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
       </div>
 
       {/* 2. THANH TÌM KIẾM LIQUID GLASS (Bộ lọc trung tâm duy nhất) */}
-      <GlassSearchBar onSearch={handleFilterChange} />
+      <GlassSearchBar 
+        onSearch={handleFilterChange} 
+        selectedDates={filterParams.dates}
+        onOpenCalendar={() => setIsCalendarModalOpen(true)}
+      />
 
       {/* 3. THANH THÔNG TIN BỘ LỌC HIỆN TẠI (TINH GỌN, ĐÃ CHUYỂN HẠNG THÀNH VIÊN VÀO TÀI KHOẢN) */}
       <div className="flex flex-wrap items-center justify-between gap-3 mt-8 mb-6 z-10 relative">
@@ -278,171 +283,42 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
         )}
       </div>
 
-      {/* 4. PHÂN HỆ XEM LỊCH TRỐNG 7 NGÀY THEO TỪNG LOẠI MÁY / LENS / PHỤ KIỆN */}
+      {/* 4. PHÂN HỆ XEM LỊCH & CHỌN NGÀY DẠNG POPUP (THEO STYLE ẢNH 2 & THIẾT KẾ ẢNH 3) */}
       <div className="mb-10">
         
-        {/* Nút Toggle Mở / Thu gọn lịch (Đồng bộ tuyệt đối cấu trúc văn bản theo btn Thu gọn làm gốc) */}
+        {/* Nút bấm mở Popup Lịch nổi bật (Thay thế việc bung bảng inline đẩy trang) */}
         <div className="flex justify-center mb-5">
           <button
             type="button"
-            onClick={() => setShowMatrix(!showMatrix)}
-            className="crystal-liquid-glass px-6 py-2.5 rounded-full text-xs font-medium text-white/85 hover:text-white flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg"
+            onClick={() => setIsCalendarModalOpen(true)}
+            className="crystal-liquid-glass px-6 py-2.5 rounded-full text-xs font-semibold text-white/90 hover:text-white flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg group border border-white/20 hover:border-white/40"
           >
             <Calendar size={15} className="text-amber-400" />
-            <span>{showMatrix ? 'Thu gọn Lịch khả dụng 7 ngày' : 'Mở Lịch khả dụng 7 ngày'}</span>
-            <ChevronDown size={14} className={`transition-transform duration-300 ${showMatrix ? 'rotate-180' : ''}`} />
+            <span>Mở Lịch khả dụng 7 ngày</span>
+            <ArrowUpRight size={14} className="opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </button>
         </div>
 
-        {/* Khung Lịch chi tiết theo loại with Rytox Spring expansion */}
+        {/* POPUP MODAL NỔI (THEO ĐÚNG STYLE ẢNH 2 & THIẾT KẾ ẢNH 3) */}
         <AnimatePresence>
-          {showMatrix && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, scale: 0.98 }}
-              animate={{ opacity: 1, height: 'auto', scale: 1 }}
-              exit={{ opacity: 0, height: 0, scale: 0.98 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="liquid-glass rounded-3xl p-5 sm:p-7 border border-white/20 shadow-[0_24px_70px_rgba(0,0,0,0.65)] backdrop-blur-2xl transition-all">
-                
-                {/* Header Lịch & Bộ chuyển danh mục Máy / Lens / Phụ kiện */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-white/10 mb-6">
-                  <div>
-                    <h3 className="font-serif text-xl sm:text-2xl text-white font-medium flex items-center gap-2">
-                      <Calendar size={20} className="text-amber-400" />
-                      <span>Lịch Khả Dụng 7 Ngày Tới</span>
-                    </h3>
-                    <p className="text-xs text-white/60 mt-1">
-                      Số lượng cá thể thiết bị sẵn sàng giao trong kho (loại trừ các máy đang bảo dưỡng hoặc giữ chỗ 15p).
-                    </p>
-                  </div>
-
-                  {/* BỘ CHUYỂN DANH MỤC XEM LỊCH DẠNG LIQUID GLASS SCRUBBER CÓ THỂ KÉO */}
-                  <div className="shrink-0 flex items-center">
-                    <NavigationScrubber
-                      activeId={calendarCategory}
-                      onChange={(id) => setCalendarCategory(id as any)}
-                      items={calendarNavItems}
-                      variant="compact"
-                    />
-                  </div>
-                </div>
-
-                {/* Chú giải trạng thái */}
-                <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-white/60 mb-5 px-1">
-                  <span>Đang hiển thị <strong>{filteredSchedule.length}</strong> dòng thiết bị:</span>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 radar-pulse-green" />
-                      <span>Sẵn sàng (&gt;1 máy)</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 radar-pulse-amber" />
-                      <span>Còn 1 máy cuối</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                      <span>Tạm kín lịch</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* BẢNG LỊCH TRỰC QUAN DỄ XEM (Interactive Schedule Timeline Matrix) */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-white/15 text-white/50 text-[11px] uppercase tracking-wider">
-                        <th className="py-3 px-3 min-w-[220px] font-semibold">Tên thiết bị &amp; Kho</th>
-                        {daysTimeline.map((d, i) => (
-                          <th 
-                            key={i} 
-                            className={`py-3 px-2 text-center min-w-[85px] font-semibold ${
-                              d.isToday ? 'bg-amber-400/10 text-amber-300 rounded-t-xl font-bold' : ''
-                            }`}
-                          >
-                            <div className="text-[12px]">{d.date}</div>
-                            <div className={`text-[10px] normal-case font-normal ${d.isToday ? 'text-amber-400 font-semibold' : 'text-white/40'}`}>
-                              {d.isToday ? '★ Hôm nay' : d.dayName}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {filteredSchedule.map((item) => (
-                        <tr key={item.id} className="hover:bg-white/[0.04] transition-colors group">
-                          
-                          {/* Cột 1: Thông tin thiết bị */}
-                          <td className="py-3.5 px-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-[#121722] border border-white/10 flex items-center justify-center p-1 shrink-0 group-hover:scale-105 transition-transform">
-                                <img 
-                                  src={item.image} 
-                                  alt={item.name} 
-                                  className="max-h-full max-w-full object-contain"
-                                />
-                              </div>
-                              <div>
-                                <div className="font-semibold text-white group-hover:text-amber-300 transition-colors text-[13px] line-clamp-1">
-                                  {item.name}
-                                </div>
-                                <div className="text-[11px] text-white/50 flex items-center gap-2 mt-0.5">
-                                  <span>Kho: <strong className="text-white/80">{item.totalUnits}</strong> chiếc</span>
-                                  <span>•</span>
-                                  <span className="text-amber-400/90">{item.dailyRate.toLocaleString('vi-VN')} ₫/ngày</span>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* 7 Cột Lịch ngày: Hiển thị badge to rõ, có chữ 'Còn X máy' dễ đọc */}
-                          {item.slots.map((count, i) => {
-                            const isAvailable = count > 1;
-                            const isLow = count === 1;
-                            const isToday = daysTimeline[i].isToday;
-
-                            return (
-                              <td 
-                                key={i} 
-                                className={`py-3 px-1.5 text-center ${isToday ? 'bg-amber-400/[0.03]' : ''}`}
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const matchedItem = allEquipment.find(e => e.id === item.id);
-                                    if (matchedItem) onSelectItem(matchedItem as any);
-                                  }}
-                                  className={`w-full py-2 px-1.5 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer hover:scale-105 active:scale-95 shadow-sm ${
-                                    isAvailable
-                                      ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/35'
-                                      : isLow
-                                      ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/35'
-                                      : 'bg-rose-500/10 text-rose-400/50 border border-rose-500/20 cursor-not-allowed opacity-60'
-                                  }`}
-                                  title={`Bấm để đặt thuê ${item.name} vào ${daysTimeline[i].date}`}
-                                >
-                                  <span className="text-[12px]">{count > 0 ? count : '0'}</span>
-                                  <span className="text-[9px] font-normal leading-none opacity-80">
-                                    {isAvailable ? 'Sẵn sàng' : isLow ? 'Còn 1' : 'Hết lịch'}
-                                  </span>
-                                </button>
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-white/50">
-                  <span className="italic text-[11px]">* Bấm trực tiếp vào ô ngày còn trống để mở giao diện đặt lịch &amp; giữ chỗ 15 phút.</span>
-                  <span className="text-[11px]">Cập nhật thời gian thực theo CSDL v1.1</span>
-                </div>
-
-              </div>
-            </motion.div>
+          {isCalendarModalOpen && (
+            <CalendarModal
+              isOpen={isCalendarModalOpen}
+              onClose={() => setIsCalendarModalOpen(false)}
+              initialStartDate="2026-10-29"
+              initialEndDate="2026-10-31"
+              onApplyDates={(rangeText) => {
+                const newParams = { ...filterParams, dates: rangeText };
+                setFilterParams(newParams);
+                onSearch(newParams);
+              }}
+              scheduleData={fullScheduleData}
+              daysTimeline={daysTimeline}
+              onSelectItemFromSchedule={(item) => {
+                const matchedItem = allEquipment.find(e => e.id === item.id);
+                if (matchedItem) onSelectItem(matchedItem as any);
+              }}
+            />
           )}
         </AnimatePresence>
       </div>
