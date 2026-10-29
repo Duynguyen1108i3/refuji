@@ -124,7 +124,7 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
       {/* 3. THANH THÔNG TIN BỘ LỌC HIỆN TẠI (TINH GỌN, ĐÃ CHUYỂN HẠNG THÀNH VIÊN VÀO TÀI KHOẢN) */}
       <div className="flex flex-wrap items-center justify-between gap-3 mt-8 mb-6 z-10 relative">
         <div className="flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 radar-pulse-green shrink-0" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 radar-pulse-amber shrink-0" />
           <span className="text-xs sm:text-sm font-medium text-white/90">
             Tìm thấy <strong className="text-white font-bold">{filteredItems.length}</strong> thiết bị khả dụng
           </span>
@@ -242,10 +242,10 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                       {item.name}
                     </h4>
 
-                    {/* Trạng thái sẵn sàng cho Khách hàng */}
+                    {/* Trạng thái sẵn sàng cho Khách hàng (Đen than & Trắng bạc chuẩn Fujifilm) */}
                     <div className="flex items-center gap-1.5 text-xs mb-4">
-                      <span className={`w-2 h-2 rounded-full ${isLowStock ? 'bg-amber-400 radar-pulse-amber' : 'bg-emerald-400 radar-pulse-green'}`} />
-                      <span className={isLowStock ? 'text-amber-400 font-medium' : 'text-emerald-400 font-medium'}>
+                      <span className={`w-2 h-2 rounded-full ${isLowStock ? 'bg-amber-400 radar-pulse-amber' : 'bg-white/80 shadow-[0_0_6px_rgba(255,255,255,0.7)]'}`} />
+                      <span className={isLowStock ? 'text-amber-400 font-medium' : 'text-white/85 font-medium'}>
                         {isLowStock ? 'Chỉ còn 1 thiết bị cuối' : 'Sẵn sàng giao ngay'}
                       </span>
                     </div>
@@ -308,7 +308,7 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
         </div>
 
         <div className="flex items-start gap-3">
-          <ShieldCheck size={20} className="text-emerald-400 shrink-0 mt-0.5" />
+          <ShieldCheck size={20} className="text-amber-400 shrink-0 mt-0.5" />
           <div>
             <div className="font-semibold text-white mb-1">Tuân thủ Luật Căn cước 2023</div>
             <div className="text-white/60 leading-relaxed text-[11.5px]">

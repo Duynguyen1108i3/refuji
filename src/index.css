@@ -159,38 +159,23 @@
 }
 
 /* 3. Sonar Radar Pulse Badges (Authentic Live Hardware Status) */
-@keyframes radar-pulse {
+@keyframes radar-pulse-white {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
   }
   to {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
 }
 
-@keyframes radar-pulse-amber {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
-  }
-  to {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-  }
-}
-
-.radar-pulse-green {
-  animation: radar-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.radar-pulse-white {
+  animation: radar-pulse-white 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .radar-pulse-amber {

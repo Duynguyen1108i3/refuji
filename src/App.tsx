@@ -87,23 +87,23 @@ export const App: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-[#07070a] text-white overflow-x-hidden selection:bg-white/20">
       
-      {/* Authentic RytoxGroup Ambient Drifting Lights (Organic Floating Fluid Behind Glass) */}
+      {/* Authentic Fujifilm Charcoal Black & Magnesium Ambient Atmosphere */}
       <div 
-        className="fixed top-64 -left-36 w-[520px] h-[520px] rounded-full pointer-events-none z-0 ambient-glass-drift-1 opacity-70 blur-3xl"
+        className="fixed top-64 -left-36 w-[520px] h-[520px] rounded-full pointer-events-none z-0 ambient-glass-drift-1 opacity-50 blur-3xl"
         style={{
-          background: 'radial-gradient(circle, rgba(22, 101, 52, 0.28) 0%, rgba(20, 83, 45, 0.12) 45%, rgba(0, 0, 0, 0) 70%)'
+          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, rgba(35, 40, 52, 0.16) 45%, rgba(0, 0, 0, 0) 70%)'
         }}
       />
       <div 
-        className="fixed top-96 -right-36 w-[560px] h-[560px] rounded-full pointer-events-none z-0 ambient-glass-drift-2 opacity-65 blur-3xl"
+        className="fixed top-96 -right-36 w-[560px] h-[560px] rounded-full pointer-events-none z-0 ambient-glass-drift-2 opacity-40 blur-3xl"
         style={{
-          background: 'radial-gradient(circle, rgba(217, 119, 6, 0.22) 0%, rgba(180, 83, 9, 0.08) 45%, rgba(0, 0, 0, 0) 70%)'
+          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(180, 83, 9, 0.04) 45%, rgba(0, 0, 0, 0) 70%)'
         }}
       />
       <div 
-        className="fixed top-1/2 left-1/2 w-[650px] h-[650px] rounded-full pointer-events-none z-0 ambient-glass-drift-3 opacity-40 blur-3xl"
+        className="fixed top-1/2 left-1/2 w-[650px] h-[650px] rounded-full pointer-events-none z-0 ambient-glass-drift-3 opacity-30 blur-3xl"
         style={{
-          background: 'radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(30, 58, 138, 0.05) 50%, rgba(0, 0, 0, 0) 75%)'
+          background: 'radial-gradient(circle, rgba(255, 255, 255, 0.02) 0%, rgba(20, 24, 34, 0.14) 50%, rgba(0, 0, 0, 0) 75%)'
         }}
       />
 
@@ -131,9 +131,9 @@ export const App: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed bottom-20 md:bottom-6 right-6 z-50 liquid-glass border border-emerald-500/40 px-5 py-3 rounded-xl text-xs sm:text-sm text-emerald-400 shadow-2xl flex items-center gap-2"
+              className="fixed bottom-20 md:bottom-6 right-6 z-50 liquid-glass border border-white/20 bg-[#0e1118]/95 px-5 py-3 rounded-xl text-xs sm:text-sm text-white shadow-2xl flex items-center gap-2.5"
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 radar-pulse-green" />
+              <span className="w-2 h-2 rounded-full bg-amber-400 radar-pulse-amber" />
               <span>{searchNotification}</span>
             </motion.div>
           )}

@@ -35,6 +35,8 @@ export interface LensModel {
   highlightBadge?: string;
   description: string;
   features: string[];
+  weight?: string;
+  filterSize?: string;
 }
 
 export interface AccessoryModel {

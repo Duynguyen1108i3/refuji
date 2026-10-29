@@ -35,7 +35,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelec
             <div className="relative z-10 rounded-sm overflow-hidden shadow-[0_24px_50px_rgba(0,0,0,0.8)] bg-[#121722] border border-white/10 aspect-[4/3] flex items-center justify-center">
               {/* Badge */}
               <div className="absolute top-3 left-3 z-20 liquid-glass px-3 py-1.5 rounded text-[10px] font-semibold text-white tracking-wide shadow-md flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 radar-pulse-green" />
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 radar-pulse-amber" />
                 <span>{activeCam.highlightBadge || 'Được thuê nhiều nhất'}</span>
               </div>
 
@@ -125,8 +125,8 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelec
                   <span className="text-white/30">•</span>
                   <span><strong>Cọc tiêu chuẩn:</strong> {activeCam.depositRate.toLocaleString('vi-VN')}₫</span>
                 </div>
-                <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                  <CheckCircle2 size={15} />
+                <div className="flex items-center gap-2 text-white/90 font-medium">
+                  <CheckCircle2 size={15} className="text-amber-400" />
                   <span>
                     {activeCam.availableCount === 1 
                       ? 'Chỉ còn 1 máy cuối (Sẵn sàng nhận trực tiếp tại cửa hàng)' 

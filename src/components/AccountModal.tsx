@@ -122,7 +122,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               </span>
             </div>
             <p className="text-xs text-white/60 mt-0.5">trantxi@refuji.stu.edu.vn • ĐACN STU 2026</p>
-            <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 mt-1">
+            <div className="flex items-center gap-1.5 text-[11px] text-amber-400 mt-1">
               <ShieldCheck size={14} />
               <span>Định danh CCCD điện tử hợp lệ (Luật Căn cước 2023)</span>
             </div>
@@ -173,7 +173,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         {/* KHU VỰC ÁP MÃ VOUCHER / KHUYẾN MÃI */}
         <div className="mb-6 bg-[#10141f]/90 rounded-2xl p-4 border border-white/10">
           <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/80 mb-2.5">
-            <Tag size={13} className="text-emerald-400" />
+            <Tag size={13} className="text-amber-400" />
             <span>Mã Ưu Đãi / Voucher Giảm Cọc</span>
           </div>
 
@@ -198,15 +198,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           )}
 
           {appliedVoucher && (
-            <div className="mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs text-emerald-300">
+            <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-xs text-amber-300">
               <div className="flex items-center gap-1.5 font-medium">
-                <CheckCircle2 size={14} className="text-emerald-400" />
+                <CheckCircle2 size={14} className="text-amber-400" />
                 <span>Mã <strong>{appliedVoucher.code}</strong>: {appliedVoucher.discountText}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setAppliedVoucher(null)}
-                className="text-[10px] text-emerald-400/80 hover:text-emerald-300 underline cursor-pointer"
+                className="text-[10px] text-amber-400/80 hover:text-amber-300 underline cursor-pointer"
               >
                 Hủy mã
               </button>

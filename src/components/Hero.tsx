@@ -39,10 +39,11 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
         style={{ 
           backgroundImage: `url('/assets/forest-clean.jpg')`,
           opacity: bgOpacity,
-          scale: bgScale
+          scale: bgScale,
+          filter: 'grayscale(90%) contrast(115%) brightness(70%)'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#07070a]/40 via-[#07070a]/70 to-[#07070a] z-0 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#07070a]/60 via-[#07070a]/85 to-[#07070a] z-0 pointer-events-none" />
 
       {/* Top spacing - 100vh Ultra Minimalist, Absolutely NO navbar at top */}
       <div className="h-20 w-full relative z-10" />

@@ -53,8 +53,8 @@ export const FeaturedLens: React.FC<FeaturedLensProps> = ({ lenses, onSelectLens
                   <span className="text-white/30">•</span>
                   <span><strong>Cọc tiêu chuẩn:</strong> {activeLens.depositRate.toLocaleString('vi-VN')}₫</span>
                 </div>
-                <div className="flex items-center gap-2 text-emerald-400 font-medium">
-                  <CheckCircle2 size={15} />
+                <div className="flex items-center gap-2 text-white/90 font-medium">
+                  <CheckCircle2 size={15} className="text-amber-400" />
                   <span>
                     {activeLens.availableCount === 1 
                       ? 'Chỉ còn 1 ống kính cuối (Sẵn sàng giao ngay)' 
