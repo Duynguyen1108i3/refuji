@@ -2,14 +2,11 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   X, 
-  User, 
   Award, 
   ShieldCheck, 
   Tag, 
   Sparkles, 
   Check, 
-  ChevronRight,
-  CreditCard,
   CheckCircle2
 } from 'lucide-react';
 

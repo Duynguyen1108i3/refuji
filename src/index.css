@@ -61,34 +61,6 @@
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
 }
 
-.liquid-glass-header {
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%) !important;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.liquid-glass-header:after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -80px;
-  height: 80px;
-  pointer-events: none;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
-  z-index: -1;
-  transition: opacity 0.5s ease;
-}
-
-.liquid-glass-header.scrolled {
-  background: #0e0f14c7 !important;
-  backdrop-filter: blur(var(--glass-blur, 32px)) saturate(190%) brightness(105%) !important;
-  -webkit-backdrop-filter: blur(var(--glass-blur, 32px)) saturate(190%) brightness(105%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 12px 36px #00000080 !important;
-}
-
 .glass-button {
   background: #ffffff0d;
   backdrop-filter: blur(12px);
@@ -173,30 +145,7 @@
   will-change: transform;
 }
 
-/* 3. Liquid Glass Morph & Caustic Drift */
-@keyframes liquid-glass-morph-1 {
-  0% { transform: translateZ(0) rotate(0deg) scale(1); }
-  50% { transform: translate3d(35px, -30px, 0) rotate(180deg) scale(1.06); }
-  to { transform: translate3d(-25px, 25px, 0) rotate(360deg) scale(0.95); }
-}
-
-@keyframes liquid-ripple-pulse {
-  0% { transform: translate3d(-50%, -50%, 0) scale(0.92); opacity: 0.22; }
-  50% { transform: translate3d(-50%, -50%, 0) scale(1.05); opacity: 0.38; }
-  to { transform: translate3d(-50%, -50%, 0) scale(0.92); opacity: 0.22; }
-}
-
-@keyframes liquid-caustic-drift {
-  0% { transform: translateZ(0) scale(1); }
-  50% { transform: translate3d(0, -25px, 0) scale(1.02); }
-  to { transform: translateZ(0) scale(1); }
-}
-
-.liquid-caustic-drift {
-  animation: liquid-caustic-drift 12s ease-in-out infinite alternate;
-}
-
-/* 4. Sonar Radar Pulse Badges (Authentic Live Hardware Status) */
+/* 3. Sonar Radar Pulse Badges (Authentic Live Hardware Status) */
 @keyframes radar-pulse {
   0% {
     transform: scale(0.95);
