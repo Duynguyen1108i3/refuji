@@ -127,7 +127,11 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelec
                 </div>
                 <div className="flex items-center gap-2 text-emerald-400 font-medium">
                   <CheckCircle2 size={15} />
-                  <span>Đang còn {activeCam.availableCount} máy trống (Sẵn sàng nhận trực tiếp tại cửa hàng)</span>
+                  <span>
+                    {activeCam.availableCount === 1 
+                      ? 'Chỉ còn 1 máy cuối (Sẵn sàng nhận trực tiếp tại cửa hàng)' 
+                      : 'Thiết bị sẵn sàng bàn giao trực tiếp tại cửa hàng'}
+                  </span>
                 </div>
               </div>
 

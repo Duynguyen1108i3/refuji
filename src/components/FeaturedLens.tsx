@@ -55,7 +55,11 @@ export const FeaturedLens: React.FC<FeaturedLensProps> = ({ lenses, onSelectLens
                 </div>
                 <div className="flex items-center gap-2 text-emerald-400 font-medium">
                   <CheckCircle2 size={15} />
-                  <span>Đang còn {activeLens.availableCount} ống kính sẵn sàng giao ngay</span>
+                  <span>
+                    {activeLens.availableCount === 1 
+                      ? 'Chỉ còn 1 ống kính cuối (Sẵn sàng giao ngay)' 
+                      : 'Ống kính sẵn sàng bàn giao trực tiếp tại cửa hàng'}
+                  </span>
                 </div>
               </div>
             </motion.div>

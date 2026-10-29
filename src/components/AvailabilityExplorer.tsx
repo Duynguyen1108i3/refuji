@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassSearchBar } from './GlassSearchBar';
-import { NavigationScrubber, NavScrubberItem } from './NavigationScrubber';
 import { CalendarModal } from './CalendarModal';
 import { CAMERAS, LENSES, ACCESSORIES } from '../data/mockData';
 import { CameraModel, LensModel, AccessoryModel } from '../types';
@@ -11,13 +10,8 @@ import {
   Clock, 
   Sparkles, 
   Layers, 
-  ChevronDown,
-  Camera,
-  Aperture,
-  Zap,
-  Check,
-  Heart,
-  ArrowUpRight
+  Heart, 
+  ArrowUpRight 
 } from 'lucide-react';
 
 interface AvailabilityExplorerProps {
@@ -41,7 +35,6 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
   
   // Trạng thái mở xem chi tiết lịch và bộ lọc theo loại trong lịch
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
-  const [calendarCategory, setCalendarCategory] = useState<'ALL' | 'BODY' | 'LENS' | 'ACCESSORY'>('BODY');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
@@ -106,140 +99,6 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
     onSearch(params);
   };
 
-  // Dữ liệu ma trận lịch trống 7 ngày thời gian thực (Time-Slot Availability Matrix)
-  const daysTimeline = [
-    { date: 'T4 29/10', dayName: 'Thứ 4', isToday: true },
-    { date: 'T5 30/10', dayName: 'Thứ 5' },
-    { date: 'T6 31/10', dayName: 'Thứ 6' },
-    { date: 'T7 01/11', dayName: 'Thứ 7' },
-    { date: 'CN 02/11', dayName: 'Chủ Nhật' },
-    { date: 'T2 03/11', dayName: 'Thứ 2' },
-    { date: 'T3 04/11', dayName: 'Thứ 3' }
-  ];
-
-  // Dữ liệu chi tiết lịch phân theo từng danh mục
-  const fullScheduleData = [
-    // 1. THÂN MÁY (BODY)
-    {
-      id: 'fuji-xt5',
-      name: 'Fujifilm X-T5 Body Silver',
-      type: 'BODY' as const,
-      image: '/assets/camera-xt5.png',
-      dailyRate: 500000,
-      totalUnits: 2,
-      badge: '40.2MP • IBIS 7-stops',
-      slots: [2, 2, 1, 0, 1, 2, 2],
-    },
-    {
-      id: 'fuji-x100vi',
-      name: 'Fujifilm X100VI Compact',
-      type: 'BODY' as const,
-      image: '/assets/camera-xt5.png',
-      dailyRate: 550000,
-      totalUnits: 1,
-      badge: 'Ống 23mm F2 • ND 4-stops',
-      slots: [1, 1, 0, 0, 0, 1, 1],
-    },
-    {
-      id: 'fuji-xh2s',
-      name: 'Fujifilm X-H2S Flagship',
-      type: 'BODY' as const,
-      image: '/assets/camera-xt5.png',
-      dailyRate: 600000,
-      totalUnits: 3,
-      badge: 'Stacked Sensor 40fps',
-      slots: [3, 3, 2, 2, 2, 3, 3],
-    },
-    {
-      id: 'fuji-gfx50s2',
-      name: 'Fujifilm GFX 50S II',
-      type: 'BODY' as const,
-      image: '/assets/camera-xt5.png',
-      dailyRate: 900000,
-      totalUnits: 1,
-      badge: 'Medium Format 51.4MP',
-      slots: [1, 1, 1, 0, 1, 1, 1],
-    },
-
-    // 2. ỐNG KÍNH (LENS)
-    {
-      id: 'xf-35mm-f14',
-      name: 'Fujinon XF 35mm f/1.4 R',
-      type: 'LENS' as const,
-      image: '/assets/lens-35mm.png',
-      dailyRate: 180000,
-      totalUnits: 4,
-      badge: 'Khẩu lớn f/1.4 • Bokeh mịn',
-      slots: [4, 4, 3, 2, 2, 4, 4],
-    },
-    {
-      id: 'xf-56mm-f12',
-      name: 'Fujinon XF 56mm f/1.2 R WR',
-      type: 'LENS' as const,
-      image: '/assets/lens-35mm.png',
-      dailyRate: 250000,
-      totalUnits: 2,
-      badge: 'Chân dung sắc nét f/1.2',
-      slots: [2, 2, 1, 1, 1, 2, 2],
-    },
-    {
-      id: 'xf-16-55mm-f28',
-      name: 'Fujinon XF 16-55mm f/2.8 R LM',
-      type: 'LENS' as const,
-      image: '/assets/lens-35mm.png',
-      dailyRate: 280000,
-      totalUnits: 3,
-      badge: 'Zoom đa dụng f/2.8 toàn dải',
-      slots: [3, 2, 2, 1, 2, 3, 3],
-    },
-
-    // 3. PHỤ KIỆN (ACCESSORY)
-    {
-      id: 'acc-battery-combo',
-      name: 'Combo 2 Pin NP-W235 + Sạc kép',
-      type: 'ACCESSORY' as const,
-      image: '/assets/camera-xt5.png',
-      dailyRate: 60000,
-      totalUnits: 8,
-      badge: 'Dung lượng 2200mAh x 2',
-      slots: [8, 7, 5, 4, 5, 7, 8],
-    },
-    {
-      id: 'acc-sd-v90',
-      name: 'Thẻ nhớ SanDisk SD 128GB V90',
-      type: 'ACCESSORY' as const,
-      image: '/assets/camera-xt5.png',
-      dailyRate: 50000,
-      totalUnits: 6,
-      badge: '300MB/s • Quay 6.2K ProRes',
-      slots: [6, 5, 4, 3, 4, 5, 6],
-    },
-    {
-      id: 'acc-tripod-carbon',
-      name: 'Chân máy Peak Design Carbon',
-      type: 'ACCESSORY' as const,
-      image: '/assets/camera-xt5.png',
-      dailyRate: 80000,
-      totalUnits: 4,
-      badge: 'Sợi Carbon • Siêu nhẹ 1.27kg',
-      slots: [4, 4, 3, 2, 3, 4, 4],
-    },
-  ];
-
-  // Dữ liệu danh mục Scrubber dạng Liquid Glass có thể kéo
-  const calendarNavItems: NavScrubberItem[] = [
-    { id: 'BODY', label: 'Thân máy (Body)', shortLabel: 'Body', icon: <Camera size={13} /> },
-    { id: 'LENS', label: 'Ống kính (Lens)', shortLabel: 'Lens', icon: <Aperture size={13} /> },
-    { id: 'ACCESSORY', label: 'Phụ kiện & Pin', shortLabel: 'Phụ kiện', icon: <Zap size={13} /> },
-    { id: 'ALL', label: 'Tất cả thiết bị', shortLabel: 'Tất cả', icon: <Layers size={13} /> },
-  ];
-
-  // Lọc danh sách lịch theo tab danh mục đã chọn
-  const filteredSchedule = fullScheduleData.filter((item) => {
-    if (calendarCategory === 'ALL') return true;
-    return item.type === calendarCategory;
-  });
-
   return (
     <section className="relative w-full max-w-6xl mx-auto px-4 sm:px-8 py-8 select-none">
       
@@ -286,16 +145,16 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
       {/* 4. PHÂN HỆ XEM LỊCH & CHỌN NGÀY DẠNG POPUP (THEO STYLE ẢNH 2 & THIẾT KẾ ẢNH 3) */}
       <div className="mb-10">
         
-        {/* Nút bấm mở Popup Lịch nổi bật (Thay thế việc bung bảng inline đẩy trang) */}
-        <div className="flex justify-center mb-5">
+        {/* Nút bấm mở Popup Lịch nổi bật */}
+        <div className="flex justify-center mb-6">
           <button
             type="button"
             onClick={() => setIsCalendarModalOpen(true)}
-            className="crystal-liquid-glass px-6 py-2.5 rounded-full text-xs font-semibold text-white/90 hover:text-white flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg group border border-white/20 hover:border-white/40"
+            className="crystal-liquid-glass px-7 py-3 rounded-full text-xs sm:text-sm font-semibold text-white/95 hover:text-white flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg group border border-white/20 hover:border-white/40"
           >
-            <Calendar size={15} className="text-amber-400" />
-            <span>Mở Lịch khả dụng 7 ngày</span>
-            <ArrowUpRight size={14} className="opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <Calendar size={16} className="text-amber-400" />
+            <span>Chọn ngày nhận &amp; trả máy</span>
+            <ArrowUpRight size={15} className="opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </button>
         </div>
 
@@ -311,12 +170,6 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                 const newParams = { ...filterParams, dates: rangeText };
                 setFilterParams(newParams);
                 onSearch(newParams);
-              }}
-              scheduleData={fullScheduleData}
-              daysTimeline={daysTimeline}
-              onSelectItemFromSchedule={(item) => {
-                const matchedItem = allEquipment.find(e => e.id === item.id);
-                if (matchedItem) onSelectItem(matchedItem as any);
               }}
             />
           )}
@@ -389,11 +242,11 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                       {item.name}
                     </h4>
 
-                    {/* Trạng thái sẵn sàng */}
+                    {/* Trạng thái sẵn sàng cho Khách hàng */}
                     <div className="flex items-center gap-1.5 text-xs mb-4">
                       <span className={`w-2 h-2 rounded-full ${isLowStock ? 'bg-amber-400 radar-pulse-amber' : 'bg-emerald-400 radar-pulse-green'}`} />
                       <span className={isLowStock ? 'text-amber-400 font-medium' : 'text-emerald-400 font-medium'}>
-                        {isLowStock ? 'Còn 1 máy cuối' : `Sẵn sàng (${item.availableCount} máy)`}
+                        {isLowStock ? 'Chỉ còn 1 thiết bị cuối' : 'Sẵn sàng giao ngay'}
                       </span>
                     </div>
                   </div>
