@@ -21,10 +21,24 @@ export const FeaturedLens: React.FC<FeaturedLensProps> = ({ lenses, onSelectLens
   return (
     <section 
       id="lenses" 
-      className="relative w-full min-h-[calc(100vh-84px)] scroll-mt-[84px] select-none flex flex-col justify-center items-center py-6 sm:py-8 lg:py-10 overflow-hidden bg-white"
+      className="relative w-full min-h-[calc(100vh-84px)] scroll-mt-[84px] select-none flex flex-col justify-start items-center pt-8 sm:pt-10 pb-16 sm:pb-20 overflow-hidden bg-[#fbfbfc] border-t-2 border-[#14171f]/10 shadow-[0_-16px_40px_rgba(20,24,32,0.06)]"
     >
       <div className="relative z-10 w-full max-w-6xl mx-auto px-6 sm:px-8">
         
+        {/* Section Header: Tách biệt rõ ràng với phân hệ Máy ảnh */}
+        <div className="flex flex-col items-center text-center mb-6 sm:mb-8 pt-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-[11px] font-semibold tracking-[0.2em] uppercase text-[#14171f] bg-[#14171f]/[0.06] border border-[#14171f]/10 mb-2.5 shadow-xs">
+            <Sparkles size={12} className="text-[#14171f]" />
+            <span>Hệ Thống Quang Học Fujinon</span>
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#14171f] tracking-tight">
+            Ống Kính Fujinon Được Săn Đón
+          </h2>
+          <p className="text-xs sm:text-sm text-[#5a6072] max-w-xl mt-2 font-light">
+            Độ phân giải siêu cao 40.2MP, bokeh nghệ thuật và khả năng lấy nét tuyến tính siêu êm
+          </p>
+        </div>
+
         {/* Thanh chuyển đổi nhanh đúng 4 lens hot nhất */}
         <div className="flex items-center justify-center mb-6">
           <div className="liquid-glass p-1.5 rounded-full flex flex-wrap items-center justify-center gap-1.5 shadow-md max-w-full">
@@ -58,7 +72,7 @@ export const FeaturedLens: React.FC<FeaturedLensProps> = ({ lenses, onSelectLens
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full liquid-glass rounded-3xl p-6 sm:p-7 md:p-8 border border-[#14171f]/10 shadow-[0_16px_40px_rgba(20,24,32,0.06)]"
+                className="w-full bg-white rounded-3xl p-6 sm:p-7 md:p-8 border border-[#14171f]/10 shadow-[0_16px_40px_rgba(20,24,32,0.06)]"
               >
                 {/* Badge phân loại */}
                 <div className="flex items-center justify-between mb-3">
