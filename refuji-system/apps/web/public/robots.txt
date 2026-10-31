@@ -1,0 +1,13 @@
+# REFUJI Robots.txt - Chuẩn SEO & Bảo vệ các endpoint nội bộ
+User-agent: *
+Allow: /
+Allow: /catalog
+Allow: /chinh-sach-phap-ly
+
+# Chặn các trang quản trị, nhân viên và API
+Disallow: /admin/
+Disallow: /staff/
+Disallow: /api/
+Disallow: /checkout/payment-callback
+
+Sitemap: https://refuji.vn/sitemap.xml

@@ -1,72 +1,169 @@
 import React from 'react';
 import { NavigationScrubber, NavScrubberItem } from './NavigationScrubber';
-import { Home, Camera, Aperture, Calendar, ShieldCheck, User } from 'lucide-react';
+import { GlassSearchBar, SearchFilterParams } from './GlassSearchBar';
+import { Home, Camera, Aperture, Calendar, ShieldCheck, ShoppingBag, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LiquidNavbarProps {
   isVisible: boolean;
   activeSection: string;
-  onOpenAuth: () => void;
+  onOpenAuth?: () => void;
+  onOpenCart: () => void;
+  cartCount?: number;
   onNavigate: (sectionId: string) => void;
+  // Props cho chế độ Search Bar thay thế Navbar (Image 3 thay thế Image 2)
+  isSearchMode?: boolean;
+  onCloseSearchMode?: () => void;
+  searchFilterParams?: SearchFilterParams;
+  onSearchChange?: (params: SearchFilterParams) => void;
+  onOpenCalendar?: () => void;
 }
 
 export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
   isVisible,
   activeSection,
   onOpenAuth,
+  onOpenCart,
+  cartCount = 0,
   onNavigate,
+  isSearchMode = false,
+  onCloseSearchMode,
+  searchFilterParams,
+  onSearchChange,
+  onOpenCalendar,
 }) => {
   const navItems: NavScrubberItem[] = [
     { id: 'hero', label: 'Trang chủ', shortLabel: 'Home', icon: <Home size={16} /> },
     { id: 'explore', label: 'Tra cứu lịch', shortLabel: 'Lịch', icon: <Calendar size={16} /> },
-    { id: 'cameras', label: 'Thân máy Hot', shortLabel: 'Body', icon: <Camera size={16} /> },
+    { id: 'cameras', label: 'Máy ảnh Hot', shortLabel: 'Máy ảnh', icon: <Camera size={16} /> },
     { id: 'lenses', label: 'Ống kính', shortLabel: 'Lens', icon: <Aperture size={16} /> },
     { id: 'policies', label: 'Chính sách cọc', shortLabel: 'Cọc', icon: <ShieldCheck size={16} /> },
   ];
 
+  const showNavbar = true; // Luôn hiển thị thanh điều hướng trên toàn bộ các trang để chuyển tab tức thì
+
   return (
     <>
-      {/* 1. DESKTOP / TABLET HEADER (Cao 84px, rộng rãi, chuẩn phong cách RytoxGroup) */}
+      {/* 1. DESKTOP / TABLET HEADER (Cao 84px, chuẩn phong cách RytoxGroup & iOS/macOS) */}
       <header
-        className={`fixed inset-x-0 top-0 z-50 flex h-[84px] items-center justify-between px-8 sm:px-12 lg:px-16 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+        className={`fixed inset-x-0 top-0 z-50 flex h-[84px] items-center justify-between px-6 sm:px-10 lg:px-14 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          showNavbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         }`}
       >
+        {/* Subtle Frosted Glass Top Header Background for Smooth Under-Scrubbing */}
+        <div 
+          className={`absolute inset-0 bg-white/75 backdrop-blur-xl border-b border-[#14171f]/5 transition-opacity duration-300 pointer-events-none ${
+            isVisible || isSearchMode ? 'opacity-100 shadow-[0_4px_24px_rgba(20,24,32,0.03)]' : 'opacity-0'
+          }`}
+        />
         {/* LOGO BÊN TRÁI: Độc lập, cỡ chữ lớn sang trọng */}
         <div className="flex items-center z-10 pointer-events-auto">
           <button
-            onClick={() => onNavigate('hero')}
-            className="font-serif text-2xl sm:text-3xl tracking-[0.16em] font-medium text-white hover:text-white/80 transition-colors drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] focus:outline-none cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+            onClick={() => {
+              if (isSearchMode && onCloseSearchMode) {
+                onCloseSearchMode();
+              }
+              onNavigate('hero');
+            }}
+            className="font-serif text-2xl sm:text-3xl tracking-[0.16em] font-medium text-[#14171f] hover:text-[#2c3242] transition-colors drop-shadow-[0_2px_8px_rgba(20,24,32,0.08)] focus:outline-none cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
           >
             REFUJI
           </button>
         </div>
 
-        {/* THANH TASKBAR LIQUID GLASS Ở CHÍNH GIỮA: Kích thước rộng rãi, phom chuẩn RytoxGroup */}
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 z-20 items-center justify-center pointer-events-auto">
-          <NavigationScrubber
-            activeId={activeSection}
-            onChange={onNavigate}
-            items={navItems}
-            variant="header"
-          />
+        {/* 
+          THANH TASKBAR Ở CHÍNH GIỮA: 
+          - Bình thường: NavigationScrubber (Thanh home ảnh 2)
+          - Khi mở toàn bộ thiết bị: Thay thế mượt mà bằng GlassSearchBar (Thanh ảnh 3)
+          - Sử dụng animation chuyển cảnh Apple iOS / macOS spring physics
+        */}
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 z-20 items-center justify-center pointer-events-auto w-full max-w-4xl px-4">
+          <AnimatePresence mode="wait">
+            {!isSearchMode ? (
+              <motion.div
+                key="navbar-scrubber"
+                initial={{ opacity: 0, scale: 0.94, y: -6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: -6 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 450,
+                  damping: 32,
+                  mass: 0.8,
+                }}
+                className="flex items-center justify-center"
+              >
+                <NavigationScrubber
+                  activeId={activeSection}
+                  onChange={onNavigate}
+                  items={navItems}
+                  variant="header"
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="navbar-search-bar"
+                initial={{ opacity: 0, scale: 0.94, y: -6 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: -6 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 450,
+                  damping: 32,
+                  mass: 0.8,
+                }}
+                className="w-full flex items-center justify-center"
+              >
+                <GlassSearchBar
+                  variant="compact-header"
+                  onSearch={(params) => {
+                    if (onSearchChange) onSearchChange(params);
+                  }}
+                  selectedDates={searchFilterParams?.dates}
+                  onOpenCalendar={onOpenCalendar}
+                  initialCategory={searchFilterParams?.category}
+                  initialMount={searchFilterParams?.mount}
+                  initialSeries={searchFilterParams?.series}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* BÊN PHẢI: Duy nhất nút Tài khoản dạng Glass Capsule với Rytox Lift */}
-        <div className="flex items-center z-10 pointer-events-auto">
+        {/* BÊN PHẢI: Nút Đóng (khi ở chế độ tìm kiếm) & Nút Giỏ Hàng Thuê */}
+        <div className="flex items-center gap-2.5 z-10 pointer-events-auto">
+          {isSearchMode && onCloseSearchMode && (
+            <button
+              onClick={onCloseSearchMode}
+              className="bg-white hover:bg-neutral-50 rytox-hover-lift h-11 px-5 rounded-full flex items-center gap-2 font-semibold text-xs sm:text-sm text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all"
+            >
+              <X size={15} />
+              <span>Đóng</span>
+            </button>
+          )}
+
           <button
-            onClick={onOpenAuth}
-            className="crystal-liquid-glass rytox-hover-lift h-11 px-6 rounded-full flex items-center gap-2.5 font-semibold text-sm text-white cursor-pointer shadow-lg"
+            onClick={onOpenCart}
+            className="bg-white hover:bg-neutral-50 rytox-hover-lift h-11 px-5 sm:px-6 rounded-full flex items-center gap-2 font-semibold text-xs sm:text-sm text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all relative group"
+            aria-label="Mở giỏ hàng thuê thiết bị"
           >
-            <User size={16} />
-            <span>Tài khoản</span>
+            <ShoppingBag size={16} className="text-[#14171f] group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline">Giỏ hàng</span>
+            {cartCount > 0 && (
+              <span className="bg-[#14171f] text-white text-[11px] font-mono px-2 py-0.5 rounded-full font-bold ml-0.5 animate-in fade-in zoom-in duration-200">
+                {cartCount}
+              </span>
+            )}
           </button>
         </div>
       </header>
 
-      {/* 2. MOBILE BOTTOM FLOATING DOCK */}
+      {/* 2. MOBILE BOTTOM FLOATING DOCK (Tự ẩn khi mở Popup Tìm kiếm Toàn Bộ) */}
       <div
         className={`md:hidden fixed bottom-5 inset-x-0 z-50 mx-auto w-[94%] max-w-[440px] transition-all duration-300 pointer-events-auto ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0 pointer-events-none'
+          showNavbar && !isSearchMode
+            ? 'translate-y-0 opacity-100'
+            : 'translate-y-24 opacity-0 pointer-events-none'
         }`}
         style={{ bottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >

@@ -1,0 +1,3853 @@
+{
+  "membershipTiers": [
+    {
+      "tier_code": "BRONZE",
+      "tier_name": "Hạng Đồng",
+      "min_completed_rentals": 0,
+      "min_reputation_score": 0,
+      "deposit_discount_percent": 0,
+      "priority_approval": false,
+      "fast_track_checkin": false,
+      "description": "Hạng mặc định khi đăng ký tài khoản mới"
+    },
+    {
+      "tier_code": "SILVER",
+      "tier_name": "Hạng Bạc",
+      "min_completed_rentals": 5,
+      "min_reputation_score": 80,
+      "deposit_discount_percent": 5,
+      "priority_approval": false,
+      "fast_track_checkin": false,
+      "description": "Giảm 5% tiền cọc thiết bị"
+    },
+    {
+      "tier_code": "GOLD",
+      "tier_name": "Hạng Vàng",
+      "min_completed_rentals": 15,
+      "min_reputation_score": 90,
+      "deposit_discount_percent": 10,
+      "priority_approval": true,
+      "fast_track_checkin": false,
+      "description": "Giảm 10% tiền cọc, ưu tiên duyệt đơn"
+    },
+    {
+      "tier_code": "PLATINUM",
+      "tier_name": "Hạng Bạch Kim",
+      "min_completed_rentals": 30,
+      "min_reputation_score": 95,
+      "deposit_discount_percent": 15,
+      "priority_approval": true,
+      "fast_track_checkin": true,
+      "description": "Giảm 15% tiền cọc, thủ tục nhận máy Fast-track"
+    }
+  ],
+  "productModels": [
+    {
+      "model_name": "FUJIFILM GFX100 II",
+      "category": "BODY",
+      "mount_type": "G_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 950000,
+      "deposit_amount": 14000000,
+      "description": "Chiếc máy ảnh Medium Format đỉnh cao tích hợp cảm biến thế hệ mới 102MP CMOS II HS, tốc độ đọc dữ liệu tăng gấp đôi, quay video chuẩn điện ảnh 8K/30p Apple ProRes và chống rung 8.0 stops.",
+      "specs_json": {
+        "sensor": "102MP High-Speed Large Format CMOS II HS",
+        "megapixels": 102,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 8.0 stops",
+        "video": "8K/30p, 4K/60p 4:2:2 10-bit nội bộ, Apple ProRes",
+        "burst_rate": "8.0fps cơ học",
+        "battery": "NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/gfx100-ii/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2023/09/wfqs_gfx100-ii_thum.jpg",
+      "items": [
+        {
+          "serial_number": "3GF001209",
+          "shutter_count": 3120,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-11-01",
+          "purchase_price": 189000000,
+          "total_rental_count": 8,
+          "last_maintenance_date": "2026-09-15",
+          "next_maintenance_date": "2026-12-15",
+          "note": "Máy Studio chuyên nghiệp, kèm 3 pin và cáp Tether Tools."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM GFX100S II",
+      "category": "BODY",
+      "mount_type": "G_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 850000,
+      "deposit_amount": 12000000,
+      "description": "Thân máy Large Format 102MP siêu gọn nhẹ chỉ 883g với lớp da hoa văn BISHAMON-TEX™ độc quyền, hệ thống chống rung 8.0 stops và 20 giả lập màu phim bao gồm REALA ACE.",
+      "specs_json": {
+        "sensor": "102MP Large Format CMOS II",
+        "megapixels": 102,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 8.0 stops",
+        "video": "4K/30p 4:2:2 10-bit",
+        "burst_rate": "7.0fps",
+        "battery": "NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/gfx100s-ii/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2024/05/gfx_100s_ii_small.jpg",
+      "items": [
+        {
+          "serial_number": "FUJI-GFX100S-II-01",
+          "shutter_count": 3200,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-10-01",
+          "purchase_price": 60000000
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM GFX100RF",
+      "category": "BODY",
+      "mount_type": "G_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 800000,
+      "deposit_amount": 11000000,
+      "description": "Dòng Medium Format phong cách Rangefinder thanh lịch và cơ động nhất từ trước tới nay, cảm biến 102 triệu điểm ảnh tái hiện chi tiết và dải tương phản động vô song.",
+      "specs_json": {
+        "sensor": "102MP Large Format CMOS II",
+        "megapixels": 102,
+        "processor": "X-Processor 5",
+        "ibis": "7.5 stops",
+        "video": "4K/30p HQ",
+        "burst_rate": "6.0fps",
+        "battery": "NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/gfx100rf/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2025/03/product-list_gfx100rf.jpg",
+      "items": [
+        {
+          "serial_number": "FUJI-GFX100RF-01",
+          "shutter_count": 3200,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-10-01",
+          "purchase_price": 55000000
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM GFX ETERNA 55 Cinema Camera",
+      "category": "BODY",
+      "mount_type": "G_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 1200000,
+      "deposit_amount": 18000000,
+      "description": "Máy quay phim điện ảnh Large Format định dạng thế hệ mới mang tên huyền thoại ETERNA, cảm biến 102MP tốc độ cao hỗ trợ ghi hình chuẩn Hollywood và chuyển màu mượt mà.",
+      "specs_json": {
+        "sensor": "102MP Large Format Cinema CMOS II HS",
+        "megapixels": 102,
+        "processor": "X-Processor 5",
+        "ibis": "Cinema IS",
+        "video": "8K Open Gate, Apple ProRes RAW, F-Log2",
+        "burst_rate": "Cinema 24/25/30/60fps",
+        "battery": "V-Mount / NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/gfx-eterna-55/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2025/09/featured-img-ETERNA.jpg",
+      "items": [
+        {
+          "serial_number": "FUJI-GFX-ETERNA-55-01",
+          "shutter_count": 3200,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-10-01",
+          "purchase_price": 90000000
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-H2S Flagship",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 650000,
+      "deposit_amount": 8000000,
+      "description": "Flagship Mirrorless tốc độ cao cảm biến X-Trans CMOS 5 HS 26.1MP Stacked BSI, chụp liên tiếp 40fps không blackout, quay 6.2K/30p Apple ProRes.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 5 HS (Stacked BSI)",
+        "megapixels": 26.1,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 7.0 stops",
+        "video": "6.2K/30p, 4K/120p 4:2:2 10-bit Apple ProRes",
+        "burst_rate": "40fps Blackout-free",
+        "battery": "NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-h2s/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/3168ceefc03b3db16dd40fb6c3e4bee5/pic_xsystem_61.jpg?itok=BjPT05ej",
+      "items": [
+        {
+          "serial_number": "2Q004112",
+          "shutter_count": 5420,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-09-10",
+          "purchase_price": 54990000,
+          "total_rental_count": 14,
+          "last_maintenance_date": "2026-09-15",
+          "next_maintenance_date": "2026-12-15",
+          "note": "Máy đẹp 98%, kèm khung SmallRig và 2 pin NP-W235."
+        },
+        {
+          "serial_number": "2Q004380",
+          "shutter_count": 7890,
+          "condition_percent": 96,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-10-20",
+          "purchase_price": 54990000,
+          "total_rental_count": 18,
+          "last_maintenance_date": "2026-09-20",
+          "next_maintenance_date": "2026-12-20",
+          "note": "Ngoại hình 96%, máy hoạt động ổn định, kèm sạc đôi."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-H2",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 550000,
+      "deposit_amount": 7000000,
+      "description": "Thân máy độ phân giải siêu cao 40.2MP X-Trans CMOS 5 HR, hỗ trợ Pixel Shift 160MP và quay video chuẩn 8K/30p nội bộ.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 5 HR",
+        "megapixels": 40.2,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 7.0 stops",
+        "video": "8K/30p, 4K/60p HQ",
+        "burst_rate": "20fps điện tử / 15fps cơ học",
+        "battery": "NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-h2/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/3168ceefc03b3db16dd40fb6c3e4bee5/pic_xsystem_61.jpg?itok=BjPT05ej",
+      "items": [
+        {
+          "serial_number": "2Q004112",
+          "shutter_count": 5420,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-09-10",
+          "purchase_price": 54990000,
+          "total_rental_count": 14,
+          "last_maintenance_date": "2026-09-15",
+          "next_maintenance_date": "2026-12-15",
+          "note": "Máy đẹp 98%, kèm khung SmallRig và 2 pin NP-W235."
+        },
+        {
+          "serial_number": "2Q004380",
+          "shutter_count": 7890,
+          "condition_percent": 96,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-10-20",
+          "purchase_price": 54990000,
+          "total_rental_count": 18,
+          "last_maintenance_date": "2026-09-20",
+          "next_maintenance_date": "2026-12-20",
+          "note": "Ngoại hình 96%, máy hoạt động ổn định, kèm sạc đôi."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-Pro3 Dura Black",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 400000,
+      "deposit_amount": 5000000,
+      "description": "Kiệt tác khung Titanium với lớp phủ Duratect siêu cứng chống trầy xước, kính ngắm lai OVF/EVF và màn hình ẩn kích thích cảm hứng sáng tác.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 4",
+        "megapixels": 26.1,
+        "processor": "X-Processor 4",
+        "ibis": "Không có",
+        "video": "4K/30p",
+        "burst_rate": "11fps cơ học",
+        "battery": "NP-W126S",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-pro3/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/796629352103f5dabfc357b1ed58202f/pic_xsystem_48.jpg?itok=db4sLCnQ",
+      "items": [
+        {
+          "serial_number": "0A012304",
+          "shutter_count": 11200,
+          "condition_percent": 95,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-05-12",
+          "purchase_price": 39500000,
+          "total_rental_count": 22,
+          "last_maintenance_date": "2026-08-15",
+          "next_maintenance_date": "2026-11-15",
+          "note": "Bản Dura Black, kính ngắm trong vắt, cáp màn hình hoạt động hoàn hảo."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-T5 Body Silver",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 450000,
+      "deposit_amount": 5000000,
+      "description": "Biểu tượng nhiếp ảnh cổ điển với 3 vòng xoay cơ học, cảm biến 40.2MP X-Trans CMOS 5 HR, chống rung 7.0 stops và màn hình lật 3 chiều.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 5 HR",
+        "megapixels": 40.2,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 7.0 stops",
+        "video": "6.2K/30p 4:2:2 10-bit",
+        "burst_rate": "15fps cơ học",
+        "battery": "NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-t5/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/908d5d766553a21f603c1f9b16587dd0/pic_xsystem_66.jpg?itok=NnlkH4RJ",
+      "items": [
+        {
+          "serial_number": "3A014582",
+          "shutter_count": 4120,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-10-15",
+          "purchase_price": 41500000,
+          "total_rental_count": 12,
+          "last_maintenance_date": "2026-09-01",
+          "next_maintenance_date": "2026-12-01",
+          "note": "Màu Bạc (Silver), ngoại hình 98% không trầy xước."
+        },
+        {
+          "serial_number": "3A014905",
+          "shutter_count": 8350,
+          "condition_percent": 95,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-11-20",
+          "purchase_price": 41500000,
+          "total_rental_count": 24,
+          "last_maintenance_date": "2026-09-15",
+          "next_maintenance_date": "2026-12-15",
+          "note": "Màu Đen (Black), ngoại hình 95%, xước dăm nhẹ dưới đế máy."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-S20",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 320000,
+      "deposit_amount": 3500000,
+      "description": "Dòng máy đa năng hoàn hảo cho cả chụp ảnh và sáng tạo nội dung Vlog với pin NP-W235 dung lượng lớn, chế độ Vlog chuyên biệt và chống rung 7.0 stops.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 4",
+        "megapixels": 26.1,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 7.0 stops",
+        "video": "6.2K/30p Open Gate, 4K/60p",
+        "burst_rate": "20fps điện tử / 8fps cơ học",
+        "battery": "NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-s20/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/11742c13ec5c1d54846b4dfd9ab02019/pic_xsystem_68.jpg?itok=te7lPkCL",
+      "items": [
+        {
+          "serial_number": "3C029104",
+          "shutter_count": 6400,
+          "condition_percent": 97,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-12-05",
+          "purchase_price": 31900000,
+          "total_rental_count": 15,
+          "last_maintenance_date": "2026-08-20",
+          "next_maintenance_date": "2026-11-20",
+          "note": "Máy đẹp 97%, tặng kèm quạt tản nhiệt FAN-001 khi quay dài."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-T50",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 380000,
+      "deposit_amount": 4500000,
+      "description": "Máy ảnh nhỏ gọn đầu tiên trang bị vòng xoay Giả lập màu phim (Film Simulation Dial) chuyên dụng, cảm biến 40.2MP và chống rung IBIS 7.0 stops.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 5 HR",
+        "megapixels": 40.2,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 7.0 stops",
+        "video": "6.2K/30p 4:2:2 10-bit",
+        "burst_rate": "13fps điện tử",
+        "battery": "NP-W126S",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-t50/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/43c1fab01a547db102c32557b4728002/pic_xsystem_71.png?itok=Jh-qO-dG",
+      "items": [
+        {
+          "serial_number": "4D005128",
+          "shutter_count": 2890,
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-03-15",
+          "purchase_price": 35900000,
+          "total_rental_count": 8,
+          "last_maintenance_date": "2026-09-25",
+          "next_maintenance_date": "2026-12-25",
+          "note": "Bản Charcoal Silver đẹp 99% như mới."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-T30 III",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 280000,
+      "deposit_amount": 3000000,
+      "description": "Phiên bản kế nhiệm dòng X-T30 nổi tiếng với thuật toán lấy nét AI nhận diện chủ thể tự động, kiểu dáng hoài cổ và trọng lượng nhẹ bỏ túi.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 5",
+        "megapixels": 26.1,
+        "processor": "X-Processor 5",
+        "ibis": "Chống rung điện tử",
+        "video": "4K/60p 10-bit",
+        "burst_rate": "20fps điện tử",
+        "battery": "NP-W126S",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-t30-iii/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-11/4db97ce95feb615d04d45b487438e45c/pic_xsystem_79.png?itok=31PSU1QZ",
+      "items": [
+        {
+          "serial_number": "5N001420",
+          "shutter_count": 1520,
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-04-01",
+          "purchase_price": 25900000,
+          "total_rental_count": 5,
+          "last_maintenance_date": "2026-10-01",
+          "next_maintenance_date": "2027-01-01",
+          "note": "Máy mới 99%, phù hợp đi du lịch gọn nhẹ."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-E5",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 340000,
+      "deposit_amount": 4000000,
+      "description": "Dòng máy Rangefinder tối giản thế hệ mới mang cảm biến 40.2MP siêu nét, hỗ trợ IBIS bên trong thân máy phẳng siêu nhẹ cho nhiếp ảnh gia đường phố.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 5 HR",
+        "megapixels": 40.2,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 7.0 stops",
+        "video": "6.2K/30p",
+        "burst_rate": "13fps",
+        "battery": "NP-W126S",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-e5/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-06/51a1bdd44014729f9746e6b810b805ac/pic_xsystem_77.jpg?itok=2bnjQsXG",
+      "items": [
+        {
+          "serial_number": "5E002310",
+          "shutter_count": 1800,
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-06-15",
+          "purchase_price": 29900000,
+          "total_rental_count": 6,
+          "last_maintenance_date": "2026-10-10",
+          "next_maintenance_date": "2027-01-10",
+          "note": "Kèm thumb-rest và nút bấm mềm đỏ."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-M5",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 250000,
+      "deposit_amount": 2800000,
+      "description": "Chiếc máy ảnh nhẹ nhất hệ thống Fujifilm X Series chỉ 355g, trang bị 3 micro định hướng tích hợp và khả năng quay video ngắn dọc 9:16 cho TikTok.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 4",
+        "megapixels": 26.1,
+        "processor": "X-Processor 5",
+        "video": "6.2K/30p, chế độ 9:16 Short Movie",
+        "battery": "NP-W126S",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-m5/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/ce65cec3db01a0345a9f4dd4921230bd/pic_xsystem_73.jpg?itok=ENtIDYvE",
+      "items": [
+        {
+          "serial_number": "4M010293",
+          "shutter_count": 3100,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-12",
+          "purchase_price": 22990000,
+          "total_rental_count": 13,
+          "last_maintenance_date": "2026-09-12",
+          "next_maintenance_date": "2026-12-12",
+          "note": "Máy nhỏ gọn bỏ túi, rất được ưa chuộng chụp cafe."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X100VI Limited",
+      "category": "BODY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 500000,
+      "deposit_amount": 6000000,
+      "description": "Siêu phẩm Compact ống kính cố định Fujinon 23mm f/2 II, cảm biến 40.2MP, chống rung IBIS 6.0 stops và bộ lọc ND 4 stops tích hợp.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 5 HR (Fixed 23mm F2.0 II)",
+        "megapixels": 40.2,
+        "processor": "X-Processor 5",
+        "ibis": "5 trục lên đến 6.0 stops",
+        "video": "6.2K/30p, 4K/60p",
+        "burst_rate": "11fps cơ học",
+        "battery": "NP-W126S",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x100vi/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/d886c603bee589f68069257c3bc07164/pic_xsystem_70.jpg?itok=TbE1aCtZ",
+      "items": [
+        {
+          "serial_number": "4B008912",
+          "shutter_count": 2150,
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-02-10",
+          "purchase_price": 45900000,
+          "total_rental_count": 16,
+          "last_maintenance_date": "2026-10-01",
+          "next_maintenance_date": "2027-01-01",
+          "note": "Đã gắn sẵn ring chuyển và filter kháng nước bảo vệ thấu kính."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X half (X-HF1)",
+      "category": "BODY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 280000,
+      "deposit_amount": 3000000,
+      "description": "Máy ảnh kỹ thuật số định dạng nửa khung hình Half-frame độc đáo lấy cảm hứng từ máy ảnh phim chụp 72 kiểu, tối ưu cho nhiếp ảnh nghệ thuật sáng tạo.",
+      "specs_json": {
+        "sensor": "Khung ảnh dọc Half-Frame phong cách hoài cổ",
+        "megapixels": 24,
+        "processor": "X-Processor 5",
+        "video": "Full HD Vertical Movie",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-hf1/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-05/b81d563a495db384179ee4f554153587/pic_xsystem_76.jpg?itok=zZweQnUz",
+      "items": [
+        {
+          "serial_number": "5H003491",
+          "shutter_count": 980,
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-06-01",
+          "purchase_price": 19900000,
+          "total_rental_count": 7,
+          "last_maintenance_date": "2026-10-01",
+          "next_maintenance_date": "2027-01-01",
+          "note": "Máy siêu nhẹ, chuyên chụp khung dọc 2-in-1."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-T4",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 350000,
+      "deposit_amount": 4000000,
+      "description": "Thân máy đa năng 26.1MP tích hợp chống rung IBIS 6.5 stops, màn hình xoay lật đa hướng và pin lớn NP-W235 bền bỉ.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 4",
+        "megapixels": 26.1,
+        "processor": "X-Processor 4",
+        "ibis": "5 trục lên đến 6.5 stops",
+        "video": "DCI 4K/60p, Full HD 240p",
+        "battery": "NP-W235",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-t4/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/6aac58a9ab849f14ef8206ec8c79128b/pic_xsystem_52.jpg?itok=BU2ZnkVC",
+      "items": [
+        {
+          "serial_number": "1B009341",
+          "shutter_count": 14200,
+          "condition_percent": 94,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-04-10",
+          "purchase_price": 32500000,
+          "total_rental_count": 31,
+          "last_maintenance_date": "2026-09-10",
+          "next_maintenance_date": "2026-12-10",
+          "note": "Hoạt động hoàn hảo, cao su báng cầm chắc chắn."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJIFILM X-E4",
+      "category": "BODY",
+      "mount_type": "X_MOUNT",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 260000,
+      "deposit_amount": 3000000,
+      "description": "Thiết kế phẳng tối giản phong cách Rangefinder kinh điển, màn hình lật 180 độ hỗ trợ selfie và chất màu phim huyền thoại.",
+      "specs_json": {
+        "sensor": "APS-C X-Trans CMOS 4",
+        "megapixels": 26.1,
+        "processor": "X-Processor 4",
+        "video": "4K/30p",
+        "battery": "NP-W126S",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/cameras/x-e4/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/87583cc21157d3a1abe515b99c7774e1/pic_xsystem_54.jpg?itok=CkQAt-TR",
+      "items": [
+        {
+          "serial_number": "1G007812",
+          "shutter_count": 9400,
+          "condition_percent": 96,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-07-20",
+          "purchase_price": 23500000,
+          "total_rental_count": 19,
+          "last_maintenance_date": "2026-09-05",
+          "next_maintenance_date": "2026-12-05",
+          "note": "Màu Bạc, kèm handgrip chính hãng MHG-XE4."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF35mmF1.4 R",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "35mm (53mm equiv.)",
+      "aperture": "f/1.4 - f/16",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 1800000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Ống kính huyền thoại",
+      "description": "Tuyệt tác quang học kinh điển với chất ảnh có chiều sâu ma mị, hiệu ứng xóa phông tự nhiên và độ tương phản đặc trưng được thuê nhiều nhất.",
+      "specs_json": {
+        "focal_length": "35mm (53mm equiv.)",
+        "max_aperture": "f/1.4",
+        "min_aperture": "f/16",
+        "filter_size": "52mm",
+        "weight_grams": 187,
+        "elements_groups": "8 thấu kính trong 6 nhóm",
+        "official_url": "https://fujifilm-x.com/products/lenses/xf35mmf14-r/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/45e85068794d12185e692a04fb430326/pic_xsystem_21.jpg?itok=dckMAVe3",
+      "items": [
+        {
+          "serial_number": "2LA00142",
+          "condition_percent": 97,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-05-10",
+          "purchase_price": 12900000,
+          "note": "Kính trong vắt, kèm hood kim loại vuông."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF56mmF1.2 R WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "56mm (85mm equiv.)",
+      "aperture": "f/1.2 - f/16",
+      "base_rental_price_per_day": 250000,
+      "deposit_amount": 3500000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Vua Chân Dung",
+      "description": "Độ sắc nét kinh ngạc ngay tại khẩu độ cực đại f/1.2, 11 lá khẩu tròn cho bokeh mịn màng và khả năng kháng thời tiết WR.",
+      "specs_json": {
+        "focal_length": "56mm (85mm equiv.)",
+        "max_aperture": "f/1.2",
+        "filter_size": "67mm",
+        "weather_resistant": true,
+        "weight_grams": 445,
+        "official_url": "https://fujifilm-x.com/products/lenses/xf56mmf12-r-wr/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/74b074e65b4007fcfa128dc7ba475759/pic_xsystem_65.jpg?itok=gP_L-hxf",
+      "items": [
+        {
+          "serial_number": "3LB00941",
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-10-15",
+          "purchase_price": 24500000,
+          "note": "Mới 99%, kính hoàn hảo không tì vết."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF16-55mmF2.8 R LM WR II",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "16-55mm (24-84mm equiv.)",
+      "aperture": "f/2.8 Constant",
+      "base_rental_price_per_day": 280000,
+      "deposit_amount": 3500000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Red Badge Thế Hệ II",
+      "description": "Ống kính Zoom tiêu chuẩn Red Badge thế hệ 2 nhẹ hơn 37%, bổ sung công tắc gạt Click khẩu độ cho quay phim và lấy nét siêu tốc Linear Motor.",
+      "specs_json": {
+        "focal_length": "16-55mm (24-84mm equiv.)",
+        "max_aperture": "f/2.8",
+        "filter_size": "72mm",
+        "weight_grams": 410,
+        "weather_resistant": true,
+        "official_url": "https://fujifilm-x.com/products/lenses/xf16-55mmf28-r-lm-wr-ii/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/9ef4c500d90bc28b4eeab664f9cc55e6/pic_xsystem_75.png?itok=R-f6eJf8",
+      "items": [
+        {
+          "serial_number": "4LC00219",
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-02-12",
+          "purchase_price": 28900000,
+          "note": "Red Badge II bản mới nhất, chống rung xuất sắc."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF8mmF3.5 R WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "8mm (12mm equiv.)",
+      "aperture": "f/3.5 - f/22",
+      "base_rental_price_per_day": 220000,
+      "deposit_amount": 3000000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Góc siêu rộng 8mm",
+      "description": "Ống kính góc siêu rộng tiêu cự 8mm (tương đương 12mm Full-frame) nhỏ gọn, kháng thời tiết WR, lý tưởng cho kiến trúc, phong cảnh và vlog.",
+      "specs_json": {
+        "focal_length": "8mm (12mm equiv.)",
+        "max_aperture": "f/3.5",
+        "filter_size": "62mm",
+        "weather_resistant": true,
+        "weight_grams": 215,
+        "official_url": "https://fujifilm-x.com/products/lenses/xf8mmf35-r-wr/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/c96b425f25acdf7cb72ad5b5b88b6758/pic_xsystem_69.jpg?itok=W_OBozO7",
+      "items": [
+        {
+          "serial_number": "3LA04512",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-11-10",
+          "purchase_price": 19900000,
+          "note": "Kính trong không bụi mốc, kèm hood zin và filter 62mm."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF14mmF2.8 R",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "14mm (21mm equiv.)",
+      "aperture": "f/2.8 - f/22",
+      "base_rental_price_per_day": 180000,
+      "deposit_amount": 2500000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Kiểm soát méo Zero",
+      "description": "Ống kính góc siêu rộng kiểm soát méo hình quang học bằng 0, tích hợp vòng lấy nét kéo đẩy (Focus Clutch) có thước đo khoảng cách.",
+      "specs_json": {
+        "focal_length": "14mm (21mm equiv.)",
+        "max_aperture": "f/2.8",
+        "filter_size": "58mm",
+        "weight_grams": 235,
+        "official_url": "https://fujifilm-x.com/products/lenses/xf14mmf28-r/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/bcea754479f347f14dc241d9af895c13/pic_xsystem_14.jpg?itok=gfRTo-mK",
+      "items": [
+        {
+          "serial_number": "2LA01920",
+          "condition_percent": 96,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-08-15",
+          "purchase_price": 17500000,
+          "note": "Ngoại hình 96%, vòng khẩu nảy tanh tách."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF16mmF1.4 R WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "16mm (24mm equiv.)",
+      "aperture": "f/1.4 - f/16",
+      "base_rental_price_per_day": 200000,
+      "deposit_amount": 2800000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Góc rộng khẩu F1.4",
+      "description": "Ống kính góc rộng khẩu lớn f/1.4 huyền thoại với khoảng cách lấy nét cận cảnh chỉ 15cm, kháng thời tiết toàn diện.",
+      "specs_json": {
+        "focal_length": "16mm (24mm equiv.)",
+        "max_aperture": "f/1.4",
+        "min_focus_distance": "0.15m",
+        "filter_size": "67mm",
+        "weather_resistant": true,
+        "weight_grams": 375,
+        "official_url": "https://fujifilm-x.com/products/lenses/xf16mmf14-r-wr/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/50445f683bfeccbe88ea69bc5efb0569/pic_xsystem_15.jpg?itok=N-RYAW7r",
+      "items": [
+        {
+          "serial_number": "2LA08834",
+          "condition_percent": 97,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-09-01",
+          "purchase_price": 21500000,
+          "note": "Thấu kính đẹp hoàn hảo, kèm hood vuông."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF16mmF2.8 R WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "16mm (24mm equiv.)",
+      "aperture": "f/2.8 - f/22",
+      "base_rental_price_per_day": 130000,
+      "deposit_amount": 1800000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Fujicron siêu nhẹ",
+      "description": "Ống kính Fujicron nhỏ gọn chỉ 155g, lấy nét bước (Stepping Motor) êm ái tốc độ cao và kháng bụi/ẩm WR.",
+      "specs_json": {
+        "focal_length": "16mm (24mm equiv.)",
+        "max_aperture": "f/2.8",
+        "filter_size": "49mm",
+        "weather_resistant": true,
+        "weight_grams": 155,
+        "official_url": "https://fujifilm-x.com/products/lenses/xf16mmf28-r-wr/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/e57f41734bab5d638a1cf5d1500753fd/pic_xsystem_16.jpg?itok=wvoIs4wT",
+      "items": [
+        {
+          "serial_number": "3LA09911",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-11-25",
+          "purchase_price": 9900000,
+          "note": "Lens nhỏ nhẹ, kèm filter UV 49mm."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF18-120mmF4 LM PZ WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "18-120mm (27-183mm equiv.)",
+      "aperture": "f/4 Constant",
+      "base_rental_price_per_day": 240000,
+      "deposit_amount": 3200000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Power Zoom Cinema",
+      "description": "Ống kính Zoom điện ảnh đa dụng với cần gạt Zoom điện tử Power Zoom êm ái, kiểm soát trôi tiêu cự (Focus Breathing) hoàn hảo cho làm phim.",
+      "specs_json": {
+        "focal_length": "18-120mm (27-183mm equiv.)",
+        "max_aperture": "f/4",
+        "filter_size": "72mm",
+        "weather_resistant": true,
+        "weight_grams": 460,
+        "official_url": "https://fujifilm-x.com/products/lenses/xf18-120mmf4-lm-pz-wr/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/791255efab2d55e5a43e54ff7f12ee0b/pic_xsystem_62.jpg?itok=363S3eZH",
+      "items": [
+        {
+          "serial_number": "3PZ00341",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-10-10",
+          "purchase_price": 22500000,
+          "note": "Lens quay chuyên dụng, kèm hood che nắng."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF70-300mmF4-5.6 R LM OIS WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "70-300mm (107-457mm equiv.)",
+      "aperture": "f/4 - f/5.6",
+      "base_rental_price_per_day": 220000,
+      "deposit_amount": 2800000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Tele Động Vật & Thể Thao",
+      "description": "Ống kính siêu tele tầm xa nhỏ gọn chỉ 588g, chống rung quang học OIS 5.5 stops, tương thích với cả Teleconverter 1.4X và 2.0X.",
+      "specs_json": {
+        "focal_length": "70-300mm (107-457mm equiv.)",
+        "max_aperture": "f/4 - f/5.6",
+        "ois": "5.5 stops OIS",
+        "filter_size": "67mm",
+        "weight_grams": 588,
+        "weather_resistant": true,
+        "official_url": "https://fujifilm-x.com/products/lenses/xf70-300mmf4-56-r-lm-ois-wr/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/c36fb75f3a56eb88ae8de7a5e01a1d20/pic_xsystem_56.jpg?itok=OwEzP_1m",
+      "items": [
+        {
+          "serial_number": "3TL00812",
+          "condition_percent": 97,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-08-20",
+          "purchase_price": 20900000,
+          "note": "Chuyên chụp chim muông, thể thao, sân khấu."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON GF110mmF2 R LM WR",
+      "category": "LENS",
+      "mount_type": "G_MOUNT",
+      "mount": "GF",
+      "focalLength": "110mm (87mm equiv.)",
+      "aperture": "f/2 - f/22",
+      "base_rental_price_per_day": 450000,
+      "deposit_amount": 6000000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Chân dung Medium Format",
+      "description": "Ống kính chân dung đẳng cấp nhất của hệ máy Medium Format GFX, xóa phông mịn màng chuẩn cinematic và độ nét tách bạch từng sợi tóc.",
+      "specs_json": {
+        "focal_length": "110mm (87mm equiv.)",
+        "max_aperture": "f/2.0",
+        "filter_size": "77mm",
+        "weather_resistant": true,
+        "weight_grams": 1010,
+        "official_url": "https://fujifilm-x.com/products/lenses/gf110mmf2-r-lm-wr/"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2026-02/135bd7f1206242453345e28696604b05/pic_gfxsystem_13.jpg?itok=n1YRFsQh",
+      "items": [
+        {
+          "serial_number": "2GF00392",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-07-15",
+          "purchase_price": 62900000,
+          "note": "Lens chân dung Studio đỉnh cao, kính hoàn mỹ."
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF23mmF2 R WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "23mm (35mm equiv.)",
+      "aperture": "f/2 - f/16",
+      "base_rental_price_per_day": 130000,
+      "deposit_amount": 1600000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Street • Du lịch",
+      "description": "Ống kính tiêu cự 23mm kinh điển cho nhiếp ảnh đường phố và du lịch, lấy nét siêu thanh 0.05s và kháng thời tiết WR.",
+      "specs_json": {
+        "focal_length": "23mm (35mm equiv.)",
+        "max_aperture": "f/2",
+        "min_aperture": "f/16",
+        "filter_size": "43mm",
+        "weight_grams": 180,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf23mmf2-r-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2017/04/5_thum_xf23mmf2-r-wr.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01021",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-06-01",
+          "purchase_price": 10500000,
+          "note": "Thấu kính chuẩn 98%"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF23mmF2.8 R WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "23mm (35mm equiv.)",
+      "aperture": "f/2.8 - f/16",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Nhỏ gọn pancake",
+      "description": "Ống kính pancake siêu nhỏ gọn, lý tưởng để gắn thường trực trên máy du lịch hàng ngày cùng X-E5, X-T30 III.",
+      "specs_json": {
+        "focal_length": "23mm (35mm equiv.)",
+        "max_aperture": "f/2.8",
+        "min_aperture": "f/16",
+        "filter_size": "39mm",
+        "weight_grams": 95,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf23mmf28-r-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2025/06/thum_XF23mmF2.8-1.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01032",
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-07-01",
+          "purchase_price": 9500000,
+          "note": "Mới tinh 99%"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF27mmF2.8 R WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "27mm (41mm equiv.)",
+      "aperture": "f/2.8 - f/16",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Nhẹ • Đời thường",
+      "description": "Thiết kế pancake siêu nhẹ chỉ 84g với vòng chỉnh khẩu độ, góc nhìn 41mm chân thực chuẩn mắt người cho du lịch.",
+      "specs_json": {
+        "focal_length": "27mm (41mm equiv.)",
+        "max_aperture": "f/2.8",
+        "min_aperture": "f/16",
+        "filter_size": "39mm",
+        "weight_grams": 84,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf27mmf28-r-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2021/01/thum_xf27mmf28-r-wr-lboe.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01043",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-05-15",
+          "purchase_price": 9900000,
+          "note": "Pancake siêu nét"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF35mmF2 R WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "35mm (53mm equiv.)",
+      "aperture": "f/2 - f/16",
+      "base_rental_price_per_day": 130000,
+      "deposit_amount": 1600000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Nhỏ gọn đa dụng",
+      "description": "Ống kính tiêu chuẩn nhỏ gọn, độ sắc nét cao từ tâm ra rìa, chống chịu thời tiết -10°C, autofocus êm và nhanh.",
+      "specs_json": {
+        "focal_length": "35mm (53mm equiv.)",
+        "max_aperture": "f/2",
+        "min_aperture": "f/16",
+        "filter_size": "43mm",
+        "weight_grams": 170,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf35mmf2-r-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2016/10/8_thum_xf35mmf2-r-wr.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01054",
+          "condition_percent": 97,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-04-10",
+          "purchase_price": 9800000,
+          "note": "Thân kim loại chắc chắn"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF33mmF1.4 R LM WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "33mm (50mm equiv.)",
+      "aperture": "f/1.4 - f/16",
+      "base_rental_price_per_day": 180000,
+      "deposit_amount": 2400000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Chất lượng cao • Chân dung",
+      "description": "Thế hệ ống kính ngàm X độ phân giải siêu cao 40MP thế hệ mới, động cơ tuyến tính lấy nét êm ái, bokeh mềm mại.",
+      "specs_json": {
+        "focal_length": "33mm (50mm equiv.)",
+        "max_aperture": "f/1.4",
+        "min_aperture": "f/16",
+        "filter_size": "58mm",
+        "weight_grams": 360,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf33mmf14-r-lm-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2021/09/1_thum_xf33mmf14-r-lm-wr_nakp-1.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01065",
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-08-01",
+          "purchase_price": 17500000,
+          "note": "Hàng lướt 99%"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF18mmF1.4 R LM WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "18mm (27mm equiv.)",
+      "aperture": "f/1.4 - f/16",
+      "base_rental_price_per_day": 190000,
+      "deposit_amount": 2500000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Phong cảnh • Kiến trúc",
+      "description": "Góc rộng khẩu lớn F1.4 hoàn hảo cho phong cảnh du lịch, kiến trúc đô thị và chụp đêm thiếu sáng với độ nét 40MP.",
+      "specs_json": {
+        "focal_length": "18mm (27mm equiv.)",
+        "max_aperture": "f/1.4",
+        "min_aperture": "f/16",
+        "filter_size": "62mm",
+        "weight_grams": 370,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf18mmf14-r-lm-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2021/04/thum_xf18mmf1.4_haoi.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01076",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-07-15",
+          "purchase_price": 19900000,
+          "note": "Góc rộng sắc bén"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF16-50mmF2.8-4.8 R LM WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "16-50mm (24-76mm equiv.)",
+      "aperture": "f/2.8-4.8 - f/22",
+      "base_rental_price_per_day": 170000,
+      "deposit_amount": 2200000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Du lịch đa dụng thế hệ mới",
+      "description": "Ống kính zoom tiêu chuẩn thế hệ mới gọn nhẹ, cơ chế zoom trong không thò thụt, hỗ trợ tối đa cảm biến 40MP cho X-T50, X-S20.",
+      "specs_json": {
+        "focal_length": "16-50mm (24-76mm equiv.)",
+        "max_aperture": "f/2.8-4.8",
+        "min_aperture": "f/22",
+        "filter_size": "58mm",
+        "weight_grams": 240,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf16-50mmf28-48-r-lm-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2024/05/XF16-50mm_lens_feature-image-2.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01087",
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-08-10",
+          "purchase_price": 16900000,
+          "note": "Mới đập hộp 99%"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF16-80mmF4 R OIS WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "16-80mm (24-122mm equiv.)",
+      "aperture": "f/4 - f/22",
+      "base_rental_price_per_day": 170000,
+      "deposit_amount": 2200000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Một lens đi muôn nơi",
+      "description": "Dải tiêu cự đa dụng 5x zoom, khẩu độ F4 toàn dải, chống rung quang học OIS 6.0 stops cực mạnh mẽ cho mọi hành trình du lịch.",
+      "specs_json": {
+        "focal_length": "16-80mm (24-122mm equiv.)",
+        "max_aperture": "f/4",
+        "min_aperture": "f/22",
+        "filter_size": "72mm",
+        "weight_grams": 440,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf16-80mmf4-r-ois-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/xf16-80mmf4-r-ois-wr_thum.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01098",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-05-20",
+          "purchase_price": 16500000,
+          "note": "OIS 6.0 stops hoàn hảo"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF18-55mmF2.8-4 R LM OIS",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "18-55mm (27-84mm equiv.)",
+      "aperture": "f/2.8-4 - f/22",
+      "base_rental_price_per_day": 130000,
+      "deposit_amount": 1600000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Zoom kit cao cấp",
+      "description": "Ống kính zoom kit huyền thoại với khẩu lớn F2.8, thấu kính kim loại cao cấp và chống rung OIS sắc nét, combo chuẩn cho X-S20.",
+      "specs_json": {
+        "focal_length": "18-55mm (27-84mm equiv.)",
+        "max_aperture": "f/2.8-4",
+        "min_aperture": "f/22",
+        "filter_size": "58mm",
+        "weight_grams": 310,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf18-55mmf28-4-r-lm-ois/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2016/10/5_thum_xf18-55mmf2-8-4-r-lm-ois.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01109",
+          "condition_percent": 97,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-04-15",
+          "purchase_price": 11500000,
+          "note": "Kính đẹp trong vắt"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF18-135mmF3.5-5.6 R LM OIS WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "18-135mm (27-206mm equiv.)",
+      "aperture": "f/3.5-5.6 - f/22",
+      "base_rental_price_per_day": 160000,
+      "deposit_amount": 2100000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Dải zoom rộng 7.5x",
+      "description": "Ống kính all-in-one chống chịu thời tiết, dải tiêu cự bao phủ từ góc rộng đến siêu tele cho chuyến du lịch dài ngày cùng X-T5.",
+      "specs_json": {
+        "focal_length": "18-135mm (27-206mm equiv.)",
+        "max_aperture": "f/3.5-5.6",
+        "min_aperture": "f/22",
+        "filter_size": "67mm",
+        "weight_grams": 490,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf18-135mmf35-56-r-lm-ois-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2016/10/7_thum_xf18-135mmf3-5-5-6-r-lm-ois-wr.jpg.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01120",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-05-18",
+          "purchase_price": 15500000,
+          "note": "Zoom mượt mà OIS 5 stops"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XF10-24mmF4 R OIS WR",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "10-24mm (15-36mm equiv.)",
+      "aperture": "f/4 - f/22",
+      "base_rental_price_per_day": 180000,
+      "deposit_amount": 2400000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Siêu góc rộng du lịch",
+      "description": "Góc nhìn siêu rộng ngoạn mục cho phong cảnh thiên nhiên, nội thất và công trình kiến trúc kỳ vĩ, kháng thời tiết WR.",
+      "specs_json": {
+        "focal_length": "10-24mm (15-36mm equiv.)",
+        "max_aperture": "f/4",
+        "min_aperture": "f/22",
+        "filter_size": "72mm",
+        "weight_grams": 385,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xf10-24mmf4-r-ois-wr/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2020/10/xf10-24mmf4-r-ois-wr-product-list.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01131",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-06-25",
+          "purchase_price": 21000000,
+          "note": "Kháng thời tiết WR"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XC13-33mmF3.5-5.6",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "13-33mm (20-50mm equiv.)",
+      "aperture": "f/3.5-5.6 - f/22",
+      "base_rental_price_per_day": 100000,
+      "deposit_amount": 1200000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Siêu nhẹ cho Vlogger",
+      "description": "Ống kính góc rộng siêu nhẹ dành riêng cho sáng tạo nội dung vlog, du lịch tự quay cùng X-M5, X-T30 III.",
+      "specs_json": {
+        "focal_length": "13-33mm (20-50mm equiv.)",
+        "max_aperture": "f/3.5-5.6",
+        "min_aperture": "f/22",
+        "filter_size": "49mm",
+        "weight_grams": 125,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xc13-33mmf35-56/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2025/10/thum_XC13-33-1.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01142",
+          "condition_percent": 99,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-09-01",
+          "purchase_price": 8500000,
+          "note": "Gọn nhẹ như lông hồng"
+        }
+      ]
+    },
+    {
+      "model_name": "FUJINON XC15-45mmF3.5-5.6 OIS PZ",
+      "category": "LENS",
+      "mount_type": "X_MOUNT",
+      "mount": "X",
+      "focalLength": "15-45mm (23-69mm equiv.)",
+      "aperture": "f/3.5-5.6 - f/22",
+      "base_rental_price_per_day": 90000,
+      "deposit_amount": 1100000,
+      "brand": "Fujifilm",
+      "highlight_badge": "Zoom điện tử bỏ túi",
+      "description": "Ống kính zoom điện tử nhỏ nhất hệ ngàm X, khởi động nhanh, trọng lượng chỉ 135g, chuẩn du lịch mini cho X-M5.",
+      "specs_json": {
+        "focal_length": "15-45mm (23-69mm equiv.)",
+        "max_aperture": "f/3.5-5.6",
+        "min_aperture": "f/22",
+        "filter_size": "52mm",
+        "weight_grams": 135,
+        "official_url": "https://fujifilm-x.com/vi-vn/products/lenses/xc15-45mmf35-56-ois-pz/"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/9_thum_xc15-45mmf3-5-5-6-ois-pz-1.jpg",
+      "items": [
+        {
+          "serial_number": "3LA01153",
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2025-04-20",
+          "purchase_price": 7900000,
+          "note": "Power zoom êm ái"
+        }
+      ]
+    },
+    {
+      "model_name": "H MOUNT ADAPTER G",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 2000000,
+      "description": "By attaching this adapter to the GFX Series cameras, a total of 9 SUPER EBC FUJINON HC interchangeable lenses and 1 teleconverter developed for the GX645AF",
+      "specs_json": {
+        "type": "Ngàm chuyển đổi & Ống phụ",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/h-mount-adapter-g/",
+        "slug": "h-mount-adapter-g"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/h-mount-adapter-g_thum-1.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-H-MOUNT-ADAPTER-G-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 4000000
+        }
+      ]
+    },
+    {
+      "model_name": "Macro extension tube MCEX-18G WR",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 2000000,
+      "description": "MCEX-18G WR and MCEX-45G WR expand the range of macro photography. Connecting the macro extension tubes to any GF lens allows macro photographs to be taken at",
+      "specs_json": {
+        "type": "Ngàm chuyển đổi & Ống phụ",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mcex-18g-wr/",
+        "slug": "mcex-18g-wr"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/mcex-18g-wr_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MCEX-18G-WR-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 4000000
+        }
+      ]
+    },
+    {
+      "model_name": "Tele conversion lens TCL-X100II",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 2000000,
+      "description": "The “TCL-X100 II” is a dedicated tele-conversion lens for narrowing the field of view by multiplying the fixed focal length by approx. 1.4x, converting it to",
+      "specs_json": {
+        "type": "Ngàm chuyển đổi & Ống phụ",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/tcl-x100ii/",
+        "slug": "tcl-x100ii"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/tele-conversion-lens-tcl-x100ii_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-TCL-X100II-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 4000000
+        }
+      ]
+    },
+    {
+      "model_name": "Wide conversion lens WCL-X100II",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 2000000,
+      "description": "The “WCL-X100 II” is a dedicated wide conversion lens that multiples the fixed focal length by approx. 0.8x, converting it to 28mm (35mm format equivalent).",
+      "specs_json": {
+        "type": "Ngàm chuyển đổi & Ống phụ",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/wcl-x100ii/",
+        "slug": "wcl-x100ii"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/wide-conversion-lens-wcl-x100-2_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-WCL-X100II-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 4000000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens hood LH-XF16",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "The pursuit of premium quality extends to the high-precision finish of the metal lens hood, and multiplies the pleasure of ownership.",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lh-xf16/",
+        "slug": "lh-xf16"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-hood-lh-xf16_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LH-XF16-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens hood LH-XF23",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "The pursuit of premium quality extends to the high-precision finish of the metal lens hood, and multiplies the pleasure of ownership.",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lh-xf23/",
+        "slug": "lh-xf23"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-hood-lh-xf23_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LH-XF23-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens hood LH-XF35-2",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Classical and stylish metal hood allows the front lens cap to be used while attached.",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lh-xf35-2/",
+        "slug": "lh-xf35-2"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-hood-lh-xf35-2_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LH-XF35-2-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens hood LH-X70",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "ColorSilver / BlackItems includedAdapter ring, Hood porch Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lh-x70/",
+        "slug": "lh-x70"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-hood-lh-x70_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LH-X70-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens hood cap LHCP-001",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lhcp-001/",
+        "slug": "lhcp-001"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/lens-hood-cap-lhcp-001_thum-1.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LHCP-001-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens hood cap LHCP-002",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lhcp-002/",
+        "slug": "lhcp-002"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-hood-cap-lhcp-002_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LHCP-002-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-8-16",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-8-16/",
+        "slug": "flcp-8-16"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-8-16_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-8-16-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens hood LH-X100",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "ColorsSilver, BlackItems includedAdapter ring Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lh-x100/",
+        "slug": "lh-x100"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-hood-lh-x100_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LH-X100-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Adapter ring AR-X100",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 2000000,
+      "description": "ColorSilver / Black Compatibility",
+      "specs_json": {
+        "type": "Ngàm chuyển đổi & Ống phụ",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ar-x100/",
+        "slug": "ar-x100"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/adapter-ring-ar-x100_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-AR-X100-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 4000000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-39 II",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø39mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-39-ii/",
+        "slug": "flcp-39-ii"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-39-ii_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-39-II-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-43",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø43mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-43/",
+        "slug": "flcp-43"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-43_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-43-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-46",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø46mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-46/",
+        "slug": "flcp-46"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/Lens-cap-FLCP-46-thumb.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-46-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-49",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø49mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-49/",
+        "slug": "flcp-49"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-49_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-49-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-52 II",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø52mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-52-ii/",
+        "slug": "flcp-52-ii"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-52-ii_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-52-II-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Macro extension tube MCEX-45G WR",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 2000000,
+      "description": "MCEX-18G WR and MCEX-45G WR expand the range of macro photography. Connecting the macro extension tubes to any GF lens allows macro photographs to be taken at",
+      "specs_json": {
+        "type": "Ngàm chuyển đổi & Ống phụ",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mcex-45g-wr/",
+        "slug": "mcex-45g-wr"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/mcex-45g-wr_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MCEX-45G-WR-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 4000000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-58 II",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø58mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-58-ii/",
+        "slug": "flcp-58-ii"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-58-ii_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-58-II-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-62 II",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø62mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-62-ii/",
+        "slug": "flcp-62-ii"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-62-ii_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-62-II-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-67 II",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø67mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-67-ii/",
+        "slug": "flcp-67-ii"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-67-ii_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-67-II-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-77",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø77mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-77/",
+        "slug": "flcp-77"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-77_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-77-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens cap FLCP-105",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "Sizeø105mm Compatibility",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/flcp-105/",
+        "slug": "flcp-105"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-cap-flcp-105_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FLCP-105-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Protector filter PRF-39",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "The protector filter is designed to protect the lens from dust or dirt. The Super EBC (Electron Beam Coating) of these would control harmful borrowed light",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/prf-39/",
+        "slug": "prf-39"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/PRF-39-thumbnail.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-PRF-39-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Protector filter PRF-43",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "The protector filter is designed to protect the lens from dust or dirt. The Super EBC (Electron Beam Coating) of these would control harmful borrowed light",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/prf-43/",
+        "slug": "prf-43"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/prf-43_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-PRF-43-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens rear cap RLCP-002",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "FUJIFILM G Mount Lens",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/rlcp-002/",
+        "slug": "rlcp-002"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-rear-cap-rlcp-002_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-RLCP-002-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Protector filter PRF-46",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "The protector filter is designed to protect the lens from dust or dirt. The Super EBC (Electron Beam Coating) of these would control harmful borrowed light",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/prf-46/",
+        "slug": "prf-46"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/prf-46_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-PRF-46-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Lens plate MLP-75XF",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 40000,
+      "deposit_amount": 500000,
+      "description": "The lens plate is compatible with ARCA SWISS tripods",
+      "specs_json": {
+        "type": "Phụ kiện",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mlp-75xf/",
+        "slug": "mlp-75xf"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/lens-plate-mlp-75xf_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MLP-75XF-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 1000000
+        }
+      ]
+    },
+    {
+      "model_name": "Battery pack EF-BP1",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Đèn Flash",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ef-bp1/",
+        "slug": "ef-bp1"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/ef-bp1_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EF-BP1-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 3000000
+        }
+      ]
+    },
+    {
+      "model_name": "Shoe mount flash EF-X20",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "description": "Enables flash compensation from -1EV to +1EV in increments of 1/3 stops in the TTL Auto mode.",
+      "specs_json": {
+        "type": "Đèn Flash",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ef-x20/",
+        "slug": "ef-x20"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2022/05/shoe-mount-flash-ef-x20.webp",
+      "items": [
+        {
+          "serial_number": "ACC-EF-X20-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 3000000
+        }
+      ]
+    },
+    {
+      "model_name": "Shoe mount flash EF-X500",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "description": "The EF-X500 is a hot-shoe mount flash with the maximum guide number of approx. 50 (ISO100·m) / 164 (ISO100·ft). Its support for the FP mode (high-speed flash",
+      "specs_json": {
+        "type": "Đèn Flash",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ef-x500/",
+        "slug": "ef-x500"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/shoe-mount-flash-ef-x500_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EF-X500-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 3000000
+        }
+      ]
+    },
+    {
+      "model_name": "Shoe mount flash EF-42",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Đèn Flash",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ef-42/",
+        "slug": "ef-42"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/shoe-mount-flash-ef-42_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EF-42-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 3000000
+        }
+      ]
+    },
+    {
+      "model_name": "Shoe mount flash EF-60",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "description": "Official product information for FUJIFILM Shoe Mount Flash EF-60",
+      "specs_json": {
+        "type": "Đèn Flash",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ef-60/",
+        "slug": "ef-60"
+      },
+      "image_url": "http://70406",
+      "items": [
+        {
+          "serial_number": "ACC-EF-60-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 3000000
+        }
+      ]
+    },
+    {
+      "model_name": "Shoe mount flash EF-20",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Đèn Flash",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ef-20/",
+        "slug": "ef-20"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/shoe-mount-flash-ef-20_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EF-20-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 3000000
+        }
+      ]
+    },
+    {
+      "model_name": "Shoe mount flash EF-X8",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "description": "FUJIFILM digital camera accessory \"Shoe mount flash EF-X8\"",
+      "specs_json": {
+        "type": "Đèn Flash",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ef-x8/",
+        "slug": "ef-x8"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2020/02/ef-x8_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EF-X8-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 3000000
+        }
+      ]
+    },
+    {
+      "model_name": "Wireless Commander EF-W1",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 120000,
+      "deposit_amount": 1500000,
+      "description": "Official product information for FUJIFILM Wireless Commander EF-W1",
+      "specs_json": {
+        "type": "Đèn Flash",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ef-w1/",
+        "slug": "ef-w1"
+      },
+      "image_url": "http://70403",
+      "items": [
+        {
+          "serial_number": "ACC-EF-W1-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 3000000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case BLC-XPRO2",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "This genuine-leather bottom case elegantly shows off the X-Pro2’sclassic design while protecting the camera body. The battery can be replaced while the case",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/blc-xpro2/",
+        "slug": "blc-xpro2"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/leather-case-blc-xpro2_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BLC-XPRO2-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case BLC-XT3",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "Genuine premium leather bottom case.The camera can stay in the case while the battery is replaced.",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/blc-xt3/",
+        "slug": "blc-xt3"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/XT3-Leather.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BLC-XT3-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case BLC-XT2",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "This is a genuine leather bottom case with premium textures. The camera can stay in the case while the battery is replaced. The case comes with a cloth to",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/blc-xt2/",
+        "slug": "blc-xt2"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/leather-case-blc-xt2_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BLC-XT2-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case BLC-XT10",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "The stylish, authentic leather case adds a wonderfully tactile feel to shooting and perfectly suits the FUJIFILM X-T10’s classic design. With the FUJIFILM",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/blc-xt10/",
+        "slug": "blc-xt10"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/leather-case-blc-xt10_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BLC-XT10-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case BLC-XE3",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "A stylish, genuine leather case that has a wonderfully tactile feel and perfectly suits the FUJIFILM X-E3’s classic design. With the FUJIFILM X-E3 snugly",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/blc-xe3/",
+        "slug": "blc-xe3"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/leather-case-blc-xe3_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BLC-XE3-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case LC-X100F",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "It is possible to swap the battery and media when the case is attached to the camera. A Quickshot Premium Leather Case that emphasizes a sense of unity with",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lc-x100f/",
+        "slug": "lc-x100f"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/leather-case-lc-x100f_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LC-X100F-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case LC-X100S",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "It is possible to swap the battery and media when the case is attachedto the camera. A Quickshot Premium Leather Case that emphasizes a senseof unity with the",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lc-x100s/",
+        "slug": "lc-x100s"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/leather-case-lc-x100s_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LC-X100S-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case BLC-XPRO3",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "This genuine leather case elegantly shows off the X-Pro3&#039;s classic design while protecting the camera body. The battery can be replaced while the case is",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/blc-xpro3/",
+        "slug": "blc-xpro3"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/leather-case-blc-xpro3_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BLC-XPRO3-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather case LC-X100V",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "Product information for Fujifilm digital camera accessory \"leather case LC-X100V\"",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/lc-x100v/",
+        "slug": "lc-x100v"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2020/02/lc-x100v_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-LC-X100V-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Leather Case BLC-XE4",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 30000,
+      "deposit_amount": 400000,
+      "description": "Official product information for Leather Case BLC-XE4 for FUJIFILM X Series.",
+      "specs_json": {
+        "type": "Bao da & Case",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/blc-xe4/",
+        "slug": "blc-xe4"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2021/01/BLC-XE4_thum-1_jakasd.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BLC-XE4-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 800000
+        }
+      ]
+    },
+    {
+      "model_name": "Vertical battery grip VG-GFX1",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "This high-performance battery grip is created to unify operations, placing the release button, dials, and function buttons in a similar area to be used when",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vg-gfx1/",
+        "slug": "vg-gfx1"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/vertical-battery-grip-vg-gfx1_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VG-GFX1-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Vertical battery grip VPB-XH1",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Dust-resistant and water-resistant operates at temperatures of down to -10°C. Two batteries may be attached, with a third battery in the body of the camera",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vpb-xh1/",
+        "slug": "vpb-xh1"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/vertical-battery-grip-vpb-xh1_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VPB-XH1-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand grip MHG-XPRO2",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Improves the grip on the camera and reduces the chances of camera shake, especially when using heavy, large aperture lenses. This grip can be left in place",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-xpro2/",
+        "slug": "mhg-xpro2"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/hand-grip-mhg-xpro2_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-XPRO2-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Vertical battery grip VG-XT3",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Enhanced handling for horizontal and vertical shooting. It holds an additional two batteries, bringing the total number of batteries to three, to increase the",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vg-xt3/",
+        "slug": "vg-xt3"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/VG-XT3-Battery-Grip-Thumb.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VG-XT3-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Vertical power boost grip VPB-XT2",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "It is dust-resistant, water-resistant and capable of operating at temperatures as low as -10°C. It fits two batteries, bringing the total number of batteries",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vpb-xt2/",
+        "slug": "vpb-xt2"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/vertical-power-boost-grip-vpb-xt2_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VPB-XT2-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand grip MHG-XT3",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Enhanced ergonomic design for horizontal shooting. The camera’s battery or SD cards can be replaced without having to remove the hand grip. The hand grip’s",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-xt3/",
+        "slug": "mhg-xt3"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/MHG-XT3-Thumbnail.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-XT3-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand grip MHG-XT2",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "This hand grip makes it substantially more comfortable to hold the camera when it is mounted with large-aperture lenses, thereby reducing camera shake. When",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-xt2/",
+        "slug": "mhg-xt2"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/mhg-xt2_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-XT2-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand grip MHG-XT10",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "While never sacrificing the FUJIFILM X-T10’s streamlined design, the metal hand grip provides a secure hold and masterful control of the camera. The tripod",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-xt10/",
+        "slug": "mhg-xt10"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/hand-grip-mhg-xt10_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-XT10-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand grip MHG-XE3",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "To increase the camera’s grip. Both the battery and the memory card can be swapped with the grip in place. Additionally, a tripod screw hole can be placed in",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-xe3/",
+        "slug": "mhg-xe3"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/hand-grip-mhg-xe3_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-XE3-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand grip MHG-XPRO3",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "This hand grip improves the handling of the camera, especially when using a heavier, large aperture lens. You can replace the battery or SD card without",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-xpro3/",
+        "slug": "mhg-xpro3"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/grip-xpro3_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-XPRO3-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Vertical battery grip VG-XT4",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "FUJIFILM digital camera accessory \"Vertical battery grip VG-XT4\"",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vg-xt4/",
+        "slug": "vg-xt4"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2020/02/vg-xt4_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VG-XT4-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand Grip MHG-GFX S",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Official product information for Hand Grip MHG-GFX S for FUJIFILM GFX.",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-gfx-s/",
+        "slug": "mhg-gfx-s"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2021/01/MHG-GFX_S_thum-1_miwlg.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-GFX-S-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand Grip MHG-XE4",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Official product information for Hand Grip MHG-XE4 for FUJIFILM X Series.",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-xe4/",
+        "slug": "mhg-xe4"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2021/01/MHG-XE4_thum-1_jbie.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-XE4-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Grip belt GB-001",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "GB-001 enhances the camera’s hold, allowing users to carry the camera firmly with just one hand.",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/gb-001/",
+        "slug": "gb-001"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/grip-belt-gb-001_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-GB-001-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Vertical battery grip VG-XH",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Official product information for Vertical battery grip \"VG-XH\"",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vg-xh/",
+        "slug": "vg-xh"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2022/05/vg-xh_thumb-fsse.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VG-XH-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Hand Grip MHG-XT5",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Official product information for Hand Grip MHG-XT5",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mhg-xt5/",
+        "slug": "mhg-xt5"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2022/11/mhg-xt5_thumbimage.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MHG-XT5-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Tripod Grip TG-BT1",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Official product information for Tripod Grip TG-BT1 for FUJIFILM X Series",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/tg-bt1/",
+        "slug": "tg-bt1"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2022/11/product-thum-tg-bt1.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-TG-BT1-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "File transmitter FT-XH",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Official product information for File transmitter FT-XH",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ft-xh/",
+        "slug": "ft-xh"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2022/05/ft-xh_thumb-fsse.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FT-XH-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Vertical battery grip VG-GFX100II",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 80000,
+      "deposit_amount": 1200000,
+      "description": "Official product information of vertical battery grip VG-GFX100II for FUJIFILM GFX Series.",
+      "specs_json": {
+        "type": "Grip & Báng tay cầm",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vg-gfx100ii/",
+        "slug": "vg-gfx100ii"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2023/09/vggfx100iithumbnail.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VG-GFX100II-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Li-ion battery NP-50",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/np-50/",
+        "slug": "np-50"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/np-50_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-NP-50-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Li-ion battery NP-95",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/np-95/",
+        "slug": "np-95"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/np-95_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-NP-95-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Li-ion battery NP-T125",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/np-t125/",
+        "slug": "np-t125"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/np-t125_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-NP-T125-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Li-ion battery NP-W126S",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/np-w126s/",
+        "slug": "np-w126s"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/np-w126s_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-NP-W126S-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "DC coupler CP-W126",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "FUJIFILM digital camera accessory DC coupler CP-W126.",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/cp-w126/",
+        "slug": "cp-w126"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/cp-w126_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-CP-W126-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "DC coupler CP-45",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "FUJIFILM digital camera accessory DC coupler CP-45",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/cp-45/",
+        "slug": "cp-45"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/CP-45-Thumbnail.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-CP-45-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Power adapter AC-5VX",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Power supplyAC100V∼240V, 50Hz / 60Hz Compatibility",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ac-5vx/",
+        "slug": "ac-5vx"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/AC-5VX-Thumbnail.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-AC-5VX-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Power adapter AC-9V",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ac-9v/",
+        "slug": "ac-9v"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/ac-9v_thum-1.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-AC-9V-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Power adapter AC-15V",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ac-15v/",
+        "slug": "ac-15v"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/ac-15v_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-AC-15V-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Battery charger BC-50B",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "SupportsNP-50",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/bc-50b/",
+        "slug": "bc-50b"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/bc-50b_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BC-50B-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Battery charger BC-W126S",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Power supplyAC100V-240V, 50Hz / 60HzSupportsNP-W126 / NP-W126SCharging timeApprox. 150min for NP-W126S Compatibility",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/bc-w126s/",
+        "slug": "bc-w126s"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/BC-W126S-Thumbnail.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BC-W126S-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Battery charger BC-T125",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "SupportsNP-T125 Compatibility",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/bc-t125/",
+        "slug": "bc-t125"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/bc-t125_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BC-T125-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Li-ion battery NP-45S",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "Tương Thích",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/np-45s/",
+        "slug": "np-45s"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/np-45s_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-NP-45S-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Dual battery charger BC-W235",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "FUJIFILM digital camera accessory \"Dual battery charger BC-W235\"",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/bc-w235/",
+        "slug": "bc-w235"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2020/02/bc-w235_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BC-W235-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "Li-ion battery NP-W235",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 35000,
+      "deposit_amount": 450000,
+      "description": "FUJIFILM digital camera accessory \"Li-ion battery NP-W235\"",
+      "specs_json": {
+        "type": "Nguồn & Pin sạc",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/np-w235/",
+        "slug": "np-w235"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2020/02/np-w235_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-NP-W235-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 900000
+        }
+      ]
+    },
+    {
+      "model_name": "VIEW CAMERA ADAPTER G",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 2000000,
+      "description": "The view camera adapter can be used when shooting with the FUJIFILM GFX 50S when using older FUJINON large format camera lenses, such as the CM FUJINON, etc.",
+      "specs_json": {
+        "type": "Ngàm chuyển đổi & Ống phụ",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/view-camera-adapter-g/",
+        "slug": "view-camera-adapter-g"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/view-camera-adapter-g_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VIEW-CAMERA-ADAPTER-G-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 4000000
+        }
+      ]
+    },
+    {
+      "model_name": "Cover kit CVR-XT3",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 40000,
+      "deposit_amount": 500000,
+      "description": "Cover kit specifically designed for the FUJIFILM X-T3.",
+      "specs_json": {
+        "type": "Phụ kiện",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/cvr-xt3/",
+        "slug": "cvr-xt3"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/X-T3-Camera-Cover-Thumbnail.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-CVR-XT3-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 1000000
+        }
+      ]
+    },
+    {
+      "model_name": "Body cap BCP-002",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "FUJIFILM G Mount Camera Body",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/bcp-002/",
+        "slug": "bcp-002"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/body-cap-bcp-002_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BCP-002-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Cover kit CVR-XT4",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 40000,
+      "deposit_amount": 500000,
+      "description": "FUJIFILM digital camera accessory \"Cover kit CVR-XT4\"",
+      "specs_json": {
+        "type": "Phụ kiện",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/cvr-xt4/",
+        "slug": "cvr-xt4"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2020/02/cvr-xt4_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-CVR-XT4-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 1000000
+        }
+      ]
+    },
+    {
+      "model_name": "Thumb Rest TR-XE4",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 40000,
+      "deposit_amount": 500000,
+      "description": "Official product information for Thumb Rest TR-XE4 for FUJIFILM X Series.",
+      "specs_json": {
+        "type": "Phụ kiện",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/tr-xe4/",
+        "slug": "tr-xe4"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2021/01/TR-XE4_thum-1_bagwr.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-TR-XE4-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 1000000
+        }
+      ]
+    },
+    {
+      "model_name": "Body cap BCP-001",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 20000,
+      "deposit_amount": 250000,
+      "description": "FUJIFILM X Mount Camera Body",
+      "specs_json": {
+        "type": "Kính lọc & Nắp che",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/bcp-001/",
+        "slug": "bcp-001"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/body-cap-bcp-001_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-BCP-001-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 500000
+        }
+      ]
+    },
+    {
+      "model_name": "Stereo Microphone MIC-ST1",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 40000,
+      "deposit_amount": 500000,
+      "description": "SizeΦ2.5mmAdapter includedΦ2.5mm→3.5mm adapter Compatibility",
+      "specs_json": {
+        "type": "Phụ kiện",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/mic-st1/",
+        "slug": "mic-st1"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/stereo-microphone_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-MIC-ST1-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 1000000
+        }
+      ]
+    },
+    {
+      "model_name": "Remote release RR-100",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 40000,
+      "deposit_amount": 500000,
+      "description": "L-shaped plug extension cable for 2.5mm jack is included",
+      "specs_json": {
+        "type": "Phụ kiện",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/rr-100/",
+        "slug": "rr-100"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/08/remote-release-rr-100_thum-1.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-RR-100-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 1000000
+        }
+      ]
+    },
+    {
+      "model_name": "Cover kit CVR-XH",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 40000,
+      "deposit_amount": 500000,
+      "description": "Official product information for Cover kit CVR-XH for FUJIFILM X Series",
+      "specs_json": {
+        "type": "Phụ kiện",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/cvr-xh/",
+        "slug": "cvr-xh"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2022/05/x-h-coverkit_fsse.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-CVR-XH-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 1000000
+        }
+      ]
+    },
+    {
+      "model_name": "Cooling fan FAN-001",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 40000,
+      "deposit_amount": 500000,
+      "description": "Official product information for Cooling fan FAN-001 for FUJIFILM X Series.",
+      "specs_json": {
+        "type": "Phụ kiện",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/fan-001/",
+        "slug": "fan-001"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2022/05/fan-001_thumb-fsse.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-FAN-001-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 1000000
+        }
+      ]
+    },
+    {
+      "model_name": "Electronic Viewfinder VF-GFXC2",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 90000,
+      "deposit_amount": 1200000,
+      "description": "The VF-GFXC2 is a dedicated electronic viewfinder for the GFX ETERNA 55. Featuring an industry-leading high resolution of 2048x1536 and a peak brightness of",
+      "specs_json": {
+        "type": "Kính ngắm Finder",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vf-gfxc2/",
+        "slug": "vf-gfxc2"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2026/09/eterna-evf.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VF-GFXC2-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "EVF tilt adapter EVF-TL1",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 150000,
+      "deposit_amount": 2000000,
+      "description": "By mounting this accessory between the camera body and EVF unit, the mounting angle of the EVF can be changed to angles from 0°∼90° when shooting horizontal",
+      "specs_json": {
+        "type": "Ngàm chuyển đổi & Ống phụ",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/evf-tl1/",
+        "slug": "evf-tl1"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/evf-tl1_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EVF-TL1-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 4000000
+        }
+      ]
+    },
+    {
+      "model_name": "External optical viewfinder VF-X21",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 90000,
+      "deposit_amount": 1200000,
+      "description": "Features 21mm / 28mm (35mm format equivalent) frame lines, and supports wide conversion lens.",
+      "specs_json": {
+        "type": "Kính ngắm Finder",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/vf-x21/",
+        "slug": "vf-x21"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/vf-x21_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-VF-X21-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Eye cup EC-XT M",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 90000,
+      "deposit_amount": 1200000,
+      "description": "This is the same eyecup as included with the FUJIFILM X-T2.",
+      "specs_json": {
+        "type": "Kính ngắm Finder",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ec-xt-m/",
+        "slug": "ec-xt-m"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/eye-cup-ec-xt-m_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EC-XT-M-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Eye cup EC-GFX",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 90000,
+      "deposit_amount": 1200000,
+      "description": "The round-shaped eyecup effectively shields the light, making it easier to see the viewfinder. This is the same eyecup as included with the FUJIFILM GFX 50S.",
+      "specs_json": {
+        "type": "Kính ngắm Finder",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ec-gfx/",
+        "slug": "ec-gfx"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/ec-gfx_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EC-GFX-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Eye cup EC-XH W",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 90000,
+      "deposit_amount": 1200000,
+      "description": "The wide cup covers a broad area around the eye, greatly reducing light interference and enhancing concentration during long shoots. The eye cup can also be",
+      "specs_json": {
+        "type": "Kính ngắm Finder",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ec-xh-w/",
+        "slug": "ec-xh-w"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/eye-cup-ec-xh-w_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EC-XH-W-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Eye cup EC-XT L",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 90000,
+      "deposit_amount": 1200000,
+      "description": "The dome-shaped eyecup effectively shields light, making it easier to see the viewfinder. The soft material also improves the fit for users shooting with the",
+      "specs_json": {
+        "type": "Kính ngắm Finder",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ec-xt-l/",
+        "slug": "ec-xt-l"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/eye-cup-ec-xt-l_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EC-XT-L-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    },
+    {
+      "model_name": "Eye cup EC-XT S",
+      "category": "ACCESSORY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm",
+      "base_rental_price_per_day": 90000,
+      "deposit_amount": 1200000,
+      "description": "This is the thinnest eyecup.",
+      "specs_json": {
+        "type": "Kính ngắm Finder",
+        "official_url": "https://www.fujifilm-x.com/vi-vn/products/accessories/ec-xt-s/",
+        "slug": "ec-xt-s"
+      },
+      "image_url": "https://fujifilm-x.b-cdn.net/wp-content/uploads/2019/10/ec-xt-s_thum.jpg",
+      "items": [
+        {
+          "serial_number": "ACC-EC-XT-S-01",
+          "shutter_count": 0,
+          "condition_percent": 98,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-01-10",
+          "purchase_price": 2400000
+        }
+      ]
+    }
+  ]
+}

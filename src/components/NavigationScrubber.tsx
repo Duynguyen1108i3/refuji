@@ -48,7 +48,6 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
   // Exact pointer scrubbing logic from RytoxGroup
   const handlePointerDown = (index: number, e: React.PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return;
-    e.preventDefault();
     const target = e.currentTarget;
     try {
       target.setPointerCapture(e.pointerId);
@@ -136,12 +135,12 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
       role="navigation"
       aria-label="Navigation Scrubber"
       onMouseLeave={() => setHoveredIndex(null)}
-      className={`relative isolate select-none touch-none transition-all flex items-center ${
+      className={`relative isolate select-none touch-none transition-all flex items-center bg-white border border-[#14171f]/10 shadow-[0_8px_30px_rgba(20,24,32,0.06)] ${
         isMobileDock
-          ? 'crystal-liquid-glass rounded-full p-2 gap-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.65)]'
+          ? 'rounded-full p-2 gap-1.5'
           : isCompact
-          ? 'crystal-liquid-glass rounded-full p-1 sm:p-1.5 gap-1 shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex-nowrap overflow-x-auto scrollbar-none'
-          : 'crystal-liquid-glass rounded-full p-2 px-3 gap-2 shadow-[0_16px_40px_rgba(0,0,0,0.5)]'
+          ? 'rounded-full p-1 sm:p-1.5 gap-1 flex-nowrap overflow-x-auto scrollbar-none'
+          : 'rounded-full p-2 px-3 gap-2'
       } ${className}`}
     >
       {items.map((item, idx) => {
@@ -166,7 +165,7 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
                 ? 'flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-full whitespace-nowrap'
                 : 'px-6 sm:px-7 py-2.5 sm:py-3 text-sm font-semibold rounded-full whitespace-nowrap'
             } ${
-              isActive ? 'text-white' : 'text-white/70 hover:text-white'
+              isActive ? 'text-[#14171f]' : 'text-[#5a6070] hover:text-[#14171f]'
             }`}
           >
             {/* Active Fluid Slider Lens (Framer Motion Spring Physics) */}
@@ -187,7 +186,7 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
             {(isMobileDock || isCompact) && item.icon && (
               <span
                 className={`transition-transform duration-200 ${
-                  isActive ? 'scale-105 text-white' : 'text-white/70'
+                  isActive ? 'scale-105 text-[#14171f]' : 'text-[#5a6070]'
                 }`}
               >
                 {item.icon}
@@ -202,7 +201,7 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
                   : isCompact
                   ? 'text-xs font-semibold'
                   : 'text-sm font-semibold'
-              } ${isActive ? 'font-bold text-white' : 'text-white/70'}`}
+              } ${isActive ? 'font-bold text-[#14171f]' : 'text-[#5a6070]'}`}
             >
               {isMobileDock && item.shortLabel ? item.shortLabel : item.label}
             </span>

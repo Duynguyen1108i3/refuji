@@ -1,0 +1,300 @@
+// REFUJI - Prisma Schema v1.1
+// 13 Tables in standard 3NF matching business rules
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PENDING
+  CONFIRMED
+  DELIVERED
+  OVERDUE
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum ItemStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  LOST
+}
+
+enum DamageLevel {
+  NONE
+  LIGHT_SCRATCH
+  MINOR
+  MODERATE
+  SEVERE
+  LOST
+}
+
+enum ProductCategory {
+  BODY
+  LENS
+  ACCESSORY
+}
+
+enum MountType {
+  X_MOUNT
+  G_MOUNT
+  NONE
+}
+
+// 1. Users
+model User {
+  id               Int              @id @default(autoincrement())
+  email            String           @unique @db.VarChar(191)
+  password_hash    String           @db.VarChar(255)
+  full_name        String           @db.VarChar(150)
+  phone            String           @db.VarChar(20)
+  role             UserRole         @default(CUSTOMER)
+  is_active        Boolean          @default(true)
+  reputation_score Int              @default(100)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+
+  kyc              UserKyc?
+  membership       UserMembership?
+  orders           RentalOrder[]
+  payments         Payment[]
+  audit_logs       AuditLog[]
+
+  @@map("users")
+}
+
+// 2. UserKyc (CCCD / VNeID AES-256-GCM + Privacy Consent 2025)
+model UserKyc {
+  id                 Int       @id @default(autoincrement())
+  user_id            Int       @unique
+  id_card_encrypted  String    @db.Text
+  id_card_hash       String    @unique @db.VarChar(64)
+  id_card_last4      String    @db.VarChar(4)
+  full_name_id       String    @db.VarChar(150)
+  issue_date         DateTime? @db.Date
+  issue_place        String?   @db.VarChar(150)
+  privacy_consent    Boolean   @default(false)
+  privacy_consent_at DateTime?
+  verified_at        DateTime?
+  verified_by        Int?
+
+  user               User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_kyc")
+}
+
+// 3. MembershipTiers
+model MembershipTier {
+  id                       Int              @id @default(autoincrement())
+  tier_code                String           @unique @db.VarChar(50)
+  tier_name                String           @db.VarChar(100)
+  min_completed_rentals    Int              @default(0)
+  min_reputation_score     Int              @default(0)
+  deposit_discount_percent Decimal          @default(0.00) @db.Decimal(5, 2)
+  priority_approval        Boolean          @default(false)
+  fast_track_checkin       Boolean          @default(false)
+  description              String?          @db.Text
+
+  user_memberships         UserMembership[]
+
+  @@map("membership_tiers")
+}
+
+// 4. UserMemberships
+model UserMembership {
+  id                      Int            @id @default(autoincrement())
+  user_id                 Int            @unique
+  tier_id                 Int
+  total_completed_rentals Int            @default(0)
+  updated_at              DateTime       @updatedAt
+
+  user                    User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  tier                    MembershipTier @relation(fields: [tier_id], references: [id])
+
+  @@map("user_memberships")
+}
+
+// 5. ProductModels
+model ProductModel {
+  id                        Int               @id @default(autoincrement())
+  model_name                String            @db.VarChar(200)
+  category                  ProductCategory
+  mount_type                MountType         @default(NONE)
+  brand                     String            @default("Fujifilm") @db.VarChar(100)
+  base_rental_price_per_day Decimal           @db.Decimal(12, 2)
+  deposit_amount            Decimal           @db.Decimal(12, 2)
+  description               String?           @db.Text
+  specs_json                Json?
+  image_url                 String            @db.VarChar(255)
+  is_active                 Boolean           @default(true)
+  created_at                DateTime          @default(now())
+
+  items                     ProductItem[]
+  order_details             RentalOrderDetail[]
+
+  @@map("product_models")
+}
+
+// 6. ProductItems (Cá thể theo Serial)
+model ProductItem {
+  id                    Int                 @id @default(autoincrement())
+  model_id              Int
+  serial_number         String              @unique @db.VarChar(100)
+  shutter_count         Int                 @default(0)
+  condition_percent     Int                 @default(100)
+  status                ItemStatus          @default(AVAILABLE)
+  purchase_date         DateTime?           @db.Date
+  purchase_price        Decimal?            @db.Decimal(12, 2)
+  last_maintenance_date DateTime?           @db.Date
+  next_maintenance_date DateTime?           @db.Date
+
+  model                 ProductModel        @relation(fields: [model_id], references: [id], onDelete: Cascade)
+  order_details         RentalOrderDetail[]
+  return_details        ReturnItemDetail[]
+
+  @@map("product_items")
+}
+
+// 7. RentalOrders
+model RentalOrder {
+  id                      Int                 @id @default(autoincrement())
+  order_code              String              @unique @db.VarChar(50)
+  user_id                 Int
+  status                  OrderStatus         @default(PENDING_PAYMENT)
+  rental_start_date       DateTime
+  rental_end_date         DateTime
+  total_rent_amount       Decimal             @db.Decimal(12, 2)
+  total_deposit_amount    Decimal             @db.Decimal(12, 2)
+  deposit_discount_amount Decimal             @default(0.00) @db.Decimal(12, 2)
+  final_amount            Decimal             @db.Decimal(12, 2)
+  created_at              DateTime            @default(now())
+  updated_at              DateTime            @updatedAt
+
+  user                    User                @relation(fields: [user_id], references: [id])
+  details                 RentalOrderDetail[]
+  payments                Payment[]
+  checkout_records        CheckoutRecord[]
+  return_records          ReturnRecord[]
+
+  @@map("rental_orders")
+}
+
+// 8. RentalOrderDetails
+model RentalOrderDetail {
+  id                 Int          @id @default(autoincrement())
+  order_id           Int
+  product_item_id    Int?
+  product_model_id   Int
+  unit_rental_price  Decimal      @db.Decimal(12, 2)
+  unit_deposit_amount Decimal     @db.Decimal(12, 2)
+
+  order              RentalOrder  @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  model              ProductModel @relation(fields: [product_model_id], references: [id])
+  item               ProductItem? @relation(fields: [product_item_id], references: [id])
+
+  @@map("rental_order_details")
+}
+
+// 9. Payments (VNPAY / Tiền mặt)
+model Payment {
+  id                    Int         @id @default(autoincrement())
+  order_id              Int
+  user_id               Int
+  payment_type          String      @db.VarChar(50) // RENT_DEPOSIT, SETTLEMENT_REFUND, DAMAGE_FEE
+  payment_method        String      @db.VarChar(50) // VNPAY, CASH, BANK_TRANSFER
+  amount                Decimal     @db.Decimal(12, 2)
+  vnpay_transaction_no  String?     @db.VarChar(100)
+  vnpay_bank_code       String?     @db.VarChar(50)
+  vnpay_response_code   String?     @db.VarChar(10)
+  status                String      @default("PENDING") @db.VarChar(30)
+  paid_at               DateTime?
+
+  order                 RentalOrder @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  user                  User        @relation(fields: [user_id], references: [id])
+
+  @@map("payments")
+}
+
+// 10. CheckoutRecords (Biên bản bàn giao)
+model CheckoutRecord {
+  id                     Int         @id @default(autoincrement())
+  order_id               Int
+  staff_id               Int
+  handover_time          DateTime    @default(now())
+  handover_notes         String?     @db.Text
+  customer_signature_url String?     @db.VarChar(255)
+  photos_json            Json?
+  status                 String      @default("DELIVERED") @db.VarChar(50)
+
+  order                  RentalOrder @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@map("checkout_records")
+}
+
+// 11. ReturnRecords (Biên bản thu hồi & quyết toán)
+model ReturnRecord {
+  id                     Int                @id @default(autoincrement())
+  order_id               Int
+  staff_id               Int
+  return_time            DateTime           @default(now())
+  return_notes           String?            @db.Text
+  late_hours             Int                @default(0)
+  late_fee               Decimal            @default(0.00) @db.Decimal(12, 2)
+  total_damage_fee       Decimal            @default(0.00) @db.Decimal(12, 2)
+  refund_deposit_amount  Decimal            @default(0.00) @db.Decimal(12, 2)
+  customer_signature_url String?            @db.VarChar(255)
+  photos_json            Json?
+  status                 String             @default("SETTLED") @db.VarChar(50)
+
+  order                  RentalOrder        @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  item_details           ReturnItemDetail[]
+
+  @@map("return_records")
+}
+
+// 12. ReturnItemDetails (Chi tiết hư hỏng từng Serial)
+model ReturnItemDetail {
+  id                   Int          @id @default(autoincrement())
+  return_record_id     Int
+  product_item_id      Int
+  damage_level         DamageLevel  @default(NONE)
+  damage_description   String?      @db.Text
+  damage_fee           Decimal      @default(0.00) @db.Decimal(12, 2)
+  item_returned_status ItemStatus   @default(AVAILABLE)
+
+  return_record        ReturnRecord @relation(fields: [return_record_id], references: [id], onDelete: Cascade)
+  item                 ProductItem  @relation(fields: [product_item_id], references: [id])
+
+  @@map("return_item_details")
+}
+
+// 13. AuditLogs (Nhật ký hệ thống)
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int?
+  action     String   @db.VarChar(100)
+  entity_name String  @db.VarChar(100)
+  entity_id  Int?
+  old_values Json?
+  new_values Json?
+  ip_address String?  @db.VarChar(50)
+  created_at DateTime @default(now())
+
+  user       User?    @relation(fields: [user_id], references: [id])
+
+  @@map("audit_logs")
+}

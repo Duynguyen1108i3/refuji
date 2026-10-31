@@ -27,7 +27,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Danh sách các tháng ở cột bên trái (như thiết kế ảnh 3)
+  // Danh sách các tháng ở cột bên trái
   const monthList = [
     { name: 'Tháng 10', year: 2026, monthIndex: 9 },
     { name: 'Tháng 11', year: 2026, monthIndex: 10 },
@@ -98,38 +98,44 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
     const s = new Date(startDateStr);
     const e = new Date(endDateStr);
     const diffTime = e.getTime() - s.getTime();
-    const diffDays = Math.round(diffTime / (1000 * 3600 * 24)) + 1; // Tính cả ngày nhận và trả
-    return Math.max(1, diffDays);
+    const diffDays = Math.round(diffTime / (1000 * 3600 * 24)) + 1;
+    return diffDays > 0 ? diffDays : 1;
   };
 
   const totalDays = calculateDays();
 
-  // Format hiển thị trên 2 ô ở đầu (theo ảnh 3)
-  const formatInputDisplay = (dateStr: string) => {
-    if (!dateStr) return 'Chọn ngày';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    const day = parts[2];
-    const month = parts[1];
-    const year = parts[0];
-    return `${day} Th${month} ${year}`;
+  // Chuyển ngày YYYY-MM-DD thành hiển thị DD/MM
+  const formatShortDate = (dStr: string) => {
+    if (!dStr) return '';
+    const parts = dStr.split('-');
+    if (parts.length < 3) return '';
+    return `${parts[2]}/${parts[1]}`;
   };
 
-  // Đặt lại ngày
+  // Chuỗi hiển thị khoảng ngày (VD: 29/10 — 31/10 (3 ngày))
+  const getRangeDisplayText = () => {
+    if (!startDateStr) return 'Chọn ngày nhận máy';
+    if (!endDateStr) return `${formatShortDate(startDateStr)} (1 ngày)`;
+    return `${formatShortDate(startDateStr)} — ${formatShortDate(endDateStr)} (${totalDays} ngày)`;
+  };
+
   const handleClear = () => {
     setStartDateStr('');
     setEndDateStr('');
   };
 
-  // Áp dụng ngày
   const handleApply = () => {
     if (!startDateStr) return;
-    const finalEnd = endDateStr || startDateStr;
-    const sParts = startDateStr.split('-');
-    const eParts = finalEnd.split('-');
-    const rangeText = `${sParts[2]}/${sParts[1]} — ${eParts[2]}/${eParts[1]} (${totalDays} ngày)`;
+    const rangeText = getRangeDisplayText();
     onApplyDates(rangeText, totalDays);
     onClose();
+  };
+
+  // Format hiển thị cho 2 ô Ngày nhận / Ngày trả
+  const formatInputDisplay = (dStr: string) => {
+    if (!dStr) return 'Chưa chọn';
+    const [y, m, d] = dStr.split('-');
+    return `${d} Th${m}, ${y}`;
   };
 
   return (
@@ -138,82 +144,82 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-xl"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/40 backdrop-blur-xl"
       onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.94, y: 16 }}
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 12 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-[#0c0f17] border border-white/20 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_rgba(0,0,0,0.9)] text-white flex flex-col max-h-[92vh] overflow-hidden"
+        className="relative w-full max-w-2xl bg-white border border-[#14171f]/10 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_rgba(20,24,32,0.18)] text-[#14171f] flex flex-col max-h-[92vh] overflow-hidden"
       >
-        {/* NÚT ĐÓNG (X) DẠNG TRÒN NỔI BẬT THEO STYLE ẢNH 2 */}
+        {/* NÚT ĐÓNG (X) DẠNG TRÒN */}
         <button
           onClick={onClose}
           aria-label="Đóng popup lịch"
-          className="absolute top-5 right-5 z-20 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-90"
+          className="absolute top-5 right-5 z-20 w-9 h-9 rounded-full bg-[#14171f]/[0.05] hover:bg-[#14171f]/[0.1] border border-[#14171f]/10 text-[#14171f] flex items-center justify-center transition-all cursor-pointer active:scale-90"
         >
           <X size={18} />
         </button>
 
         {/* HEADER: Tiêu đề Chọn ngày thuê */}
-        <div className="pb-4 border-b border-white/10 pr-12">
+        <div className="pb-4 border-b border-[#14171f]/10 pr-12">
           <div className="flex items-center gap-2">
-            <CalendarIcon size={18} className="text-amber-400" />
-            <h3 className="font-serif text-xl sm:text-2xl text-white font-medium">
+            <CalendarIcon size={18} className="text-[#14171f]" />
+            <h3 className="font-serif text-xl sm:text-2xl text-[#14171f] font-medium">
               Chọn Thời Gian Thuê Thiết Bị
             </h3>
           </div>
-          <p className="text-[11px] sm:text-xs text-white/60 mt-0.5">
+          <p className="text-[11px] sm:text-xs text-[#6e7587] mt-0.5">
             Chọn ngày nhận và ngày trả máy để hệ thống kiểm tra thiết bị sẵn sàng cho bạn.
           </p>
         </div>
 
-        {/* NỘI DUNG CHÍNH (THEO THIẾT KẾ ẢNH 3) */}
+        {/* NỘI DUNG CHÍNH */}
         <div className="overflow-y-auto py-4 flex-1">
-          {/* 1. HAI Ô HIỂN THỊ NGÀY NHẬN & NGÀY TRẢ (THEO ĐÚNG ẢNH THỨ 3) */}
+          {/* 1. HAI Ô HIỂN THỊ NGÀY NHẬN & NGÀY TRẢ */}
           <div className="grid grid-cols-2 gap-3 mb-5">
             <div
               className={`p-3 rounded-2xl border transition-all ${
                 !endDateStr
-                  ? 'border-white bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.15)]'
-                  : 'border-white/15 bg-white/5 text-white/80'
+                  ? 'border-[#14171f] bg-[#14171f]/[0.05] text-[#14171f] shadow-sm'
+                  : 'border-[#14171f]/12 bg-[#f7f8fa] text-[#444a59]'
               }`}
             >
-              <div className="text-[10px] uppercase font-bold tracking-wider text-white/50 mb-1">
+              <div className="text-[10px] uppercase font-bold tracking-wider text-[#747b8c] mb-1">
                 Ngày nhận máy
               </div>
-              <div className="text-sm sm:text-base font-bold text-white flex items-center justify-between">
+              <div className="text-sm sm:text-base font-bold text-[#14171f] flex items-center justify-between">
                 <span>{formatInputDisplay(startDateStr)}</span>
-                <Clock size={14} className="text-amber-400" />
+                <Clock size={14} className="text-[#6e7587]" />
               </div>
             </div>
 
             <div
               className={`p-3 rounded-2xl border transition-all ${
                 endDateStr
-                  ? 'border-white bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.15)]'
-                  : 'border-white/15 bg-white/5 text-white/80'
+                  ? 'border-[#14171f] bg-[#14171f]/[0.05] text-[#14171f] shadow-sm'
+                  : 'border-[#14171f]/12 bg-[#f7f8fa] text-[#444a59]'
               }`}
             >
-              <div className="text-[10px] uppercase font-bold tracking-wider text-white/50 mb-1">
+              <div className="text-[10px] uppercase font-bold tracking-wider text-[#747b8c] mb-1">
                 Ngày trả máy dự kiến
               </div>
-              <div className="text-sm sm:text-base font-bold text-white flex items-center justify-between">
+              <div className="text-sm sm:text-base font-bold text-[#14171f] flex items-center justify-between">
                 <span>{formatInputDisplay(endDateStr)}</span>
-                <Clock size={14} className="text-amber-400" />
+                <Clock size={14} className="text-[#6e7587]" />
               </div>
             </div>
           </div>
 
-          {/* 2. BỐ CỤC CHÍNH 2 CỘT: CỘT THÁNG BÊN TRÁI & LƯỚI LỊCH BÊN PHẢI (THEO ẢNH 3) */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 border border-white/10 rounded-2xl p-4 bg-white/[0.02]">
+          {/* 2. BỐ CỤC CHÍNH 2 CỘT: CỘT THÁNG BÊN TRÁI & LƯỚI LỊCH BÊN PHẢI */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 border border-[#14171f]/10 rounded-2xl p-4 bg-[#f7f8fa]">
             
             {/* Cột trái (4 cols): Danh sách tháng */}
-            <div className="md:col-span-4 border-b md:border-b-0 md:border-r border-white/10 pb-3 md:pb-0 md:pr-4 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible">
-              <div className="hidden md:block text-[10px] uppercase font-bold tracking-wider text-white/40 mb-2">
+            <div className="md:col-span-4 border-b md:border-b-0 md:border-r border-[#14171f]/10 pb-3 md:pb-0 md:pr-4 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible">
+              <div className="hidden md:block text-[10px] uppercase font-bold tracking-wider text-[#747b8c] mb-2">
                 Chọn tháng
               </div>
               {monthList.map((m) => {
@@ -228,8 +234,8 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                     }}
                     className={`text-left px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all shrink-0 cursor-pointer ${
                       isSelected
-                        ? 'bg-white text-[#0B0F17] font-bold shadow-md scale-[1.02]'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                        ? 'bg-[#14171f] text-white font-bold shadow-sm scale-[1.02]'
+                        : 'text-[#525868] hover:text-[#14171f] hover:bg-[#14171f]/[0.05]'
                     }`}
                   >
                     {m.name} {m.year !== 2026 && `(${m.year})`}
@@ -243,7 +249,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
               
               {/* Điều hướng Tháng & Năm */}
               <div className="flex items-center justify-between mb-3">
-                <span className="font-serif text-lg font-semibold text-white">
+                <span className="font-serif text-lg font-semibold text-[#14171f]">
                   {monthNamesVi[currentMonth]} {currentYear}
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -251,7 +257,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                     type="button"
                     onClick={handlePrevMonth}
                     aria-label="Tháng trước"
-                    className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/70 hover:text-white cursor-pointer"
+                    className="w-7 h-7 rounded-full bg-white border border-[#14171f]/10 hover:bg-[#14171f]/[0.06] flex items-center justify-center text-[#525868] hover:text-[#14171f] cursor-pointer shadow-sm"
                   >
                     <ChevronLeft size={16} />
                   </button>
@@ -259,15 +265,15 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                     type="button"
                     onClick={handleNextMonth}
                     aria-label="Tháng sau"
-                    className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-white/70 hover:text-white cursor-pointer"
+                    className="w-7 h-7 rounded-full bg-white border border-[#14171f]/10 hover:bg-[#14171f]/[0.06] flex items-center justify-center text-[#525868] hover:text-[#14171f] cursor-pointer shadow-sm"
                   >
                     <ChevronRight size={16} />
                   </button>
                 </div>
               </div>
 
-              {/* Header Thứ trong tuần (T2 -> CN theo ảnh 3) */}
-              <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-white/40 mb-2 pb-1 border-b border-white/10">
+              {/* Header Thứ trong tuần */}
+              <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-[#747b8c] mb-2 pb-1 border-b border-[#14171f]/10">
                 <span>T2</span>
                 <span>T3</span>
                 <span>T4</span>
@@ -303,9 +309,9 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                     <div
                       key={`day-${day}`}
                       className={`relative h-9 flex items-center justify-center select-none ${
-                        isInRange ? 'bg-white/15' : ''
-                      } ${isStart && endDateStr ? 'rounded-l-full bg-white/15' : ''} ${
-                        isEnd && startDateStr ? 'rounded-r-full bg-white/15' : ''
+                        isInRange ? 'bg-[#14171f]/10' : ''
+                      } ${isStart && endDateStr ? 'rounded-l-full bg-[#14171f]/10' : ''} ${
+                        isEnd && startDateStr ? 'rounded-r-full bg-[#14171f]/10' : ''
                       }`}
                     >
                       <button
@@ -313,15 +319,15 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                         onClick={() => handleDateClick(day)}
                         className={`w-8 h-8 rounded-full text-xs font-semibold flex items-center justify-center transition-all cursor-pointer relative z-10 ${
                           isStart || isEnd
-                            ? 'bg-white text-[#0B0F17] font-bold shadow-md scale-105'
+                            ? 'bg-[#14171f] text-white font-bold shadow-md scale-105'
                             : isInRange
-                            ? 'text-white font-medium hover:bg-white/20'
-                            : 'text-white/80 hover:bg-white/15 hover:text-white'
+                            ? 'text-[#14171f] font-semibold hover:bg-[#14171f]/15'
+                            : 'text-[#2d3342] hover:bg-[#14171f]/[0.08] hover:text-[#14171f]'
                         }`}
                       >
                         <span>{day}</span>
                         {isToday && !isStart && !isEnd && (
-                          <span className="absolute bottom-1 w-1 h-1 rounded-full bg-amber-400" />
+                          <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#14171f]" />
                         )}
                       </button>
                     </div>
@@ -334,15 +340,15 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
           </div>
         </div>
 
-        {/* FOOTER THANH DƯỚI (THEO ĐÚNG ẢNH THỨ 3) */}
-        <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          {/* Hiển thị số ngày thuê (như '16 days' ở ảnh 3) */}
+        {/* FOOTER THANH DƯỚI */}
+        <div className="pt-4 border-t border-[#14171f]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          {/* Hiển thị số ngày thuê */}
           <div className="flex items-center gap-2">
-            <span className="text-base sm:text-lg font-serif font-bold text-white tracking-wide">
+            <span className="text-base sm:text-lg font-serif font-bold text-[#14171f] tracking-wide">
               {totalDays} ngày thuê
             </span>
-            <span className="text-white/40">•</span>
-            <span className="text-white/60 text-[11px]">
+            <span className="text-[#14171f]/20">•</span>
+            <span className="text-[#6e7587] text-[11px]">
               Giờ giao nhận tiêu chuẩn: 08:00 – 20:00 hàng ngày
             </span>
           </div>
@@ -352,7 +358,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
             <button
               type="button"
               onClick={handleClear}
-              className="px-4 py-2 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all font-medium cursor-pointer active:scale-95 flex items-center gap-1.5"
+              className="px-4 py-2 rounded-full border border-[#14171f]/15 bg-white hover:bg-[#14171f]/[0.05] text-[#444a59] hover:text-[#14171f] transition-all font-medium cursor-pointer active:scale-95 flex items-center gap-1.5 shadow-sm"
             >
               <RotateCcw size={13} />
               <span>Xóa ngày</span>
@@ -362,7 +368,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
               type="button"
               onClick={handleApply}
               disabled={!startDateStr}
-              className="px-6 py-2 rounded-xl bg-white hover:bg-white/90 text-[#0B0F17] font-bold transition-all shadow-lg active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+              className="px-6 py-2 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white font-bold transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
             >
               <Check size={14} />
               <span>Áp dụng lịch</span>

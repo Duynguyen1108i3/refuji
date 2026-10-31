@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Design Tokens - Fujifilm Retro-Modern & Liquid Glass */
+  --brand-green: #00805e;             /* Fujifilm Heritage Green (WCAG AA compliant) */
+  --brand-green-light: #10b981;       /* Active Emerald for glows & badges */
+  --brand-green-hover: #006b4f;
+  --brand-silver: #d1d5db;            /* Precision milled aluminum */
+  --brand-charcoal: #14171f;          /* Fujifilm magnesium alloy body */
+  
+  /* Text Contrast Standards (WCAG 2.2 AA: minimum 4.5:1 on #07070a / #0d1118) */
+  --text-main: #f4f4f5;               /* zinc-100 */
+  --text-sub: #d4d4d8;                /* zinc-300 */
+  --text-muted: #a1a1aa;              /* zinc-400 (Contrast ratio > 5.5:1 on dark) */
+  --text-dim: #71717a;                /* zinc-500 for non-essential borders */
+
+  /* Glassmorphism Variables */
+  --glass-bg: rgba(18, 22, 32, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-hover-border: rgba(16, 185, 129, 0.35);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Ensure lining figures & tabular alignment for all numbers (Prices, dates, serials) */
+.num {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum", "lnum";
+}
+
+/* Minimum accessible label size (>= 12px) */
+.label-xs {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+/* Accessible Liquid Glass Card */
+.liquid-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.liquid-glass:hover {
+  border-color: var(--glass-hover-border);
+}
+
+/* Fallback when backdrop-filter is unsupported */
+@supports not (backdrop-filter: blur(1px)) {
+  .liquid-glass {
+    background: #0f131c !important;
+  }
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Respect user transparency preferences */
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass {
+    background: #0d1017 !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* Accessible Outline & Focus Ring */
+*:focus-visible {
+  outline: 2px solid var(--brand-green-light);
+  outline-offset: 2px;
+}
+
+/* Typography Enhancements for Vietnamese Glyph support */
+h1, h2, h3, .font-serif {
+  text-wrap: balance;
+  line-height: 1.15;
+}

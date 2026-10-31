@@ -33,34 +33,30 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
   if (!isOpen) return null;
 
-  const tiers: { id: MembershipTierType; label: string; discountText: string; desc: string; color: string }[] = [
+  const tiers: { id: MembershipTierType; label: string; discountText: string; desc: string }[] = [
     { 
       id: 'BRONZE', 
       label: 'Hạng Đồng', 
       discountText: '0% cọc', 
       desc: 'Mức cọc tiêu chuẩn dành cho thành viên mới',
-      color: 'border-white/20 text-white/80'
     },
     { 
       id: 'SILVER', 
       label: 'Hạng Bạc', 
       discountText: 'Giảm 5% cọc', 
       desc: 'Áp dụng sau 3 lần thuê máy thành công',
-      color: 'border-slate-300 text-slate-200'
     },
     { 
       id: 'GOLD', 
       label: 'Hạng Vàng', 
       discountText: 'Giảm 10% cọc', 
       desc: 'Đặc quyền giữ chỗ ưu tiên + Giảm 10% tiền cọc',
-      color: 'border-amber-400 text-amber-300'
     },
     { 
       id: 'PLATINUM', 
       label: 'Bạch Kim', 
       discountText: 'Giảm 15% cọc', 
       desc: 'Fast-track nhận máy tại quầy + Giảm 15% tiền cọc',
-      color: 'border-cyan-400 text-cyan-200'
     },
   ];
 
@@ -90,7 +86,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#14171f]/40 backdrop-blur-xl"
       onClick={onClose}
     >
       <motion.div
@@ -99,31 +95,31 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         exit={{ opacity: 0, scale: 0.95, y: 12 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-xl liquid-glass rounded-3xl p-6 sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.85)] border border-white/20 text-white max-h-[92vh] overflow-y-auto"
+        className="relative w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 text-[#14171f] max-h-[92vh] overflow-y-auto"
       >
         {/* Nút đóng */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-white/60 hover:text-white p-2 rounded-full hover:bg-white/10 transition-all active:scale-90"
+          className="absolute top-5 right-5 text-[#6e7587] hover:text-[#14171f] p-2 rounded-full hover:bg-[#14171f]/[0.06] transition-all active:scale-90"
         >
           <X size={18} />
         </button>
 
         {/* Header thông tin hội viên */}
-        <div className="flex items-center gap-4 pb-6 border-b border-white/10 mb-6">
-          <div className="w-14 h-14 rounded-2xl crystal-liquid-glass flex items-center justify-center text-white text-xl font-bold border border-white/20 shadow-inner">
+        <div className="flex items-center gap-4 pb-6 border-b border-[#14171f]/10 mb-6">
+          <div className="w-14 h-14 rounded-2xl bg-[#14171f]/[0.06] border border-[#14171f]/12 flex items-center justify-center text-[#14171f] text-xl font-bold shadow-sm">
             TX
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-serif text-xl sm:text-2xl font-medium text-white">Trần Txi</h3>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+              <h3 className="font-serif text-xl sm:text-2xl font-medium text-[#14171f]">Trần Txi</h3>
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-[#14171f]/[0.07] text-[#14171f] border border-[#14171f]/12">
                 {tiers.find(t => t.id === currentTier)?.label}
               </span>
             </div>
-            <p className="text-xs text-white/60 mt-0.5">trantxi@refuji.stu.edu.vn • ĐACN STU 2026</p>
-            <div className="flex items-center gap-1.5 text-[11px] text-amber-400 mt-1">
-              <ShieldCheck size={14} />
+            <p className="text-xs text-[#6e7587] mt-0.5">trantxi@refuji.stu.edu.vn • ĐACN STU 2026</p>
+            <div className="flex items-center gap-1.5 text-[11px] text-[#484e5e] mt-1">
+              <ShieldCheck size={14} className="text-[#14171f]" />
               <span>Định danh CCCD điện tử hợp lệ (Luật Căn cước 2023)</span>
             </div>
           </div>
@@ -132,11 +128,11 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         {/* KHU VỰC HẠNG THÀNH VIÊN & TỰ ĐỘNG TÍNH CỌC */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <label className="text-xs font-semibold text-white/80 uppercase tracking-wider flex items-center gap-1.5">
-              <Award size={14} className="text-amber-400" />
+            <label className="text-xs font-semibold text-[#14171f] uppercase tracking-wider flex items-center gap-1.5">
+              <Award size={14} className="text-[#14171f]" />
               <span>Hạng Thành Viên &amp; Quyền Lợi Cọc</span>
             </label>
-            <span className="text-[11px] text-white/50 italic">Tự động tính khi kiểm tra &amp; đặt máy</span>
+            <span className="text-[11px] text-[#6e7587] italic">Tự động tính khi kiểm tra &amp; đặt máy</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -148,20 +144,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   onClick={() => onChangeTier(t.id)}
                   className={`p-3.5 rounded-2xl cursor-pointer transition-all border text-left ${
                     isSelected
-                      ? 'bg-white/15 border-white/40 shadow-lg scale-[1.01]'
-                      : 'bg-[#10141f]/70 border-white/10 hover:border-white/25 hover:bg-white/5'
+                      ? 'bg-[#14171f]/[0.07] border-[#14171f]/35 shadow-sm scale-[1.01]'
+                      : 'bg-[#f7f8fa] border-[#14171f]/10 hover:border-[#14171f]/25 hover:bg-[#14171f]/[0.03]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-bold text-white flex items-center gap-1.5">
-                      {isSelected && <span className="w-2 h-2 rounded-full bg-amber-400 radar-pulse-amber" />}
+                    <span className="text-sm font-bold text-[#14171f] flex items-center gap-1.5">
+                      {isSelected && <span className="w-2 h-2 rounded-full bg-[#14171f] radar-pulse-white" />}
                       <span>{t.label}</span>
                     </span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-white/10 text-white/90">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#14171f]/[0.08] text-[#14171f]">
                       {t.discountText}
                     </span>
                   </div>
-                  <p className="text-[11px] text-white/60 leading-relaxed">
+                  <p className="text-[11px] text-[#6e7587] leading-relaxed">
                     {t.desc}
                   </p>
                 </div>
@@ -171,9 +167,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* KHU VỰC ÁP MÃ VOUCHER / KHUYẾN MÃI */}
-        <div className="mb-6 bg-[#10141f]/90 rounded-2xl p-4 border border-white/10">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/80 mb-2.5">
-            <Tag size={13} className="text-amber-400" />
+        <div className="mb-6 bg-[#f7f8fa] rounded-2xl p-4 border border-[#14171f]/10">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#14171f] mb-2.5">
+            <Tag size={13} className="text-[#14171f]" />
             <span>Mã Ưu Đãi / Voucher Giảm Cọc</span>
           </div>
 
@@ -183,30 +179,30 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               value={voucherCode}
               onChange={(e) => setVoucherCode(e.target.value)}
               placeholder="Nhập mã (VD: FUJI10, STU2026, VIPCAMERA)"
-              className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/15 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/40 transition-colors"
+              className="flex-1 px-4 py-2.5 rounded-full bg-white border border-[#14171f]/15 text-xs text-[#14171f] placeholder-[#8e95a6] focus:outline-none focus:border-[#14171f]/40 transition-colors shadow-sm"
             />
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-white hover:bg-white/90 text-[#0B0F17] font-semibold text-xs transition-all active:scale-95 shrink-0 cursor-pointer shadow-md"
+              className="px-5 py-2.5 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white font-semibold text-xs transition-all active:scale-95 shrink-0 cursor-pointer shadow-sm"
             >
               Áp dụng
             </button>
           </form>
 
           {voucherError && (
-            <p className="text-[11px] text-rose-400 mt-2">{voucherError}</p>
+            <p className="text-[11px] text-rose-500 mt-2">{voucherError}</p>
           )}
 
           {appliedVoucher && (
-            <div className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-xs text-amber-300">
+            <div className="mt-3 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-800">
               <div className="flex items-center gap-1.5 font-medium">
-                <CheckCircle2 size={14} className="text-amber-400" />
+                <CheckCircle2 size={14} className="text-emerald-600" />
                 <span>Mã <strong>{appliedVoucher.code}</strong>: {appliedVoucher.discountText}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setAppliedVoucher(null)}
-                className="text-[10px] text-amber-400/80 hover:text-amber-300 underline cursor-pointer"
+                className="text-[10px] text-emerald-600 hover:text-emerald-800 underline cursor-pointer"
               >
                 Hủy mã
               </button>
@@ -215,17 +211,17 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* Nghiệp vụ tự động áp dụng */}
-        <div className="text-[11px] text-white/60 leading-relaxed bg-white/[0.02] p-3.5 rounded-xl border border-white/5 flex items-start gap-2.5">
-          <Sparkles size={16} className="text-amber-400 shrink-0 mt-0.5" />
+        <div className="text-[11px] text-[#525868] leading-relaxed bg-[#14171f]/[0.03] p-3.5 rounded-xl border border-[#14171f]/10 flex items-start gap-2.5">
+          <Sparkles size={16} className="text-[#14171f] shrink-0 mt-0.5" />
           <span>
             Hệ thống <strong>REFUJI</strong> sẽ tự động tính toán mức cọc và chiết khấu ưu đãi tối ưu nhất ngay khi bạn tra cứu lịch hoặc chọn giữ máy. Bạn không cần phải chọn lại hạng mỗi lần xem thiết bị.
           </span>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-white/10 flex justify-end">
+        <div className="mt-6 pt-4 border-t border-[#14171f]/10 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-white hover:bg-white/90 text-[#0B0F17] font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
+            className="px-6 py-2.5 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
           >
             Hoàn tất &amp; Lưu hồ sơ
           </button>

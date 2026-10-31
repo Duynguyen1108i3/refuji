@@ -31,19 +31,20 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
   return (
     <section 
       ref={containerRef}
+      id="hero"
       className="relative w-full h-screen min-h-[720px] flex flex-col justify-between items-center text-center px-6 overflow-hidden select-none"
     >
-      {/* Background with clean mist forest & deep charcoal gradient & Rytox Ken Burns Motion */}
+      {/* Background with clean mist forest & bamboo charcoal gradient & Rytox Ken Burns Motion */}
       <motion.div 
         className="absolute inset-0 bg-cover bg-top bg-no-repeat z-0 hero-ken-burns"
         style={{ 
           backgroundImage: `url('/assets/forest-clean.jpg')`,
           opacity: bgOpacity,
           scale: bgScale,
-          filter: 'grayscale(90%) contrast(115%) brightness(70%)'
+          filter: 'grayscale(60%) contrast(105%) brightness(120%)'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#07070a]/60 via-[#07070a]/85 to-[#07070a] z-0 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/88 to-white z-0 pointer-events-none" />
 
       {/* Top spacing - 100vh Ultra Minimalist, Absolutely NO navbar at top */}
       <div className="h-20 w-full relative z-10" />
@@ -60,7 +61,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="text-xs sm:text-sm uppercase font-semibold tracking-[0.36em] text-white/80 mb-6 drop-shadow-sm"
+          className="text-xs sm:text-sm uppercase font-semibold tracking-[0.36em] text-[#383d4a] mb-6 drop-shadow-sm"
         >
           Máy ảnh cho những câu chuyện thật
         </motion.span>
@@ -69,7 +70,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="font-serif text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-normal leading-[1.06] tracking-tight text-[#F8FAFC] uppercase mb-7 drop-shadow-[0_12px_36px_rgba(0,0,0,0.8)]"
+          className="font-serif text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-normal leading-[1.06] tracking-tight text-[#14171f] uppercase mb-7 drop-shadow-[0_4px_16px_rgba(20,24,32,0.06)]"
         >
           Lưu Giữ Mọi<br />Khoảnh Khắc
         </motion.h1>
@@ -78,7 +79,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-xs sm:text-sm md:text-base font-light uppercase tracking-[0.26em] text-white/75 max-w-3xl leading-relaxed"
+          className="text-xs sm:text-sm md:text-base font-light uppercase tracking-[0.26em] text-[#4d5363] max-w-3xl leading-relaxed"
         >
           Hệ thống cho thuê máy ảnh &amp; ống kính Fujifilm chuyên nghiệp
         </motion.p>
@@ -93,7 +94,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
         onClick={onExploreClick}
         className="relative z-10 flex flex-col items-center gap-2.5 pb-14 cursor-pointer group"
       >
-        <span className="text-[10px] sm:text-[11px] uppercase font-medium tracking-[0.26em] text-white/50 group-hover:text-white/90 transition-colors">
+        <span className="text-[10px] sm:text-[11px] uppercase font-medium tracking-[0.26em] text-[#6e7485] group-hover:text-[#14171f] transition-colors">
           Cuộn xuống để khám phá
         </span>
         <div className="flex flex-col items-center animate-breathing group-hover:translate-y-1.5 transition-transform duration-300">
@@ -103,7 +104,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
             viewBox="0 0 14 44" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg"
-            className="text-white/70 group-hover:text-white transition-colors"
+            className="text-[#6e7485] group-hover:text-[#14171f] transition-colors"
           >
             <defs>
               <linearGradient id="hero-scroll-gradient" x1="0" y1="0" x2="0" y2="1">

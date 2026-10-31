@@ -1,0 +1,64 @@
+@media print {
+  /* Set A4 Page with minimal printable margin */
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Plus Jakarta Sans', Arial, sans-serif !important;
+    font-size: 11pt !important;
+  }
+
+  /* Hide navigation, buttons, footers, interactive elements */
+  header,
+  footer,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Container expands to full width with crisp black borders */
+  .print-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Tables have clear borders */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  table, th, td {
+    border: 1px solid #333333 !important;
+    padding: 6px 10px !important;
+  }
+
+  th {
+    background-color: #f2f2f2 !important;
+    font-weight: bold !important;
+  }
+
+  /* Signature blocks */
+  .signature-zone {
+    page-break-inside: avoid;
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-top: 30px !important;
+  }
+
+  .signature-box {
+    width: 45% !important;
+    text-align: center !important;
+    min-height: 120px !important;
+  }
+}

@@ -1,3 +1,13 @@
+export interface ProductItem {
+  serial_number: string;
+  shutter_count?: number;
+  condition_percent: number;
+  status: 'AVAILABLE' | 'RENTED' | 'MAINTENANCE';
+  purchase_date?: string;
+  purchase_price?: number;
+  note?: string;
+}
+
 export interface CameraModel {
   id: string;
   name: string;
@@ -16,6 +26,8 @@ export interface CameraModel {
   highlightBadge?: string;
   description: string;
   specs: string[];
+  items?: ProductItem[];
+  officialUrl?: string;
 }
 
 export interface LensModel {
@@ -37,6 +49,8 @@ export interface LensModel {
   features: string[];
   weight?: string;
   filterSize?: string;
+  items?: ProductItem[];
+  officialUrl?: string;
 }
 
 export interface AccessoryModel {
@@ -44,6 +58,7 @@ export interface AccessoryModel {
   name: string;
   category: 'ACCESSORY';
   brand?: string;
+  mountType?: 'NONE';
   image: string;
   dailyRate: number; // VND
   depositRate: number; // VND
@@ -52,6 +67,15 @@ export interface AccessoryModel {
   highlightBadge?: string;
   description: string;
   specs: string[];
+  items?: ProductItem[];
+  officialUrl?: string;
 }
 
 export type EquipmentItem = CameraModel | LensModel | AccessoryModel;
+
+export interface CartItem {
+  id: string;
+  item: EquipmentItem & { type?: 'BODY' | 'LENS' | 'ACCESSORY' };
+  quantity: number;
+  addedAt: string;
+}

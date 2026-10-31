@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  refuji-db-prod:
+    image: mysql:8.4
+    container_name: refuji-mysql-prod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-refuji_db}
+      MYSQL_USER: ${DB_USER:-refuji_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Ho_Chi_Minh
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    command: >
+      --default-authentication-plugin=caching_sha2_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=1G
+      --max_connections=200
+    networks:
+      - refuji_internal
+
+  refuji-api-prod:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: refuji-api-prod
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: mysql://${DB_USER}:${DB_PASSWORD}@refuji-db-prod:3306/${DB_NAME}?connection_limit=25
+      JWT_SECRET: ${JWT_SECRET}
+      AES_ENCRYPTION_KEY: ${AES_ENCRYPTION_KEY}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET}
+      CLOUDINARY_URL: ${CLOUDINARY_URL}
+    depends_on:
+      refuji-db-prod:
+        condition: service_healthy
+    networks:
+      - refuji_internal
+
+  refuji-web-prod:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: refuji-web-prod
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    depends_on:
+      - refuji-api-prod
+    networks:
+      - refuji_internal
+
+volumes:
+  mysql_prod_data:
+    driver: local
+
+networks:
+  refuji_internal:
+    driver: bridge

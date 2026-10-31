@@ -1,40 +1,50 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { GlassSearchBar } from './GlassSearchBar';
-import { CalendarModal } from './CalendarModal';
-import { CAMERAS, LENSES, ACCESSORIES } from '../data/mockData';
-import { CameraModel, LensModel, AccessoryModel } from '../types';
+import { motion } from 'framer-motion';
+import { CameraModel, LensModel, AccessoryModel, EquipmentItem } from '../types';
 import { 
   Calendar, 
-  ShieldCheck, 
-  Clock, 
   Sparkles, 
-  Layers, 
   Heart, 
-  ArrowUpRight 
+  ArrowUpRight,
+  ArrowRight,
+  ShoppingBag
 } from 'lucide-react';
 
 interface AvailabilityExplorerProps {
   onSearch: (params: { category: string; mount: string; series: string; dates: string }) => void;
   onSelectItem: (item: CameraModel | LensModel | AccessoryModel) => void;
   membershipTier?: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+  onOpenAllEquipment: () => void;
+  filterParams: { category: string; mount: string; series: string; dates: string };
+  onOpenCalendar: () => void;
+  cameras?: CameraModel[];
+  lenses?: LensModel[];
+  accessories?: AccessoryModel[];
+  onAddToCart?: (item: EquipmentItem) => void;
 }
 
+// Helper nhận diện ảnh thumbnail có viền trắng lớn để scale đều kích thước
+const isSmallThumbnailImage = (item: { name: string; image: string }) => {
+  return (
+    item.image.includes('thum') ||
+    item.image.includes('small') ||
+    item.image.includes('product-list_gfx100rf') ||
+    item.name.includes('GFX')
+  );
+};
+
 export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
-  onSearch,
+  onSearch: _onSearch,
   onSelectItem,
   membershipTier = 'BRONZE',
+  onOpenAllEquipment,
+  filterParams,
+  onOpenCalendar,
+  cameras = [],
+  lenses = [],
+  accessories = [],
+  onAddToCart,
 }) => {
-  // Bộ lọc đồng bộ từ thanh GlassSearchBar (Single Source of Truth)
-  const [filterParams, setFilterParams] = useState({
-    category: 'Thân máy (Body)',
-    mount: 'Hệ ngàm X (APS-C)',
-    series: 'Tất cả dòng máy',
-    dates: '29/10 — 31/10 (3 ngày)',
-  });
-  
-  // Trạng thái mở xem chi tiết lịch và bộ lọc theo loại trong lịch
-  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
@@ -47,7 +57,7 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
     });
   };
   
-  // Tỷ lệ giảm cọc theo MembershipTiers v1.1
+  // Tỷ lệ giảm cọc theo MembershipTiers
   const tierDiscountMap: Record<string, { label: string; discount: number; badge: string }> = {
     BRONZE: { label: 'Hạng Đồng', discount: 0, badge: 'Mặc định' },
     SILVER: { label: 'Hạng Bạc', discount: 0.05, badge: 'Giảm 5% cọc' },
@@ -55,278 +65,243 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
     PLATINUM: { label: 'Bạch Kim', discount: 0.15, badge: 'Giảm 15% cọc + Fast-track' }
   };
 
-  const currentTier = tierDiscountMap[membershipTier];
+  const currentTier = tierDiscountMap[membershipTier] || tierDiscountMap.BRONZE;
 
   // Danh sách toàn bộ cá thể thiết bị
-  const allEquipment = [
-    ...CAMERAS.map((c) => ({ ...c, type: 'BODY' as const })),
-    ...LENSES.map((l) => ({ ...l, type: 'LENS' as const })),
-    ...ACCESSORIES.map((a) => ({ ...a, type: 'ACCESSORY' as const })),
+  const allEquipment: (EquipmentItem & { type: 'BODY' | 'LENS' | 'ACCESSORY' })[] = [
+    ...cameras.map((c) => ({ ...c, type: 'BODY' as const })),
+    ...lenses.map((l) => ({ ...l, type: 'LENS' as const })),
+    ...accessories.map((a) => ({ ...a, type: 'ACCESSORY' as const })),
   ];
 
-  // Lọc chính xác theo nghiệp vụ đã chọn từ thanh tìm kiếm
-  const filteredItems = allEquipment.filter((item) => {
-    // 1. Lọc theo Phân loại
-    if (filterParams.category === 'Thân máy (Body)' && item.type !== 'BODY') return false;
-    if (filterParams.category === 'Ống kính (Lens)' && item.type !== 'LENS') return false;
-    if (filterParams.category === 'Phụ kiện & Pin' && item.type !== 'ACCESSORY') return false;
+  // 6 Thiết bị tiêu biểu hiển thị trên Trang Chủ (Cố định chuẩn 2 hàng: 3 máy + 3 ống kính)
+  // Giúp trang chủ ổn định 100%, không bị co giật, không tự chạy làm mờ nền khi thao tác popup
+  const showcaseItems: (EquipmentItem & { type: 'BODY' | 'LENS' | 'ACCESSORY' })[] = [
+    ...(cameras.slice(0, 3).map((c) => ({ ...c, type: 'BODY' as const }))),
+    ...(lenses.slice(0, 3).map((l) => ({ ...l, type: 'LENS' as const }))),
+  ];
 
-    // 2. Lọc theo Hệ ngàm
-    if (filterParams.mount === 'Hệ ngàm X (APS-C)') {
-      if (item.type === 'BODY' && (item as CameraModel).series === 'GFX') return false;
-      if (item.type === 'LENS' && (item as LensModel).mount === 'GF') return false;
-    }
-    if (filterParams.mount === 'Hệ ngàm G (Medium Format)') {
-      if (item.type === 'BODY' && (item as CameraModel).series !== 'GFX') return false;
-      if (item.type === 'LENS' && (item as LensModel).mount !== 'GF') return false;
-      if (item.type === 'ACCESSORY') return false;
-    }
-
-    // 3. Lọc theo Dòng máy
-    if (filterParams.series !== 'Tất cả dòng máy' && item.type === 'BODY') {
-      const cam = item as CameraModel;
-      if (filterParams.series === 'Fujifilm X100 Series' && cam.series !== 'X100') return false;
-      if (filterParams.series === 'Fujifilm X-T Series' && cam.series !== 'X-T') return false;
-      if (filterParams.series === 'Fujifilm X-H Series' && cam.series !== 'X-H') return false;
-      if (filterParams.series === 'Fujifilm GFX Series' && cam.series !== 'GFX') return false;
-    }
-
-    return true;
-  });
-
-  const handleFilterChange = (params: { category: string; mount: string; series: string; dates: string }) => {
-    setFilterParams(params);
-    onSearch(params);
-  };
+  // ĐÚNG YÊU CẦU: CHỈ HIỂN THỊ ĐÚNG 2 HÀNG (3 cột x 2 hàng = 6 thiết bị) VÀ 1 NÚT XEM THÊM Ở DƯỚI
+  const displayItems = showcaseItems;
 
   return (
-    <section className="relative w-full max-w-6xl mx-auto px-4 sm:px-8 py-8 select-none">
+    <section id="explore" className="relative w-full max-w-6xl mx-auto px-4 sm:px-8 pt-6 sm:pt-8 pb-12 select-none">
       
-      {/* 1. SECTION HEADER (Chuẩn phong cách Editorial Luxury) */}
-      <div className="text-center max-w-3xl mx-auto mb-8">
-        <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-white uppercase tracking-tight mb-3">
+      {/* 1. SECTION HEADER (Editorial Luxury Style) */}
+      <div className="text-center max-w-3xl mx-auto mb-4">
+        <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-[#14171f] uppercase tracking-tight mb-2.5">
           Kiểm Tra Lịch &amp; Dự Toán Chi Phí
         </h2>
         
-        <p className="text-xs sm:text-sm text-white/70 font-light leading-relaxed">
+        <p className="text-xs sm:text-sm text-[#525868] font-light leading-relaxed">
           Thuật toán kiểm tra khả dụng đa khung giờ theo thời gian thực (Time-Slot Availability Engine v1.1),
           tự động tách dòng thiết bị và bảo toàn quyền giữ chỗ 15 phút chống đặt trùng.
         </p>
       </div>
 
-      {/* 2. THANH TÌM KIẾM LIQUID GLASS (Bộ lọc trung tâm duy nhất) */}
-      <GlassSearchBar 
-        onSearch={handleFilterChange} 
-        selectedDates={filterParams.dates}
-        onOpenCalendar={() => setIsCalendarModalOpen(true)}
-      />
+      {/* 2. NÚT CHỌN LỊCH NHANH DẠNG PILL GLASS */}
+      <div className="flex justify-center mb-5">
+        <button
+          type="button"
+          onClick={onOpenCalendar}
+          className="crystal-liquid-glass px-7 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-[#14171f] hover:text-[#0b0d12] flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] shadow-sm group border border-[#14171f]/12 hover:border-[#14171f]/25"
+        >
+          <Calendar size={16} className="text-[#3c4252]" />
+          <span>Chọn ngày nhận &amp; trả máy: <strong className="text-[#14171f] underline decoration-[#14171f]/30">{filterParams.dates}</strong></span>
+          <ArrowUpRight size={15} className="opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-[#14171f]" />
+        </button>
+      </div>
 
-      {/* 3. THANH THÔNG TIN BỘ LỌC HIỆN TẠI (TINH GỌN, ĐÃ CHUYỂN HẠNG THÀNH VIÊN VÀO TÀI KHOẢN) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mt-8 mb-6 z-10 relative">
+      {/* 3. THANH THÔNG TIN BỘ LỌC HIỆN TẠI */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5 z-10 relative">
         <div className="flex items-center gap-2.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 radar-pulse-amber shrink-0" />
-          <span className="text-xs sm:text-sm font-medium text-white/90">
-            Tìm thấy <strong className="text-white font-bold">{filteredItems.length}</strong> thiết bị khả dụng
+          <span className="w-2.5 h-2.5 rounded-full bg-[#14171f]/80 radar-pulse-white shrink-0" />
+          <span className="text-xs sm:text-sm font-medium text-[#444a5a]">
+            Hiển thị <strong className="text-[#14171f] font-bold">{displayItems.length}</strong> thiết bị nổi bật sẵn sàng
           </span>
-          <span className="text-xs text-white/40 hidden md:inline">•</span>
-          <span className="text-xs text-white/60 hidden md:inline truncate">
-            {filterParams.category} • {filterParams.mount} • {filterParams.dates}
+          <span className="text-xs text-[#14171f]/30 hidden md:inline">•</span>
+          <span className="text-xs text-[#62687a] hidden md:inline truncate">
+            {filterParams.dates}
           </span>
         </div>
 
         {currentTier.discount > 0 && (
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/25 text-[11px] text-amber-300">
-            <Sparkles size={12} className="text-amber-400" />
-            <span>Tự động áp dụng đặc quyền <strong>{currentTier.label}</strong> (Giảm {currentTier.discount * 100}% cọc)</span>
+          <div className="crystal-liquid-glass inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#14171f]/12 text-[11px] text-[#2c3242] shadow-sm font-medium">
+            <Sparkles size={12} className="text-[#484f60]" />
+            <span>Đặc quyền <strong className="text-[#14171f] font-bold">{currentTier.label}</strong> (Giảm {currentTier.discount * 100}% cọc)</span>
           </div>
         )}
       </div>
 
-      {/* 4. PHÂN HỆ XEM LỊCH & CHỌN NGÀY DẠNG POPUP (THEO STYLE ẢNH 2 & THIẾT KẾ ẢNH 3) */}
-      <div className="mb-10">
-        
-        {/* Nút bấm mở Popup Lịch nổi bật */}
-        <div className="flex justify-center mb-6">
-          <button
-            type="button"
-            onClick={() => setIsCalendarModalOpen(true)}
-            className="crystal-liquid-glass px-7 py-3 rounded-full text-xs sm:text-sm font-semibold text-white/95 hover:text-white flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] shadow-lg group border border-white/20 hover:border-white/40"
-          >
-            <Calendar size={16} className="text-amber-400" />
-            <span>Chọn ngày nhận &amp; trả máy</span>
-            <ArrowUpRight size={15} className="opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </button>
-        </div>
+      {/* 4. LƯỚI 2 HÀNG THIẾT BỊ (GRID 3 CỘT X 2 HÀNG = 6 ITEMS) KHÔNG BỊ TRỄ LAYOUT */}
+      <div className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {displayItems.map((item, idx) => {
+            const discountedDeposit = Math.round(item.depositRate * (1 - currentTier.discount));
+            const isLowStock = item.availableCount === 1;
+            const isFav = favorites.has(item.id);
 
-        {/* POPUP MODAL NỔI (THEO ĐÚNG STYLE ẢNH 2 & THIẾT KẾ ẢNH 3) */}
-        <AnimatePresence>
-          {isCalendarModalOpen && (
-            <CalendarModal
-              isOpen={isCalendarModalOpen}
-              onClose={() => setIsCalendarModalOpen(false)}
-              initialStartDate="2026-10-29"
-              initialEndDate="2026-10-31"
-              onApplyDates={(rangeText) => {
-                const newParams = { ...filterParams, dates: rangeText };
-                setFilterParams(newParams);
-                onSearch(newParams);
-              }}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* 5. LƯỚI THIẾT BỊ KHẢ DỤNG CHI TIẾT (LIVE INVENTORY CARDS GRID WITH RYTOX HOVER SPRING) */}
-      <div className="mb-14">
-        {filteredItems.length === 0 ? (
-          <div className="liquid-glass rounded-2xl p-10 text-center border border-white/10 my-8">
-            <div className="text-base text-white/80 font-medium mb-1">
-              Không tìm thấy thiết bị phù hợp với bộ lọc hiện tại
-            </div>
-            <p className="text-xs text-white/50">
-              Vui lòng thử chọn lại phân loại, hệ ngàm hoặc dòng máy khác trên thanh tìm kiếm.
-            </p>
-          </div>
-        ) : (
-          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item, idx) => {
-              const discountedDeposit = Math.round(item.depositRate * (1 - currentTier.discount));
-              const isLowStock = item.availableCount === 1;
-              const isFav = favorites.has(item.id);
-
-              return (
-                <motion.div 
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, y: 24, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 0.38, delay: Math.min(idx * 0.05, 0.4), ease: [0.16, 1, 0.3, 1] }}
-                  className="relative liquid-glass-card rounded-[28px] p-6 border border-white/12 hover:border-white/30 flex flex-col justify-between transition-all duration-300 group cursor-pointer shadow-[0_16px_40px_rgba(0,0,0,0.45)] hover:shadow-[0_24px_55px_rgba(0,0,0,0.65)]"
-                  onClick={() => onSelectItem(item as any)}
-                >
+            return (
+              <motion.div 
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: Math.min(idx * 0.05, 0.3), ease: [0.16, 1, 0.3, 1] }}
+                className="relative liquid-glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 group cursor-pointer"
+                onClick={() => onSelectItem(item as any)}
+              >
                   <div>
-                    {/* Top Row: Badge on Left, Heart Wishlist on Right (chuẩn style ảnh 2) */}
+                    {/* Top Row: Meta Badge & Wishlist Button */}
                     <div className="flex items-center justify-between gap-2 mb-2 relative z-10">
                       <div className="flex items-center gap-1.5">
-                        <span className="px-3 py-1 rounded-lg bg-black/90 backdrop-blur-md border border-white/15 text-white text-[11px] font-bold shadow-md tracking-wide">
-                          {item.highlightBadge || item.type}
+                        <span className="px-3 py-1 rounded-full bg-[#14171f]/[0.05] border border-[#14171f]/[0.08] backdrop-blur-md text-[10.5px] font-medium tracking-wider text-[#3c4252] uppercase flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#14171f]/70" />
+                          {item.highlightBadge || (item.type === 'BODY' ? 'Máy ảnh' : item.type === 'LENS' ? 'Ống kính' : 'Phụ kiện')}
                         </span>
                       </div>
 
-                      {/* Nút yêu thích Heart tròn (theo style ảnh 2) */}
                       <button
                         type="button"
                         aria-label="Thêm vào yêu thích"
                         onClick={(e) => toggleFavorite(item.id, e)}
-                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 border backdrop-blur-md ${
                           isFav 
-                            ? 'text-rose-500 bg-rose-500/10' 
-                            : 'text-white/60 hover:text-white hover:bg-white/10 active:scale-90'
+                            ? 'text-rose-500 bg-rose-50 border-rose-200 shadow-sm' 
+                            : 'text-[#62687a] hover:text-[#14171f] bg-white/60 hover:bg-white border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-90'
                         }`}
                       >
-                        <Heart size={19} className={isFav ? 'fill-rose-500' : ''} />
+                        <Heart size={15} className={isFav ? 'fill-rose-500' : 'stroke-[1.8]'} />
                       </button>
                     </div>
 
-                    {/* Product Image: Thoáng đạt, nổi khối 3D không bị đóng khung tối (theo style ảnh 2) */}
-                    <div className="relative h-48 sm:h-52 w-full flex items-center justify-center py-2 my-2 overflow-hidden">
+                    {/* Product Stage Image: Tự động cân bằng tỉ lệ ảnh giúp 3 máy GFX to đều đặn như hàng dưới */}
+                    <div className="relative h-44 sm:h-48 w-full flex items-center justify-center my-3 overflow-hidden">
                       <img 
                         src={item.image} 
                         alt={item.name}
-                        className="max-h-full max-w-[88%] object-contain drop-shadow-[0_16px_28px_rgba(0,0,0,0.6)] group-hover:scale-108 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" 
+                        className={`max-h-full max-w-[88%] object-contain relative z-10 product-stage-img transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                          isSmallThumbnailImage(item)
+                            ? 'scale-[1.62] group-hover:scale-[1.68] group-hover:-translate-y-1'
+                            : 'group-hover:scale-[1.04] group-hover:-translate-y-1'
+                        }`} 
                       />
                     </div>
 
+                    {/* Technical Meta Tag */}
+                    <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-[#6e7587] mb-1 truncate font-medium">
+                      {item.type === 'BODY' 
+                        ? `Fujifilm • ${(item as CameraModel).series || 'X'} Series • ${(item as CameraModel).resolution || 'APS-C'}`
+                        : item.type === 'LENS'
+                        ? `Fujinon • ${(item as LensModel).mount === 'GF' ? 'G-Mount' : 'X-Mount'} • ${(item as LensModel).aperture?.split(' ')[0] || ''}`
+                        : `Phụ kiện chính hãng • ${item.brand || 'Fujifilm'}`}
+                    </div>
+
                     {/* Product Name */}
-                    <h4 className="text-lg sm:text-xl font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors line-clamp-1">
+                    <h4 className="text-base sm:text-[17px] font-semibold text-[#14171f] tracking-tight mb-2.5 line-clamp-1 group-hover:text-[#2d3342] transition-colors">
                       {item.name}
                     </h4>
 
-                    {/* Trạng thái sẵn sàng cho Khách hàng (Đen than & Trắng bạc chuẩn Fujifilm) */}
+                    {/* Stock Status Indicator */}
                     <div className="flex items-center gap-1.5 text-xs mb-4">
-                      <span className={`w-2 h-2 rounded-full ${isLowStock ? 'bg-amber-400 radar-pulse-amber' : 'bg-white/80 shadow-[0_0_6px_rgba(255,255,255,0.7)]'}`} />
-                      <span className={isLowStock ? 'text-amber-400 font-medium' : 'text-white/85 font-medium'}>
-                        {isLowStock ? 'Chỉ còn 1 thiết bị cuối' : 'Sẵn sàng giao ngay'}
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        isLowStock 
+                          ? 'bg-[#14171f]/70 ring-2 ring-[#14171f]/15' 
+                          : 'bg-emerald-500 ring-2 ring-emerald-500/20'
+                      }`} />
+                      <span className={`text-[11.5px] font-medium tracking-tight ${
+                        isLowStock ? 'text-[#3c4252]' : 'text-emerald-700'
+                      }`}>
+                        {isLowStock ? 'Chỉ còn 1 thiết bị' : 'Sẵn sàng giao ngay'}
                       </span>
+                      <span className="text-[#14171f]/20 mx-1">•</span>
+                      <span className="text-[11px] text-[#6e7587]">Giao hỏa tốc</span>
                     </div>
                   </div>
 
-                  {/* Bottom: Giá bên trái, Nút mũi tên có chữ "Đặt chỗ" bên phải (theo đúng yêu cầu ảnh 2) */}
-                  <div className="pt-3 border-t border-white/10 flex items-end justify-between gap-3">
-                    <div>
-                      <div className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                        {item.dailyRate.toLocaleString('vi-VN')} ₫
-                        <span className="text-xs font-normal text-white/50 ml-1">/ ngày</span>
+                  {/* Bottom: Pricing & Action Button */}
+                  <div className="pt-3.5 border-t border-[#14171f]/[0.08] flex items-end justify-between gap-3 mt-auto">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-xl sm:text-2xl font-bold text-[#14171f] tracking-tight font-sans">
+                          {item.dailyRate.toLocaleString('vi-VN')}
+                        </span>
+                        <span className="text-xs font-semibold text-[#14171f]/80">₫</span>
+                        <span className="text-[11px] text-[#6e7587] font-light ml-0.5">/ ngày</span>
                       </div>
-                      <div className="text-xs text-white/60 mt-0.5">
-                        Cọc:{' '}
+
+                      <div className="text-[11.5px] text-[#62687a] mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[#7a8192]">Cọc:</span>
                         {currentTier.discount > 0 ? (
-                          <>
-                            <span className="line-through text-white/40 mr-1.5">
-                              {item.depositRate.toLocaleString('vi-VN')} ₫
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                            <span className="line-through text-[#8e95a6] text-[10.5px]">
+                              {item.depositRate.toLocaleString('vi-VN')}₫
                             </span>
-                            <span className="text-amber-400 font-semibold">
-                              {discountedDeposit.toLocaleString('vi-VN')} ₫
+                            <span className="text-[#14171f] font-semibold text-[11px]">
+                              {discountedDeposit.toLocaleString('vi-VN')}₫
                             </span>
-                          </>
+                          </span>
                         ) : (
-                          <span>{item.depositRate.toLocaleString('vi-VN')} ₫</span>
+                          <span className="text-[#3c4252] font-medium whitespace-nowrap">
+                            {item.depositRate.toLocaleString('vi-VN')}₫
+                          </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Nút mũi tên có thêm văn bản "Đặt chỗ" */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectItem(item as any);
-                      }}
-                      className="h-11 px-4 sm:px-5 rounded-full bg-white hover:bg-neutral-100 text-[#090A0F] font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-[0_4px_16px_rgba(255,255,255,0.2)] hover:shadow-[0_6px_20px_rgba(255,255,255,0.3)] active:scale-95 transition-all cursor-pointer shrink-0"
-                    >
-                      <span>Đặt chỗ</span>
-                      <ArrowUpRight size={18} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        title="Thêm vào giỏ hàng"
+                        aria-label="Thêm vào giỏ hàng"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onAddToCart) onAddToCart(item as any);
+                        }}
+                        className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] hover:bg-[#14171f] text-[#14171f] hover:text-white border border-[#14171f]/10 hover:border-transparent flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                      >
+                        <ShoppingBag size={14} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectItem(item as any);
+                        }}
+                        className="h-9 px-4 sm:px-5 rounded-full bg-[#14171f] hover:bg-[#252a37] active:scale-95 text-white font-semibold text-xs tracking-wide flex items-center gap-1.5 shadow-[0_4px_14px_rgba(20,24,32,0.18)] hover:shadow-[0_6px_20px_rgba(20,24,32,0.26)] transition-all duration-200 cursor-pointer"
+                      >
+                        <span>Đặt chỗ</span>
+                        <ArrowUpRight size={14} className="stroke-[2.2] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               );
             })}
-          </motion.div>
-        )}
+          </div>
       </div>
 
-      {/* 6. KHUNG QUY TẮC NGHIỆP VỤ & PHÁP LÝ (THEO BẢN ĐẶC TẢ v1.1) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 liquid-glass rounded-3xl p-6 sm:p-7 border border-white/15 text-xs text-white/80 shadow-2xl">
-        
-        <div className="flex items-start gap-3">
-          <Clock size={20} className="text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <div className="font-semibold text-white mb-1">Khóa giữ chỗ 15 phút (Hold)</div>
-            <div className="text-white/60 leading-relaxed text-[11.5px]">
-              Đơn hàng được khóa chỗ độc quyền 15 phút chống Race Condition. Bạn có thể thanh toán cọc qua VNPAY hoặc chọn nhận máy tại quầy.
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <ShieldCheck size={20} className="text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <div className="font-semibold text-white mb-1">Tuân thủ Luật Căn cước 2023</div>
-            <div className="text-white/60 leading-relaxed text-[11.5px]">
-              Cửa hàng chỉ đối chiếu Thẻ căn cước/VNeID trực tiếp khi bàn giao máy, cam kết <strong>KHÔNG giữ thẻ gốc</strong> của khách hàng.
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <Layers size={20} className="text-sky-400 shrink-0 mt-0.5" />
-          <div>
-            <div className="font-semibold text-white mb-1">Kiểm tra Serial &amp; Biên bản 2 chiều</div>
-            <div className="text-white/60 leading-relaxed text-[11.5px]">
-              Mỗi thiết bị được gán đúng số Serial Number, chụp ảnh ngoại hình đối chứng lúc Check-out và hoàn cọc tức thì khi Check-in.
-            </div>
-          </div>
-        </div>
-
+      {/* 
+        5. ĐÚNG YÊU CẦU: 1 NÚT "XEM THÊM" Ở DƯỚI 2 HÀNG
+        - Bấm vào sẽ mở popup cố định gồm toàn bộ máy và phụ kiện
+        - Thay thế thanh home ảnh 2 thành thanh tìm kiếm ảnh 3 ở header
+      */}
+      <div className="flex flex-col items-center justify-center mt-10 mb-14">
+        <button
+          type="button"
+          onClick={onOpenAllEquipment}
+          className="group relative crystal-liquid-glass rytox-hover-lift px-8 sm:px-10 py-4 rounded-full flex items-center gap-3.5 text-sm sm:text-base font-semibold text-[#14171f] hover:text-[#0b0d12] cursor-pointer shadow-md border border-[#14171f]/15 hover:border-[#14171f]/30 active:scale-95 transition-all"
+        >
+          <span className="w-2.5 h-2.5 rounded-full bg-[#14171f]/80 radar-pulse-white" />
+          <span>Xem thêm toàn bộ máy &amp; phụ kiện</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-[#14171f]/[0.06] text-xs font-mono text-[#2c3242] border border-[#14171f]/10">
+            {allEquipment.length}+ thiết bị
+          </span>
+          <ArrowRight size={17} className="transition-transform group-hover:translate-x-1 duration-200 text-[#14171f]/80" />
+        </button>
+        <span className="text-[12px] text-[#6e7587] mt-2.5 text-center">
+          Mở toàn bộ kho máy &amp; phụ kiện kèm thanh tìm kiếm thời gian thực
+        </span>
       </div>
 
     </section>
