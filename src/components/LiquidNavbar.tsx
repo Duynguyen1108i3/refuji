@@ -42,7 +42,9 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
     { id: 'policies', label: 'Chính sách cọc', shortLabel: 'Cọc', icon: <ShieldCheck size={16} /> },
   ];
 
-  const showNavbar = true; // Luôn hiển thị thanh điều hướng trên toàn bộ các trang để chuyển tab tức thì
+  // Tự động ẩn hoàn toàn thanh điều hướng khi ở Trang chủ (hero) để giữ trọn vẹn màn hình 100vh tối giản
+  // Chỉ hiển thị khi cuộn xuống các phân hệ khác (activeSection !== 'hero') hoặc khi mở chế độ tìm kiếm thiết bị (isSearchMode)
+  const showNavbar = isSearchMode || activeSection !== 'hero';
 
   return (
     <>
