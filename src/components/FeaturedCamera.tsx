@@ -150,25 +150,26 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
   return (
     <section 
       id="cameras" 
-      className="relative w-full h-screen min-h-[720px] max-h-[1080px] scroll-mt-[84px] select-none flex flex-col justify-center items-center overflow-hidden bg-[#14171f]"
+      className="relative w-full min-h-[calc(100vh-84px)] scroll-mt-[84px] select-none flex flex-col justify-center items-center py-6 sm:py-8 lg:py-10 overflow-hidden"
     >
       {/* 
         ========================================================================
         1. BACKGROUND: FUJIFILM OFFICIAL LOOP SLIDER
-        - Cuộn ngang chậm rãi tràn toàn màn hình (Full Screen), sắc nét như khi bấm vào xem ảnh
+        - Cuộn ngang chậm rãi ở phía đằng sau
+        - Khi bấm "Xem ảnh": Tràn toàn màn hình (fixed inset-0 w-screen h-screen z-[60]), ảnh sắc nét 100%
         ========================================================================
       */}
       <div 
         className={`overflow-hidden pointer-events-auto bg-[#14171f] transition-all duration-500 ${
           isViewPhotoOnly 
             ? 'fixed inset-0 z-[60] w-screen h-screen' 
-            : 'absolute inset-0 z-0 w-full h-full'
+            : 'absolute inset-0 z-0'
         }`}
       >
         <div className="w-full h-full overflow-hidden flex items-center">
           <div 
             ref={trackRef}
-            className="fuji-bg-loop-slider__track h-full flex items-center"
+            className="fuji-bg-loop-slider__track"
           >
             {/* 3 lần lặp để đảm bảo trượt mượt mà vô tận không giật */}
             {[0, 1, 2].map((loopIndex) => (
@@ -179,7 +180,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                     ref={(el) => {
                       if (loopIndex === 0) itemRefs.current[idx] = el;
                     }}
-                    className={`fuji-bg-loop-slider__item group relative cursor-pointer transition-all duration-300 h-full ${
+                    className={`fuji-bg-loop-slider__item group relative cursor-pointer transition-all duration-300 ${
                       activePhotoIndex === idx && isPaused ? 'ring-2 ring-white/50' : ''
                     }`}
                     onClick={() => handleSelectPhoto(idx)}
@@ -187,7 +188,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                     <img 
                       src={img.url} 
                       alt={img.alt} 
-                      className="h-full w-auto min-w-[320px] sm:min-w-[420px] md:min-w-[560px] object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                      className="h-full w-auto min-w-[280px] sm:min-w-[340px] md:min-w-[420px] object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                       loading={loopIndex === 0 ? 'eager' : 'lazy'}
                     />
                   </div>
@@ -198,15 +199,15 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
         </div>
 
         {/* 
-          Lớp phủ tương phản điện ảnh (Cinematic Contrast Overlay):
-          - Cho phép ảnh chạy phía sau full màn hình rõ nét, sống động như khi xem ảnh
-          - Thêm viền tối nhẹ ở đỉnh (dưới navbar) và đáy để chuyển cảnh hoàn hảo
+          Lớp màng Frosted Veil: 
+          - Bình thường: Giữ màu nền thanh lịch và tương phản cho chữ ở foreground
+          - Khi "Xem ảnh": Ẩn hoàn toàn (opacity-0), ảnh rõ nét 100% nguyên bản
         */}
         <div 
           className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${
             isViewPhotoOnly 
               ? 'opacity-0' 
-              : 'opacity-100 bg-gradient-to-b from-black/45 via-black/10 to-black/60'
+              : 'opacity-100 bg-gradient-to-r from-white/95 via-white/88 to-white/75 backdrop-blur-[1.5px]'
           }`} 
         />
 
@@ -238,7 +239,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
             className={`px-4 sm:px-5 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-2 active:scale-95 transition-all shadow-md cursor-pointer ${
               isViewPhotoOnly 
                 ? 'h-11 bg-[#14171f] text-white hover:bg-[#282e3c] border border-white/20' 
-                : 'h-10 bg-white/90 backdrop-blur-xl text-[#14171f] hover:bg-white border border-white/60 shadow-lg'
+                : 'h-10 liquid-glass text-[#14171f] hover:bg-neutral-50 border border-[#14171f]/15'
             }`}
             title={isViewPhotoOnly ? 'Đóng chế độ xem ảnh' : 'Xem rõ bộ ảnh nền Fujifilm tràn toàn màn hình'}
           >
@@ -259,7 +260,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
 
         {/* Thanh chuyển đổi nhanh đúng 4 máy hot nhất */}
         <div className="flex items-center justify-center mb-6">
-          <div className="bg-white/92 backdrop-blur-2xl p-1.5 rounded-full flex flex-wrap items-center justify-center gap-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.35)] border border-white/60 max-w-full">
+          <div className="liquid-glass p-1.5 rounded-full flex flex-wrap items-center justify-center gap-1.5 shadow-md max-w-full">
             {hotCameras.map((cam, idx) => {
               const isSelected = idx === currentIndex;
               return (
@@ -269,7 +270,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                   className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-[13px] font-semibold transition-all duration-300 cursor-pointer ${
                     isSelected
                       ? 'bg-[#14171f] text-white shadow-md scale-[1.02]'
-                      : 'text-[#424856] hover:text-[#14171f] hover:bg-[#14171f]/[0.06] active:scale-95'
+                      : 'text-[#525868] hover:text-[#14171f] hover:bg-[#14171f]/[0.05] active:scale-95'
                   }`}
                 >
                   <span>{cam.name.replace('FUJIFILM ', '')}</span>
@@ -286,10 +287,10 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
           <div className="lg:col-span-5 flex flex-col items-center">
             <div className="relative w-full max-w-[340px] sm:max-w-[380px]">
               {/* Khung viền lệch 1px than tre */}
-              <div className="absolute -top-3.5 -left-3.5 w-full h-full border border-white/40 pointer-events-none z-0 transition-transform duration-500 hover:translate-x-1 hover:translate-y-1 rounded-2xl" />
+              <div className="absolute -top-3.5 -left-3.5 w-full h-full border border-[#14171f]/20 pointer-events-none z-0 transition-transform duration-500 hover:translate-x-1 hover:translate-y-1 rounded-2xl" />
 
               {/* Bục chụp ảnh sản phẩm nền trắng tinh khôi */}
-              <div className="relative z-10 rounded-2xl overflow-hidden shadow-[0_24px_50px_rgba(0,0,0,0.4)] bg-white border border-white/80 aspect-[4/3] flex items-center justify-center">
+              <div className="relative z-10 rounded-2xl overflow-hidden shadow-[0_16px_40px_rgba(20,24,32,0.1)] bg-white border border-[#14171f]/10 aspect-[4/3] flex items-center justify-center">
                 <div className="absolute top-3 left-3 z-20 liquid-glass px-3 py-1.5 rounded-full text-[10px] font-semibold text-[#14171f] tracking-wide shadow-sm flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#14171f]/80 radar-pulse-white" />
                   <span>{activeCam.highlightBadge || 'Được thuê nhiều nhất'}</span>
@@ -311,7 +312,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                 - Bấm vào từng ảnh: Tự đứng yên cho người xem
                 - Thêm nút "Chạy tiếp" khi đang đứng yên để tiếp tục tự động cuộn
               */}
-              <div className="flex items-center justify-between gap-2 mt-4 z-10 relative bg-white/92 backdrop-blur-xl p-2 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/60">
+              <div className="flex items-center justify-between gap-2 mt-4 z-10 relative">
                 <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
                   {galleryImages.map((gImg, gIdx) => {
                     const isSelected = activePhotoIndex === gIdx && isPaused;
@@ -386,7 +387,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full bg-white/95 backdrop-blur-2xl rounded-3xl p-6 sm:p-7 md:p-8 border border-white/80 shadow-[0_24px_60px_rgba(0,0,0,0.4)]"
+                className="w-full liquid-glass rounded-3xl p-6 sm:p-7 md:p-8 border border-[#14171f]/10 shadow-[0_16px_40px_rgba(20,24,32,0.06)]"
               >
                 {/* Badge phân loại */}
                 <div className="flex items-center justify-between mb-3">
@@ -540,9 +541,6 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Lớp chuyển cảnh dịu nhẹ ở đáy section sang phân hệ Ống kính */}
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#fbfbfc] via-[#fbfbfc]/80 to-transparent pointer-events-none z-10" />
 
     </section>
   );
