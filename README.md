@@ -1,7 +1,7 @@
 # REFUJI — HƯỚNG DẪN CÀI ĐẶT, KHỞI CHẠY & SỬ DỤNG HỆ THỐNG
 
 > **Dự án:** Hệ thống Quản lý & Cho thuê Máy ảnh, Ống kính Fujifilm chuyên nghiệp  
-> **Tác giả:** Tran Txi — Khoa Công nghệ Thông tin, Đại học Công nghệ Sài Gòn (STU)  
+> **Tác giả:** Nguyễn Thành Duy + Nguyễn Ngọc Minh Châu — Khoa Công nghệ Thông tin, Đại học Công nghệ Sài Gòn (STU)  
 > **Cập nhật:** Tháng 11/2026
 
 ---
