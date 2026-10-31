@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationScrubber, NavScrubberItem } from './NavigationScrubber';
 import { GlassSearchBar, SearchFilterParams } from './GlassSearchBar';
-import { Home, Camera, Aperture, Calendar, ShieldCheck, ShoppingBag, X } from 'lucide-react';
+import { Home, Camera, Aperture, Calendar, ShieldCheck, ShoppingBag, User, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LiquidNavbarProps {
@@ -50,12 +50,7 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
           showNavbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         }`}
       >
-        {/* Subtle Frosted Glass Top Header Background for Smooth Under-Scrubbing */}
-        <div 
-          className={`absolute inset-0 bg-white/75 backdrop-blur-xl border-b border-[#14171f]/5 transition-opacity duration-300 pointer-events-none ${
-            isVisible || isSearchMode ? 'opacity-100 shadow-[0_4px_24px_rgba(20,24,32,0.03)]' : 'opacity-0'
-          }`}
-        />
+        {/* Chỉ hiện thanh taskbar ở chính giữa, không có lớp nền trải dài từ Refuji tới tài khoản */}
         {/* LOGO BÊN TRÁI: Độc lập, cỡ chữ lớn sang trọng */}
         <div className="flex items-center z-10 pointer-events-auto">
           <button
@@ -130,8 +125,8 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
           </AnimatePresence>
         </div>
 
-        {/* BÊN PHẢI: Nút Đóng (khi ở chế độ tìm kiếm) & Nút Giỏ Hàng Thuê */}
-        <div className="flex items-center gap-2.5 z-10 pointer-events-auto">
+        {/* BÊN PHẢI: Nút Đóng (khi ở chế độ tìm kiếm), Nút Giỏ Hàng Thuê và Nút Tài Khoản */}
+        <div className="flex items-center gap-2 sm:gap-2.5 z-10 pointer-events-auto">
           {isSearchMode && onCloseSearchMode && (
             <button
               onClick={onCloseSearchMode}
@@ -142,9 +137,10 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
             </button>
           )}
 
+          {/* Nút Giỏ hàng (nằm ở bên trái kế bên Tài khoản) */}
           <button
             onClick={onOpenCart}
-            className="bg-white hover:bg-neutral-50 rytox-hover-lift h-11 px-5 sm:px-6 rounded-full flex items-center gap-2 font-semibold text-xs sm:text-sm text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all relative group"
+            className="bg-white hover:bg-neutral-50 rytox-hover-lift h-11 px-4 sm:px-5 rounded-full flex items-center gap-2 font-semibold text-xs sm:text-sm text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all relative group"
             aria-label="Mở giỏ hàng thuê thiết bị"
           >
             <ShoppingBag size={16} className="text-[#14171f] group-hover:scale-110 transition-transform" />
@@ -155,6 +151,18 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
               </span>
             )}
           </button>
+
+          {/* Nút Tài khoản: chỉ hiện ở ngoài, ẩn đi khi vào trang toàn bộ thiết bị (#thiet-bi) */}
+          {!isSearchMode && onOpenAuth && (
+            <button
+              onClick={onOpenAuth}
+              className="bg-white hover:bg-neutral-50 rytox-hover-lift h-11 px-4 sm:px-5 rounded-full flex items-center gap-2 font-semibold text-xs sm:text-sm text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all"
+              aria-label="Tài khoản thành viên"
+            >
+              <User size={16} className="text-[#14171f]" />
+              <span className="hidden sm:inline">Tài khoản</span>
+            </button>
+          )}
         </div>
       </header>
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraModel } from '../types';
 import { 
@@ -9,7 +9,7 @@ import {
   ShoppingBag, 
   Sparkles, 
   Eye, 
-  EyeOff, 
+  X, 
   Play, 
   Pause 
 } from 'lucide-react';
@@ -24,25 +24,96 @@ interface FeaturedCameraProps {
 
 export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelectCamera, onAddToCart }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [showFullGallery, setShowFullGallery] = useState(false);
+  const [isPaused, setIsPaused] = useState(false); // Mặc định tự động di chuyển
+  const [isViewPhotoOnly, setIsViewPhotoOnly] = useState(false); // Chế độ "Xem ảnh" ẩn toàn bộ popup
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  const sliderTrackRef = useRef<HTMLDivElement>(null);
 
-  // Reset active photo index khi đổi camera
-  useEffect(() => {
-    setActivePhotoIndex(0);
-  }, [currentIndex]);
-
-  if (!cameras || cameras.length === 0) return null;
+  const trackRef = useRef<HTMLDivElement>(null);
+  const posRef = useRef(0);
+  const animIdRef = useRef<number | null>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Giữ lại đúng 4 máy hot nhất
-  const hotCameras = cameras.slice(0, 4);
+  const hotCameras = (cameras || []).slice(0, 4);
   const activeCam = hotCameras[currentIndex] || hotCameras[0];
-  const comboGuide = findRecommendedComboForCamera(activeCam.name);
+  const comboGuide = activeCam ? findRecommendedComboForCamera(activeCam.name) : { recommendedLensNames: [] };
+  const galleryImages = activeCam ? getCameraGallery(activeCam.name) : [];
 
-  // Lấy bộ ảnh trải nghiệm chính hãng Fujifilm tương ứng với máy đang chọn
-  const galleryImages = getCameraGallery(activeCam.name);
+  // Reset khi chuyển đổi camera
+  useEffect(() => {
+    setActivePhotoIndex(0);
+    posRef.current = 0;
+    if (trackRef.current) {
+      trackRef.current.style.transform = 'translate3d(0, 0, 0)';
+    }
+    setIsPaused(false); // Bắt đầu chạy lại khi đổi máy
+  }, [currentIndex, activeCam?.id]);
+
+  // Vòng lặp RequestAnimationFrame: Di chuyển chậm và mượt mà, mặc định tự động trượt
+  useEffect(() => {
+    if (isPaused) {
+      if (animIdRef.current) cancelAnimationFrame(animIdRef.current);
+      return;
+    }
+
+    let lastTime = performance.now();
+    const speed = 20; // 20px mỗi giây: tốc độ chậm rãi, êm ái và sang trọng
+
+    const step = (time: number) => {
+      const delta = (time - lastTime) / 1000;
+      lastTime = time;
+
+      posRef.current += speed * delta;
+
+      if (trackRef.current) {
+        // Vòng lặp vô tận tại 1/3 tổng chiều dài track (track lặp 3 chu kỳ)
+        const oneSetWidth = trackRef.current.scrollWidth / 3;
+        if (oneSetWidth > 0 && posRef.current >= oneSetWidth) {
+          posRef.current -= oneSetWidth;
+        }
+        trackRef.current.style.transform = `translate3d(-${posRef.current}px, 0, 0)`;
+      }
+
+      animIdRef.current = requestAnimationFrame(step);
+    };
+
+    animIdRef.current = requestAnimationFrame(step);
+
+    return () => {
+      if (animIdRef.current) cancelAnimationFrame(animIdRef.current);
+    };
+  }, [isPaused, galleryImages]);
+
+  // Chọn ảnh cụ thể: Căn giữa ảnh đó và tự động ĐỨNG YÊN cho người xem
+  const handleSelectPhoto = useCallback((idx: number) => {
+    setActivePhotoIndex(idx);
+    setIsPaused(true); // Tự đứng yên cho người xem theo yêu cầu
+
+    const el = itemRefs.current[idx];
+    if (el && trackRef.current) {
+      const elLeft = el.offsetLeft;
+      const centerOffset = (window.innerWidth - el.offsetWidth) / 2;
+      const targetPos = Math.max(0, elLeft - Math.max(0, centerOffset));
+      posRef.current = targetPos;
+      trackRef.current.style.transform = `translate3d(-${targetPos}px, 0, 0)`;
+    }
+  }, []);
+
+  // Chuyển ảnh kế tiếp hoặc quay lại (giữ trạng thái đứng yên)
+  const handlePrevPhoto = () => {
+    const prevIdx = (activePhotoIndex === 0 ? galleryImages.length - 1 : activePhotoIndex - 1);
+    handleSelectPhoto(prevIdx);
+  };
+
+  const handleNextPhoto = () => {
+    const nextIdx = (activePhotoIndex === galleryImages.length - 1 ? 0 : activePhotoIndex + 1);
+    handleSelectPhoto(nextIdx);
+  };
+
+  // Nút Chạy tiếp (tiếp tục cuộn tự động)
+  const handleResumeSlide = () => {
+    setIsPaused(false);
+  };
 
   const handlePrevCamera = () => {
     setCurrentIndex((prev) => (prev === 0 ? hotCameras.length - 1 : prev - 1));
@@ -52,16 +123,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelec
     setCurrentIndex((prev) => (prev === hotCameras.length - 1 ? 0 : prev + 1));
   };
 
-  // Cuộn thanh trượt background ảnh chính hãng Fujifilm
-  const scrollGallery = (direction: 'left' | 'right') => {
-    if (sliderTrackRef.current) {
-      const scrollAmount = 420;
-      sliderTrackRef.current.scrollBy({
-        left: direction === 'right' ? scrollAmount : -scrollAmount,
-        behavior: 'smooth',
-      });
-    }
-  };
+  if (!cameras || cameras.length === 0 || !activeCam) return null;
 
   return (
     <section 
@@ -70,127 +132,88 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelec
     >
       {/* 
         ========================================================================
-        1. BACKGROUND: FUJIFILM OFFICIAL LOOP SLIDER ("Ảnh cuộn sang nằm ở đằng sau")
-        - Phong cách chuẩn top-device_loopSlider từ fujifilm-x.com/vi-vn/products/cameras/x100vi/
-        - Các ảnh đời thực / góc máy chi tiết đặt liền kề nhau tràn toàn màn hình
-        - Khi chuyển máy khác (X-T50, X-T5, X-S20), tự động chuyển sang bộ ảnh chính hãng tương ứng
+        1. BACKGROUND: FUJIFILM OFFICIAL LOOP SLIDER
+        - Cuộn ngang chậm rãi ở phía đằng sau
+        - Khi bấm "Xem ảnh": Lớp màng mờ bị ẩn đi hoàn toàn, ảnh sắc nét 100%
         ========================================================================
       */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-auto bg-[#fafafa]">
-        {/* Track trượt ảnh chính hãng có thể cuộn ngang hoặc tự động chạy mượt mà */}
-        <div 
-          ref={sliderTrackRef}
-          className="w-full h-full overflow-x-auto scrollbar-none flex items-center"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-auto bg-[#14171f]">
+        <div className="w-full h-full overflow-hidden flex items-center">
           <div 
-            className={`flex items-stretch h-full w-max ${
-              !isPaused ? 'fuji-slider-running' : 'fuji-slider-paused'
-            }`}
+            ref={trackRef}
+            className="fuji-bg-loop-slider__track"
           >
-            {/* Vòng lặp ảnh 1 */}
-            {galleryImages.map((img, idx) => (
-              <div 
-                key={`slide-1-${img.id}-${idx}`}
-                className="fuji-bg-loop-slider__item group relative cursor-pointer"
-                onClick={() => setActivePhotoIndex(idx)}
-              >
-                <img 
-                  src={img.url} 
-                  alt={img.alt} 
-                  className="h-full w-auto min-w-[280px] sm:min-w-[340px] md:min-w-[380px] object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                  loading="eager"
-                />
-                {/* Caption nhỏ góc ảnh chuẩn catalog Fujifilm */}
-                <div className="absolute bottom-4 left-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="liquid-glass px-3 py-1.5 rounded-full text-[11px] font-medium text-[#14171f] shadow-md inline-block">
-                    {img.caption || img.alt}
-                  </span>
-                </div>
-              </div>
-            ))}
-
-            {/* Vòng lặp ảnh 2 (đảm bảo vô tận không đứt đoạn) */}
-            {galleryImages.map((img, idx) => (
-              <div 
-                key={`slide-2-${img.id}-${idx}`}
-                className="fuji-bg-loop-slider__item group relative cursor-pointer"
-                onClick={() => setActivePhotoIndex(idx)}
-              >
-                <img 
-                  src={img.url} 
-                  alt={img.alt} 
-                  className="h-full w-auto min-w-[280px] sm:min-w-[340px] md:min-w-[380px] object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                  loading="lazy"
-                />
-                <div className="absolute bottom-4 left-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="liquid-glass px-3 py-1.5 rounded-full text-[11px] font-medium text-[#14171f] shadow-md inline-block">
-                    {img.caption || img.alt}
-                  </span>
-                </div>
-              </div>
+            {/* 3 lần lặp để đảm bảo trượt mượt mà vô tận không giật */}
+            {[0, 1, 2].map((loopIndex) => (
+              <React.Fragment key={`loop-${loopIndex}`}>
+                {galleryImages.map((img, idx) => (
+                  <div 
+                    key={`slide-${loopIndex}-${img.id}-${idx}`}
+                    ref={(el) => {
+                      if (loopIndex === 0) itemRefs.current[idx] = el;
+                    }}
+                    className={`fuji-bg-loop-slider__item group relative cursor-pointer transition-all duration-300 ${
+                      activePhotoIndex === idx && isPaused ? 'ring-2 ring-white/50' : ''
+                    }`}
+                    onClick={() => handleSelectPhoto(idx)}
+                  >
+                    <img 
+                      src={img.url} 
+                      alt={img.alt} 
+                      className="h-full w-auto min-w-[280px] sm:min-w-[340px] md:min-w-[420px] object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                      loading={loopIndex === 0 ? 'eager' : 'lazy'}
+                    />
+                    {/* Caption góc ảnh khi hover */}
+                    <div className="absolute bottom-4 left-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <span className="liquid-glass px-3 py-1.5 rounded-full text-[11px] font-medium text-[#14171f] shadow-md inline-block">
+                        {img.caption || img.alt}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </React.Fragment>
             ))}
           </div>
         </div>
 
-        {/* Lớp màng mờ Frosted Veil: Tạo chiều sâu sang trọng, giữ độ tương phản cao cho chữ và thẻ */}
+        {/* 
+          Lớp màng Frosted Veil: 
+          - Bình thường: Giữ màu nền thanh lịch và tương phản cho chữ ở foreground
+          - Khi "Xem ảnh": Ẩn hoàn toàn (opacity-0), ảnh rõ nét 100% nguyên bản
+        */}
         <div 
           className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${
-            showFullGallery 
-              ? 'bg-white/20 backdrop-blur-[0.5px]' 
-              : 'bg-gradient-to-r from-white/95 via-white/88 to-white/75 backdrop-blur-[1.5px]'
+            isViewPhotoOnly 
+              ? 'opacity-0' 
+              : 'opacity-100 bg-gradient-to-r from-white/95 via-white/88 to-white/75 backdrop-blur-[1.5px]'
           }`} 
         />
 
-        {/* Nút điều khiển thanh trượt ảnh background ở góc trên bên phải */}
-        <div className="absolute top-4 right-6 z-20 flex items-center gap-2 pointer-events-auto">
+        {/* Nút "Xem ảnh" ở góc trên bên phải (Thay văn bản thành Xem ảnh theo yêu cầu) */}
+        <div className="absolute top-4 right-6 z-40 flex items-center gap-2 pointer-events-auto">
           <button
             type="button"
-            onClick={() => setShowFullGallery(!showFullGallery)}
-            className="liquid-glass px-3 py-1.5 rounded-full text-xs font-semibold text-[#14171f] flex items-center gap-1.5 hover:bg-neutral-50 active:scale-95 transition-all shadow-sm cursor-pointer"
-            title={showFullGallery ? 'Hiện thông tin chi tiết' : 'Xem rõ bộ ảnh nền Fujifilm'}
+            onClick={() => setIsViewPhotoOnly(!isViewPhotoOnly)}
+            className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 active:scale-95 transition-all shadow-md cursor-pointer ${
+              isViewPhotoOnly 
+                ? 'bg-[#14171f] text-white hover:bg-[#282e3c] border border-white/20' 
+                : 'liquid-glass text-[#14171f] hover:bg-neutral-50 border border-[#14171f]/15'
+            }`}
+            title={isViewPhotoOnly ? 'Đóng chế độ xem ảnh để hiện lại thông tin' : 'Xem rõ bộ ảnh nền Fujifilm và ẩn popup'}
           >
-            {showFullGallery ? <EyeOff size={13} /> : <Eye size={13} />}
-            <span>{showFullGallery ? 'Hiện thông tin' : 'Chiêm ngưỡng ảnh nền'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsPaused(!isPaused)}
-            className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center text-[#14171f] hover:bg-neutral-50 active:scale-90 transition-all shadow-sm cursor-pointer"
-            title={isPaused ? 'Tiếp tục cuộn' : 'Tạm dừng cuộn'}
-          >
-            {isPaused ? <Play size={13} /> : <Pause size={13} />}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => scrollGallery('left')}
-            className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center text-[#14171f] hover:bg-neutral-50 active:scale-90 transition-all shadow-sm cursor-pointer"
-            aria-label="Cuộn ảnh sang trái"
-          >
-            <ChevronLeft size={15} />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => scrollGallery('right')}
-            className="w-8 h-8 rounded-full liquid-glass flex items-center justify-center text-[#14171f] hover:bg-neutral-50 active:scale-90 transition-all shadow-sm cursor-pointer"
-            aria-label="Cuộn ảnh sang phải"
-          >
-            <ChevronRight size={15} />
+            {isViewPhotoOnly ? <X size={14} /> : <Eye size={14} />}
+            <span>{isViewPhotoOnly ? 'Đóng xem ảnh' : 'Xem ảnh'}</span>
           </button>
         </div>
       </div>
 
       {/* 
         ========================================================================
-        2. FOREGROUND: THANH CHỌN 4 MÁY HOT NHẤT & NỘI DUNG CHÍNH (NẰM PHÍA TRƯỚC)
+        2. FOREGROUND THƯỜNG (ẨN ĐI KHI BẤM "XEM ẢNH")
         ========================================================================
       */}
-      <div className={`relative z-10 w-full max-w-6xl mx-auto px-6 sm:px-8 transition-opacity duration-300 ${
-        showFullGallery ? 'opacity-20 pointer-events-none' : 'opacity-100'
+      <div className={`relative z-10 w-full max-w-6xl mx-auto px-6 sm:px-8 transition-all duration-400 ${
+        isViewPhotoOnly ? 'opacity-0 pointer-events-none translate-y-6 hidden lg:hidden' : 'opacity-100'
       }`}>
 
         {/* Thanh chuyển đổi nhanh đúng 4 máy hot nhất */}
@@ -218,15 +241,14 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelec
         {/* Khung nội dung 2 cột: Ảnh thân máy & Thông số chi tiết */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* Cột trái: Thân máy ảnh trên bục kính và khung viền than tre 1px */}
+          {/* Cột trái: Thân máy ảnh trên bục kính */}
           <div className="lg:col-span-5 flex flex-col items-center">
             <div className="relative w-full max-w-[340px] sm:max-w-[380px]">
-              {/* Khung viền lệch 1px than tre tinh tế */}
+              {/* Khung viền lệch 1px than tre */}
               <div className="absolute -top-3.5 -left-3.5 w-full h-full border border-[#14171f]/20 pointer-events-none z-0 transition-transform duration-500 hover:translate-x-1 hover:translate-y-1 rounded-2xl" />
 
               {/* Bục chụp ảnh sản phẩm nền trắng tinh khôi */}
               <div className="relative z-10 rounded-2xl overflow-hidden shadow-[0_16px_40px_rgba(20,24,32,0.1)] bg-white border border-[#14171f]/10 aspect-[4/3] flex items-center justify-center">
-                {/* Badge góc trên */}
                 <div className="absolute top-3 left-3 z-20 liquid-glass px-3 py-1.5 rounded-full text-[10px] font-semibold text-[#14171f] tracking-wide shadow-sm flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#14171f]/80 radar-pulse-white" />
                   <span>{activeCam.highlightBadge || 'Được thuê nhiều nhất'}</span>
@@ -243,43 +265,74 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelec
                 />
               </div>
 
-              {/* Dải ảnh thumbnail nhỏ từ bộ ảnh chính hãng Fujifilm phía sau */}
+              {/* 
+                THANH CHỌN ẢNH THUMBNAIL (ẢNH 3):
+                - Bấm vào từng ảnh: Tự đứng yên cho người xem
+                - Thêm nút "Chạy tiếp" khi đang đứng yên để tiếp tục tự động cuộn
+              */}
               <div className="flex items-center justify-between gap-2 mt-4 z-10 relative">
-                <div className="flex items-center gap-1.5 overflow-x-auto py-1">
-                  {galleryImages.slice(0, 5).map((gImg, gIdx) => (
-                    <button
-                      key={gImg.id}
-                      onClick={() => setActivePhotoIndex(gIdx)}
-                      className={`relative w-10 h-10 rounded-lg overflow-hidden border transition-all cursor-pointer flex-shrink-0 ${
-                        activePhotoIndex === gIdx 
-                          ? 'border-[#14171f] ring-2 ring-[#14171f]/20 scale-105' 
-                          : 'border-transparent opacity-70 hover:opacity-100'
-                      }`}
-                      title={gImg.caption}
-                    >
-                      <img src={gImg.url} alt={gImg.alt} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
+                <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none">
+                  {galleryImages.map((gImg, gIdx) => {
+                    const isSelected = activePhotoIndex === gIdx && isPaused;
+                    return (
+                      <button
+                        key={gImg.id}
+                        onClick={() => handleSelectPhoto(gIdx)}
+                        className={`relative w-11 h-11 rounded-lg overflow-hidden border transition-all cursor-pointer flex-shrink-0 ${
+                          isSelected 
+                            ? 'border-[#14171f] ring-2 ring-[#14171f] scale-105 shadow-md' 
+                            : 'border-transparent opacity-75 hover:opacity-100 hover:scale-102'
+                        }`}
+                        title={gImg.caption || `Xem ảnh ${gIdx + 1}`}
+                      >
+                        <img src={gImg.url} alt={gImg.alt} className="w-full h-full object-cover" />
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* Nút lùi/tiến 4 máy Hot */}
+                {/* Các nút điều khiển: Lùi/Tiến ảnh & Nút Chạy tiếp khi đứng yên */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {isPaused ? (
+                    <button
+                      type="button"
+                      onClick={handleResumeSlide}
+                      className="h-8 px-2.5 rounded-full bg-[#14171f] text-white hover:bg-[#282e3c] text-[11px] font-semibold flex items-center gap-1 shadow-sm active:scale-95 transition-all cursor-pointer"
+                      title="Tiếp tục tự động cuộn ảnh"
+                    >
+                      <Play size={11} fill="currentColor" />
+                      <span>Chạy tiếp</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsPaused(true)}
+                      className="glass-button w-8 h-8 rounded-full flex items-center justify-center text-[#14171f] active:scale-90"
+                      title="Tạm dừng cuộn ảnh"
+                    >
+                      <Pause size={13} />
+                    </button>
+                  )}
+
                   <button 
-                    onClick={handlePrevCamera}
+                    onClick={handlePrevPhoto}
                     className="glass-button w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-90"
-                    aria-label="Máy ảnh trước"
+                    aria-label="Ảnh trước"
+                    title="Ảnh trước"
                   >
                     <ChevronLeft size={16} />
                   </button>
                   <button 
-                    onClick={handleNextCamera}
+                    onClick={handleNextPhoto}
                     className="glass-button w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-90"
-                    aria-label="Máy ảnh tiếp theo"
+                    aria-label="Ảnh tiếp theo"
+                    title="Ảnh tiếp theo"
                   >
                     <ChevronRight size={16} />
                   </button>
                 </div>
               </div>
+
             </div>
           </div>
 
@@ -385,6 +438,115 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({ cameras, onSelec
         </div>
 
       </div>
+
+      {/* 
+        ========================================================================
+        3. DOCK CHỌN ẢNH NỔI DÀNH RIÊNG CHO CHẾ ĐỘ "XEM ẢNH":
+        - Hiện khi bấm "Xem ảnh": Vẫn giữ thanh chọn ảnh như ảnh 3
+        - Kèm nút "Chạy tiếp", nút chuyển dòng máy, và các thumbnail ảnh
+        ========================================================================
+      */}
+      <AnimatePresence>
+        {isViewPhotoOnly && (
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-[96vw] liquid-glass p-2 sm:p-2.5 rounded-2xl sm:rounded-full border border-[#14171f]/15 shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex flex-wrap items-center justify-center gap-2 sm:gap-3"
+          >
+            {/* 4 Nút đổi nhanh dòng máy */}
+            <div className="flex items-center gap-1">
+              {hotCameras.map((cam, idx) => (
+                <button
+                  key={cam.id}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                    idx === currentIndex 
+                      ? 'bg-[#14171f] text-white shadow-xs' 
+                      : 'text-[#525868] hover:text-[#14171f] hover:bg-[#14171f]/5'
+                  }`}
+                >
+                  {cam.name.replace('FUJIFILM ', '')}
+                </button>
+              ))}
+            </div>
+
+            <div className="hidden sm:block w-[1px] h-6 bg-[#14171f]/15" />
+
+            {/* Thanh thumbnail ảnh (Ảnh 3) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none">
+              {galleryImages.map((gImg, gIdx) => {
+                const isSelected = activePhotoIndex === gIdx && isPaused;
+                return (
+                  <button
+                    key={gImg.id}
+                    onClick={() => handleSelectPhoto(gIdx)}
+                    className={`relative w-10 h-10 rounded-lg overflow-hidden border transition-all cursor-pointer flex-shrink-0 ${
+                      isSelected 
+                        ? 'border-[#14171f] ring-2 ring-[#14171f] scale-105 shadow-md' 
+                        : 'border-transparent opacity-75 hover:opacity-100 hover:scale-102'
+                    }`}
+                    title={gImg.caption || `Xem ảnh ${gIdx + 1}`}
+                  >
+                    <img src={gImg.url} alt={gImg.alt} className="w-full h-full object-cover" />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="hidden sm:block w-[1px] h-6 bg-[#14171f]/15" />
+
+            {/* Các nút điều khiển: Chạy tiếp, Lùi / Tiến */}
+            <div className="flex items-center gap-1.5">
+              {isPaused ? (
+                <button
+                  type="button"
+                  onClick={handleResumeSlide}
+                  className="h-8 px-3 rounded-full bg-[#14171f] text-white hover:bg-[#282e3c] text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
+                >
+                  <Play size={12} fill="currentColor" />
+                  <span>Chạy tiếp</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsPaused(true)}
+                  className="h-8 px-3 rounded-full bg-white hover:bg-neutral-50 text-[#14171f] border border-[#14171f]/15 text-xs font-semibold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer"
+                >
+                  <Pause size={12} />
+                  <span>Tạm dừng</span>
+                </button>
+              )}
+
+              <button 
+                onClick={handlePrevPhoto}
+                className="glass-button w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-90"
+                aria-label="Ảnh trước"
+                title="Ảnh trước"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button 
+                onClick={handleNextPhoto}
+                className="glass-button w-8 h-8 rounded-full flex items-center justify-center cursor-pointer active:scale-90"
+                aria-label="Ảnh tiếp theo"
+                title="Ảnh tiếp theo"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            {/* Caption ảnh nhỏ gọn */}
+            {galleryImages[activePhotoIndex]?.caption && (
+              <span className="hidden md:inline-block px-3 py-1 rounded-full bg-[#14171f]/[0.04] text-[11px] font-medium text-[#383e4e]">
+                {galleryImages[activePhotoIndex].caption}
+              </span>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </section>
   );
 };

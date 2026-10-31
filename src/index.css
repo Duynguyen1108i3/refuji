@@ -263,21 +263,4 @@ input.crystal-liquid-lens:focus {
   -webkit-user-drag: none;
 }
 
-@keyframes fujiSliderGlide {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-.fuji-slider-running {
-  animation: fujiSliderGlide 50s linear infinite;
-}
-
-.fuji-slider-running:hover,
-.fuji-slider-paused {
-  animation-play-state: paused;
-}
 
