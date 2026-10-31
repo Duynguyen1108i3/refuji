@@ -94,8 +94,7 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
         </h2>
         
         <p className="text-xs sm:text-sm text-[#525868] font-light leading-relaxed">
-          Thuật toán kiểm tra khả dụng đa khung giờ theo thời gian thực (Time-Slot Availability Engine v1.1),
-          tự động tách dòng thiết bị và bảo toàn quyền giữ chỗ 15 phút chống đặt trùng.
+          Kiểm tra tình trạng thiết bị theo thời gian thực, giữ chỗ tự động và đảm bảo sẵn sàng bàn giao đúng hẹn.
         </p>
       </div>
 

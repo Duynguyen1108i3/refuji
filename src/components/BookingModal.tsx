@@ -550,7 +550,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               Đã Giữ Máy Thành Công!
             </h3>
             <p className="text-xs sm:text-sm text-[#525868] leading-relaxed mb-6 max-w-md mx-auto">
-              Thiết bị <strong>{item.name}</strong> đã được hệ thống REFUJI khóa giữ chỗ độc quyền trong vòng 15 phút chống Race Condition.
+              Thiết bị <strong>{item.name}</strong> đã được hệ thống REFUJI khóa giữ chỗ độc quyền cho bạn trong vòng 15 phút.
             </p>
             
             <div className="crystal-liquid-glass inline-flex items-center gap-2 text-xs sm:text-sm text-[#14171f] px-5 py-2.5 rounded-full mb-8 border border-[#14171f]/15 shadow-sm">

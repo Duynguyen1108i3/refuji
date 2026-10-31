@@ -17,6 +17,7 @@ interface LiquidNavbarProps {
   searchFilterParams?: SearchFilterParams;
   onSearchChange?: (params: SearchFilterParams) => void;
   onOpenCalendar?: () => void;
+  isPhotoViewOnly?: boolean;
 }
 
 export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
@@ -31,6 +32,7 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
   searchFilterParams,
   onSearchChange,
   onOpenCalendar,
+  isPhotoViewOnly = false,
 }) => {
   const navItems: NavScrubberItem[] = [
     { id: 'hero', label: 'Trang chủ', shortLabel: 'Home', icon: <Home size={16} /> },
@@ -47,7 +49,7 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
       {/* 1. DESKTOP / TABLET HEADER (Cao 84px, chuẩn phong cách RytoxGroup & iOS/macOS) */}
       <header
         className={`fixed inset-x-0 top-0 z-50 flex h-[84px] items-center justify-between px-6 sm:px-10 lg:px-14 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          showNavbar ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+          showNavbar && !isPhotoViewOnly ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
         }`}
       >
         {/* Chỉ hiện thanh taskbar ở chính giữa, không có lớp nền trải dài từ Refuji tới tài khoản */}
@@ -137,16 +139,16 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
             </button>
           )}
 
-          {/* Nút Giỏ hàng (nằm ở bên trái kế bên Tài khoản) */}
+          {/* Nút Giỏ hàng (chỉ giữ lại logo, bỏ văn bản theo yêu cầu) */}
           <button
             onClick={onOpenCart}
-            className="bg-white hover:bg-neutral-50 rytox-hover-lift h-11 px-4 sm:px-5 rounded-full flex items-center gap-2 font-semibold text-xs sm:text-sm text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all relative group"
-            aria-label="Mở giỏ hàng thuê thiết bị"
+            className="bg-white hover:bg-neutral-50 rytox-hover-lift w-11 h-11 rounded-full flex items-center justify-center text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all relative group"
+            aria-label="Giỏ hàng"
+            title="Giỏ hàng"
           >
-            <ShoppingBag size={16} className="text-[#14171f] group-hover:scale-110 transition-transform" />
-            <span className="hidden sm:inline">Giỏ hàng</span>
+            <ShoppingBag size={18} className="text-[#14171f] group-hover:scale-110 transition-transform" />
             {cartCount > 0 && (
-              <span className="bg-[#14171f] text-white text-[11px] font-mono px-2 py-0.5 rounded-full font-bold ml-0.5 animate-in fade-in zoom-in duration-200">
+              <span className="absolute -top-1 -right-1 bg-[#14171f] text-white text-[10px] font-mono min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-bold shadow-sm animate-in fade-in zoom-in duration-200">
                 {cartCount}
               </span>
             )}
@@ -166,10 +168,10 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
         </div>
       </header>
 
-      {/* 2. MOBILE BOTTOM FLOATING DOCK (Tự ẩn khi mở Popup Tìm kiếm Toàn Bộ) */}
+      {/* 2. MOBILE BOTTOM FLOATING DOCK (Tự ẩn khi mở Popup Tìm kiếm Toàn Bộ hoặc Xem ảnh) */}
       <div
         className={`md:hidden fixed bottom-5 inset-x-0 z-50 mx-auto w-[94%] max-w-[440px] transition-all duration-300 pointer-events-auto ${
-          showNavbar && !isSearchMode
+          showNavbar && !isSearchMode && !isPhotoViewOnly
             ? 'translate-y-0 opacity-100'
             : 'translate-y-24 opacity-0 pointer-events-none'
         }`}

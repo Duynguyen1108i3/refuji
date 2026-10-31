@@ -14,16 +14,16 @@ export const Footer: React.FC<{ isStandalonePage?: boolean }> = ({ isStandaloneP
               <span>Chính Sách Cọc &amp; Quy Trình Bàn Giao</span>
             </div>
             <h3 className="font-serif text-2xl sm:text-3xl text-[#14171f] font-normal mb-8">
-              Bảo Toàn Quyền Lợi Khách Hàng Chuẩn Mực v1.1
+              Bảo Toàn Quyền Lợi Khách Hàng
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="liquid-glass rounded-2xl p-6 border border-[#14171f]/10 shadow-sm flex items-start gap-4">
                 <Clock size={24} className="text-[#14171f] flex-shrink-0 mt-1" />
                 <div>
-                  <h5 className="font-semibold text-sm text-[#14171f] mb-1.5">Khóa giữ chỗ 15 phút (Hold)</h5>
+                  <h5 className="font-semibold text-sm text-[#14171f] mb-1.5">Khóa giữ chỗ 15 phút</h5>
                   <p className="text-xs text-[#525868] leading-relaxed">
-                    Đơn hàng được khóa chỗ độc quyền 15 phút chống Race Condition. Bạn có thể thanh toán cọc qua VNPAY hoặc chọn nhận máy tại quầy.
+                    Đơn hàng được giữ chỗ độc quyền trong vòng 15 phút sau khi chọn. Bạn có thể thanh toán đặt cọc trực tuyến hoặc nhận máy trực tiếp tại quầy.
                   </p>
                 </div>
               </div>
@@ -81,7 +81,7 @@ export const Footer: React.FC<{ isStandalonePage?: boolean }> = ({ isStandaloneP
             <ul className="space-y-3 text-xs sm:text-sm">
               <li><span className="hover:text-[#14171f] transition-colors cursor-pointer">Chính sách cọc linh hoạt</span></li>
               <li><span className="hover:text-[#14171f] transition-colors cursor-pointer">Tuân thủ Luật Căn cước 2023</span></li>
-              <li><span className="hover:text-[#14171f] transition-colors cursor-pointer">Bảo vệ DLCN 2025 (NĐ 356)</span></li>
+              <li><span className="hover:text-[#14171f] transition-colors cursor-pointer">Bảo mật thông tin khách hàng</span></li>
               <li><span className="hover:text-[#14171f] transition-colors cursor-pointer">Quy trình bàn giao Serial</span></li>
             </ul>
           </div>
@@ -90,7 +90,7 @@ export const Footer: React.FC<{ isStandalonePage?: boolean }> = ({ isStandaloneP
 
         <div className="border-t border-[#14171f]/[0.08] pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#7e8596] gap-4">
           <span>&copy; {new Date().getFullYear()} REFUJI. All rights reserved.</span>
-          <span>Thiết kế Liquid Glass theo chuẩn kiến trúc RytoxGroup &amp; Figma</span>
+          <span>Hệ thống cho thuê thiết bị Fujifilm chuyên nghiệp</span>
         </div>
       </div>
     </footer>

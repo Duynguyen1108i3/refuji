@@ -65,6 +65,7 @@ export const App: React.FC = () => {
   const [membershipTier, setMembershipTier] = useState<MembershipTierType>('GOLD');
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isPhotoViewOnly, setIsPhotoViewOnly] = useState(false);
 
   // Giỏ hàng thuê thiết bị với lưu trữ tự động trong localStorage
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -369,6 +370,7 @@ export const App: React.FC = () => {
           handleSearch(params);
         }}
         onOpenCalendar={() => setIsCalendarModalOpen(true)}
+        isPhotoViewOnly={isPhotoViewOnly}
       />
 
       {/* Search Feedback Toast with Rytox Spring Physics */}
@@ -417,6 +419,7 @@ export const App: React.FC = () => {
             cameras={featuredHotCameras} 
             onSelectCamera={(cam) => setSelectedItem(cam)}
             onAddToCart={handleAddToCart}
+            onPhotoViewChange={setIsPhotoViewOnly}
           />
         </ScrollFadeSection>
 
@@ -430,7 +433,9 @@ export const App: React.FC = () => {
         </ScrollFadeSection>
 
         {/* 5. Chính sách cọc & Cam kết pháp lý */}
-        <Footer isStandalonePage={true} />
+        <ScrollFadeSection>
+          <Footer isStandalonePage={true} />
+        </ScrollFadeSection>
       </main>
 
       {/* 
@@ -533,11 +538,6 @@ export const App: React.FC = () => {
           />
         )}
       </AnimatePresence>
-
-      {/* Footer / Chính sách */}
-      <ScrollFadeSection>
-        <Footer />
-      </ScrollFadeSection>
 
     </div>
   );
