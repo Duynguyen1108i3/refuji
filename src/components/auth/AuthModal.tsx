@@ -105,8 +105,7 @@ export const AuthModal: React.FC = () => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/45 backdrop-blur-xl select-none"
-        onClick={closeAuthModal}
+        className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/45 backdrop-blur-xl"
       >
         {/* Khung Hộp thoại Modal Container - Chuẩn kích thước cố định như iOS / macOS Sheet */}
         <motion.div
@@ -121,7 +120,7 @@ export const AuthModal: React.FC = () => {
             mass: 0.8,
           }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-[500px] h-[670px] max-h-[92vh] flex flex-col rounded-3xl bg-white shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 text-[#14171f] overflow-hidden"
+          className="relative w-full max-w-[500px] h-[670px] max-h-[92vh] flex flex-col rounded-3xl bg-white shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 text-[#14171f] overflow-hidden select-text"
           role="dialog"
           aria-modal="true"
           aria-labelledby="refuji-auth-title"

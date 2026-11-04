@@ -121,14 +121,13 @@ export const CartModal: React.FC<CartModalProps> = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-md"
-      onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 16 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 16 }}
         transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 overflow-hidden flex flex-col h-[670px] max-h-[92vh]"
+        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 overflow-hidden flex flex-col h-[670px] max-h-[92vh] select-text"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

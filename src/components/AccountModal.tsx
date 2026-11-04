@@ -104,8 +104,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/45 backdrop-blur-xl select-none"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/45 backdrop-blur-xl"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -118,7 +117,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           mass: 0.8,
         }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 text-[#14171f] h-[670px] max-h-[92vh] flex flex-col overflow-hidden"
+        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 text-[#14171f] h-[670px] max-h-[92vh] flex flex-col overflow-hidden select-text"
       >
         {/* Nút đóng */}
         <button

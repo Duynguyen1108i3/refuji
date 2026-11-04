@@ -107,6 +107,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             </span>
             <input
               type="email"
+              id="login-email"
+              name="email"
+              autoComplete="username"
               required
               placeholder="name@domain.vn"
               value={formData.email}
@@ -142,6 +145,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             </span>
             <input
               type={showPassword ? 'text' : 'password'}
+              id="login-password"
+              name="password"
+              autoComplete="current-password"
               required
               placeholder="Tối thiểu 8 ký tự"
               value={formData.password}

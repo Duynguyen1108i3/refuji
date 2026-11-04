@@ -145,7 +145,6 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/40 backdrop-blur-xl"
-      onClick={onClose}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.94, y: 20 }}
@@ -153,7 +152,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-white border border-[#14171f]/10 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_rgba(20,24,32,0.18)] text-[#14171f] flex flex-col h-[650px] max-h-[92vh] overflow-hidden justify-between"
+        className="relative w-full max-w-2xl bg-white border border-[#14171f]/10 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_rgba(20,24,32,0.18)] text-[#14171f] flex flex-col h-[650px] max-h-[92vh] overflow-hidden justify-between select-text"
       >
         {/* NÚT ĐÓNG (X) DẠNG TRÒN */}
         <button

@@ -85,6 +85,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             </span>
             <input
               type="text"
+              id="register-fullname"
+              name="name"
+              autoComplete="name"
               required
               placeholder="Nguyễn Văn A (theo Căn cước)"
               value={formData.full_name}
@@ -120,6 +123,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             </span>
             <input
               type="email"
+              id="register-email"
+              name="email"
+              autoComplete="email"
               required
               placeholder="name@domain.vn"
               value={formData.email}
@@ -155,6 +161,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             </span>
             <input
               type="tel"
+              id="register-phone"
+              name="tel"
+              autoComplete="tel"
               required
               placeholder="0901234567 (10 chữ số)"
               value={formData.phone}
@@ -190,6 +199,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             </span>
             <input
               type={showPassword ? 'text' : 'password'}
+              id="register-password"
+              name="new-password"
+              autoComplete="new-password"
               required
               placeholder="Tối thiểu 8 ký tự, gồm hoa, thường, số, ký tự đặc biệt"
               value={formData.password}
@@ -236,6 +248,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             </span>
             <input
               type={showConfirmPassword ? 'text' : 'password'}
+              id="register-confirm-password"
+              name="confirm-password"
+              autoComplete="new-password"
               required
               placeholder="Nhập lại chính xác mật khẩu"
               value={formData.confirm_password}

@@ -112,7 +112,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/40 backdrop-blur-xl overflow-y-auto"
-      onClick={onClose}
     >
       <motion.div 
         initial={{ opacity: 0, scale: 0.94, y: 24 }}
@@ -120,7 +119,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         exit={{ opacity: 0, scale: 0.96, y: 16 }}
         transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl bg-white border border-[#14171f]/10 rounded-[28px] overflow-hidden shadow-[0_24px_80px_rgba(20,24,32,0.18)] text-[#14171f] my-auto h-[740px] max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-4xl bg-white border border-[#14171f]/10 rounded-[28px] overflow-hidden shadow-[0_24px_80px_rgba(20,24,32,0.18)] text-[#14171f] my-auto h-[740px] max-h-[92vh] flex flex-col select-text"
       >
         
         {/* NÚT ĐÓNG (X) DẠNG TRÒN NỔI BẬT THEO STYLE RYTOXGROUP */}
