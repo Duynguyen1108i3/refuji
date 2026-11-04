@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { CartItem, EquipmentItem, LensModel, AccessoryModel, CameraModel } from '../types';
 import { MembershipTierType } from './AccountModal';
+import { useAuth } from '../context/AuthContext';
 
 interface CartModalProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ export const CartModal: React.FC<CartModalProps> = ({
   allAccessories = [],
   onAddToCart,
 }) => {
+  const { isAuthenticated, openAuthModal, user } = useAuth();
   const [isSuccessBooked, setIsSuccessBooked] = useState(false);
 
   if (!isOpen) return null;
@@ -57,14 +59,15 @@ export const CartModal: React.FC<CartModalProps> = ({
   const daysMatch = rentalDatesText.match(/(\d+)\s*ngày/);
   const rentalDays = daysMatch ? parseInt(daysMatch[1], 10) : 3;
 
-  // Tỉ lệ giảm cọc theo hạng hội viên
+  // Tỉ lệ giảm cọc theo hạng hội viên (ưu tiên user đăng nhập)
+  const activeTier = user?.membership_tier || membershipTier;
   const tierDiscountMap: Record<MembershipTierType, { label: string; rate: number }> = {
     BRONZE: { label: 'Hạng Đồng', rate: 0 },
     SILVER: { label: 'Hạng Bạc', rate: 0.05 },
     GOLD: { label: 'Hạng Vàng', rate: 0.10 },
     PLATINUM: { label: 'Bạch Kim', rate: 0.15 },
   };
-  const tierInfo = tierDiscountMap[membershipTier] || tierDiscountMap.GOLD;
+  const tierInfo = tierDiscountMap[activeTier] || tierDiscountMap.BRONZE;
 
   // Tổng tiền thuê và tiền cọc
   const totalRentalPrice = cartItems.reduce(
@@ -88,6 +91,22 @@ export const CartModal: React.FC<CartModalProps> = ({
   ).slice(0, 2);
 
   const handleHoldBooking = () => {
+    if (!isAuthenticated) {
+      openAuthModal('login', {
+        type: 'BOOK_RENTAL',
+        modelId: cartItems[0]?.id || 1,
+        modelName: `Giỏ hàng (${cartItems.length} thiết bị)`,
+        startDate: '2026-10-29',
+        expectedReturnDate: '2026-10-31',
+        dailyRate: totalRentalPrice / rentalDays,
+        depositRate: finalDeposit,
+        days: rentalDays,
+        totalRent: totalRentalPrice,
+        totalDue: totalRentalPrice + finalDeposit,
+      });
+      return;
+    }
+
     setIsSuccessBooked(true);
     setTimeout(() => {
       setIsSuccessBooked(false);
@@ -109,7 +128,7 @@ export const CartModal: React.FC<CartModalProps> = ({
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 16 }}
         transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-[0_24px_64px_rgba(20,24,32,0.18)] border border-[#14171f]/10 overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 overflow-hidden flex flex-col h-[670px] max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -177,7 +196,7 @@ export const CartModal: React.FC<CartModalProps> = ({
         {/* Danh Sách Thiết Bị Trong Giỏ */}
         <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-4 space-y-4">
           {cartItems.length === 0 ? (
-            <div className="py-16 text-center flex flex-col items-center justify-center">
+            <div className="flex-1 flex flex-col items-center justify-center my-auto py-16 text-center">
               <div className="w-16 h-16 rounded-full bg-[#14171f]/[0.04] border border-[#14171f]/8 flex items-center justify-center text-[#828898] mb-4">
                 <ShoppingBag size={28} className="stroke-[1.3]" />
               </div>

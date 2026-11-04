@@ -14,8 +14,12 @@ import { ScrollFadeSection } from './components/ScrollFadeSection';
 import { Footer } from './components/Footer';
 import { CameraModel, LensModel, AccessoryModel, EquipmentItem, CartItem } from './types';
 import { fetchCatalog } from './services/api';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthModal } from './components/auth/AuthModal';
+import { useCart } from './hooks/useCart';
 
-export const App: React.FC = () => {
+const MainApp: React.FC = () => {
+  const { user, toast } = useAuth();
   const [cameras, setCameras] = useState<CameraModel[]>([]);
   const [lenses, setLenses] = useState<LensModel[]>([]);
   const [accessories, setAccessories] = useState<AccessoryModel[]>([]);
@@ -59,74 +63,66 @@ export const App: React.FC = () => {
     return hash === 'thiet-bi' || hash === 'all-equipment' || sessionStorage.getItem('refuji_all_equipment_open') === 'true';
   };
 
-  const [activeSection, setActiveSection] = useState(getInitialSection);
-  const [selectedItem, setSelectedItem] = useState<CameraModel | LensModel | AccessoryModel | null>(null);
-  const [searchNotification, setSearchNotification] = useState<string | null>(null);
-  const [membershipTier, setMembershipTier] = useState<MembershipTierType>('GOLD');
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
-  const [isPhotoViewOnly, setIsPhotoViewOnly] = useState(false);
-
-  // Giỏ hàng thuê thiết bị với lưu trữ tự động trong localStorage
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const saved = localStorage.getItem('refuji_cart_items');
-      return saved ? JSON.parse(saved) : [];
-    } catch (_) {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('refuji_cart_items', JSON.stringify(cartItems));
-    } catch (_) {}
-  }, [cartItems]);
-
-  const handleAddToCart = (item: EquipmentItem) => {
-    setCartItems((prev) => {
-      const existing = prev.find((ci) => ci.id === item.id);
-      if (existing) {
-        return prev.map((ci) =>
-          ci.id === item.id ? { ...ci, quantity: ci.quantity + 1 } : ci
-        );
-      }
-      return [
-        ...prev,
-        {
-          id: item.id,
-          item: item as any,
-          quantity: 1,
-          addedAt: new Date().toISOString(),
-        },
-      ];
-    });
-    setSearchNotification(`Đã thêm "${item.name}" vào giỏ hàng thuê!`);
-    setTimeout(() => setSearchNotification(null), 3000);
-  };
-
-  const handleUpdateCartQuantity = (itemId: string, newQty: number) => {
-    if (newQty <= 0) {
-      handleRemoveFromCart(itemId);
-      return;
-    }
-    setCartItems((prev) =>
-      prev.map((ci) => (ci.id === itemId ? { ...ci, quantity: newQty } : ci))
+  const getInitialAccountModalState = () => {
+    if (typeof window === 'undefined') return false;
+    const hash = window.location.hash.replace('#', '');
+    return (
+      hash === 'account' ||
+      hash === 'dashboard' ||
+      hash === 'ho-so' ||
+      sessionStorage.getItem('refuji_account_modal_open') === 'true'
     );
   };
 
-  const handleRemoveFromCart = (itemId: string) => {
-    setCartItems((prev) => prev.filter((ci) => ci.id !== itemId));
-    setSearchNotification('Đã xóa thiết bị khỏi giỏ hàng.');
-    setTimeout(() => setSearchNotification(null), 2500);
+  const getInitialCartModalState = () => {
+    if (typeof window === 'undefined') return false;
+    const hash = window.location.hash.replace('#', '');
+    return (
+      hash === 'cart' ||
+      hash === 'gio-hang' ||
+      sessionStorage.getItem('refuji_cart_modal_open') === 'true'
+    );
   };
 
-  const handleClearCart = () => {
-    setCartItems([]);
-    setSearchNotification('Đã xóa toàn bộ giỏ hàng.');
-    setTimeout(() => setSearchNotification(null), 2500);
+  const getInitialCalendarModalState = () => {
+    if (typeof window === 'undefined') return false;
+    const hash = window.location.hash.replace('#', '');
+    return (
+      hash === 'calendar' ||
+      hash === 'lich' ||
+      sessionStorage.getItem('refuji_calendar_modal_open') === 'true'
+    );
   };
+
+  const [activeSection, setActiveSection] = useState(getInitialSection);
+  const [selectedItem, setSelectedItem] = useState<CameraModel | LensModel | AccessoryModel | null>(null);
+  const [searchNotification, setSearchNotification] = useState<string | null>(null);
+  const [membershipTier, setMembershipTier] = useState<MembershipTierType>('BRONZE');
+
+  // Đồng bộ Hạng thành viên từ tài khoản người dùng khi đăng nhập
+  useEffect(() => {
+    if (user?.membership_tier) {
+      setMembershipTier(user.membership_tier);
+    }
+  }, [user]);
+
+  const effectiveTier = user?.membership_tier || membershipTier;
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(getInitialAccountModalState);
+  const [isCartModalOpen, setIsCartModalOpen] = useState(getInitialCartModalState);
+  const [isPhotoViewOnly, setIsPhotoViewOnly] = useState(false);
+
+  // Quản lý giỏ hàng qua Custom Hook
+  const {
+    cartItems,
+    cartCount,
+    handleAddToCart,
+    handleUpdateCartQuantity,
+    handleRemoveFromCart,
+    handleClearCart,
+  } = useCart((msg) => {
+    setSearchNotification(msg);
+    setTimeout(() => setSearchNotification(null), 3000);
+  });
 
   // 4 dòng máy ảnh Hot nhất theo yêu cầu: FUJIFILM X100VI, X-T50, X-T5, X-S20
   const featuredHotCameras = React.useMemo(() => {
@@ -165,7 +161,7 @@ export const App: React.FC = () => {
 
   // Trạng thái mở popup toàn bộ máy & phụ kiện kèm chế độ tìm kiếm thay thế thanh navbar
   const [isAllEquipmentModalOpen, setIsAllEquipmentModalOpen] = useState(getInitialModalState);
-  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(getInitialCalendarModalState);
   const [filterParams, setFilterParams] = useState({
     category: 'Tất cả thiết bị',
     mount: 'Hệ ngàm X (APS-C)',
@@ -184,7 +180,9 @@ export const App: React.FC = () => {
     }
     const elem = document.getElementById(targetId);
     if (elem) {
-      const headerHeight = 84;
+      // Riêng phân hệ #cameras và #lenses, cuộn sát mép trên cùng (headerHeight = 0)
+      // để phân hệ chiếm trọn màn hình từ y = 0, không bị lộ phần đuôi ảnh của section phía trước
+      const headerHeight = (targetId === 'cameras' || targetId === 'lenses') ? 0 : 84;
       const elemTop = elem.getBoundingClientRect().top + window.pageYOffset;
       const targetY = Math.max(0, elemTop - headerHeight);
       window.scrollTo({ top: targetY, behavior: smooth ? 'smooth' : 'instant' });
@@ -216,6 +214,87 @@ export const App: React.FC = () => {
       }
     });
   };
+
+  // Quản lý mở/đóng modal Hồ sơ / Hạng thành viên (AccountModal)
+  const openAccountModal = () => {
+    setIsAccountModalOpen(true);
+    sessionStorage.setItem('refuji_account_modal_open', 'true');
+    window.history.replaceState(null, '', '#account');
+  };
+
+  const closeAccountModal = () => {
+    setIsAccountModalOpen(false);
+    sessionStorage.removeItem('refuji_account_modal_open');
+    const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+    window.history.replaceState(null, '', `#${returnSec}`);
+    setActiveSection(returnSec);
+  };
+
+  // Quản lý mở/đóng modal Giỏ hàng (CartModal)
+  const openCartModal = () => {
+    setIsCartModalOpen(true);
+    sessionStorage.setItem('refuji_cart_modal_open', 'true');
+    window.history.replaceState(null, '', '#cart');
+  };
+
+  const closeCartModal = () => {
+    setIsCartModalOpen(false);
+    sessionStorage.removeItem('refuji_cart_modal_open');
+    const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+    window.history.replaceState(null, '', `#${returnSec}`);
+    setActiveSection(returnSec);
+  };
+
+  // Quản lý mở/đóng modal Chọn ngày (CalendarModal)
+  const openCalendarModal = () => {
+    setIsCalendarModalOpen(true);
+    sessionStorage.setItem('refuji_calendar_modal_open', 'true');
+    window.history.replaceState(null, '', '#calendar');
+  };
+
+  const closeCalendarModal = () => {
+    setIsCalendarModalOpen(false);
+    sessionStorage.removeItem('refuji_calendar_modal_open');
+    const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+    window.history.replaceState(null, '', `#${returnSec}`);
+    setActiveSection(returnSec);
+  };
+
+  // Quản lý mở/đóng modal Chi tiết thiết bị / Đặt máy (BookingModal)
+  const handleSelectItem = (item: CameraModel | LensModel | AccessoryModel) => {
+    setSelectedItem(item);
+    try {
+      sessionStorage.setItem('refuji_selected_item_id', String(item.id));
+      window.history.replaceState(null, '', `#item-${item.id}`);
+    } catch (_) {}
+  };
+
+  const handleCloseItemModal = () => {
+    setSelectedItem(null);
+    try {
+      sessionStorage.removeItem('refuji_selected_item_id');
+      const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+      window.history.replaceState(null, '', `#${returnSec}`);
+      setActiveSection(returnSec);
+    } catch (_) {}
+  };
+
+  // Tự động khôi phục thiết bị đang xem khi F5 / Reload
+  useEffect(() => {
+    if (!isLoadingCatalog) {
+      const hash = window.location.hash.replace('#', '');
+      const savedItemId = sessionStorage.getItem('refuji_selected_item_id');
+      const targetId = hash.startsWith('item-') ? hash.replace('item-', '') : savedItemId;
+
+      if (targetId) {
+        const all = [...cameras, ...lenses, ...accessories];
+        const found = all.find((i) => String(i.id) === String(targetId));
+        if (found) {
+          setSelectedItem(found);
+        }
+      }
+    }
+  }, [isLoadingCatalog, cameras, lenses, accessories]);
 
   // Vô hiệu hóa auto scroll restoration mặc định của browser để tránh bị giật về 0 khi reload
   useEffect(() => {
@@ -254,8 +333,28 @@ export const App: React.FC = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash === 'thiet-bi' || hash === 'all-equipment') {
         setIsAllEquipmentModalOpen(true);
+      } else if (hash === 'account' || hash === 'dashboard' || hash === 'ho-so') {
+        setIsAccountModalOpen(true);
+      } else if (hash === 'cart' || hash === 'gio-hang') {
+        setIsCartModalOpen(true);
+      } else if (hash === 'calendar' || hash === 'lich') {
+        setIsCalendarModalOpen(true);
+      } else if (hash.startsWith('item-')) {
+        const id = hash.replace('item-', '');
+        const all = [...cameras, ...lenses, ...accessories];
+        const found = all.find((i) => String(i.id) === id);
+        if (found) setSelectedItem(found);
       } else {
         setIsAllEquipmentModalOpen(false);
+        setIsAccountModalOpen(false);
+        setIsCartModalOpen(false);
+        setIsCalendarModalOpen(false);
+        setSelectedItem(null);
+        sessionStorage.removeItem('refuji_account_modal_open');
+        sessionStorage.removeItem('refuji_all_equipment_open');
+        sessionStorage.removeItem('refuji_cart_modal_open');
+        sessionStorage.removeItem('refuji_calendar_modal_open');
+        sessionStorage.removeItem('refuji_selected_item_id');
         if (['explore', 'cameras', 'lenses', 'policies', 'hero'].includes(hash)) {
           scrollToTargetSection(hash, true);
           setActiveSection(hash);
@@ -268,7 +367,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [cameras, lenses, accessories]);
 
   // Scroll Trigger theo dõi vị trí cuộn và cập nhật active section trên thanh navbar
   useEffect(() => {
@@ -278,6 +377,20 @@ export const App: React.FC = () => {
       sessionStorage.setItem('refuji_scroll_y', scrollY.toString());
 
       if (isManualScrolling.current) return;
+
+      // Nếu đang mở bất kỳ Modal nào (Auth, Account, Cart, Calendar, Booking, AllEquipment), KHÔNG ghi đè hash của Modal
+      const isAnyModalActive =
+        isAllEquipmentModalOpen ||
+        isAccountModalOpen ||
+        isCartModalOpen ||
+        isCalendarModalOpen ||
+        selectedItem !== null ||
+        sessionStorage.getItem('refuji_auth_modal_open') === 'true' ||
+        sessionStorage.getItem('refuji_account_modal_open') === 'true' ||
+        sessionStorage.getItem('refuji_cart_modal_open') === 'true' ||
+        sessionStorage.getItem('refuji_all_equipment_open') === 'true';
+
+      if (isAnyModalActive) return;
 
       const sections = ['policies', 'lenses', 'cameras', 'explore', 'hero'];
       const headerHeight = 84;
@@ -290,15 +403,13 @@ export const App: React.FC = () => {
             setActiveSection((prev) => {
               if (prev !== sectionId) {
                 sessionStorage.setItem('refuji_active_section', sectionId);
-                if (!isAllEquipmentModalOpen) {
-                  if (sectionId === 'hero') {
-                    if (window.location.hash) {
-                      window.history.replaceState(null, '', window.location.pathname);
-                    }
-                  } else {
-                    if (window.location.hash !== `#${sectionId}`) {
-                      window.history.replaceState(null, '', `#${sectionId}`);
-                    }
+                if (sectionId === 'hero') {
+                  if (window.location.hash) {
+                    window.history.replaceState(null, '', window.location.pathname);
+                  }
+                } else {
+                  if (window.location.hash !== `#${sectionId}`) {
+                    window.history.replaceState(null, '', `#${sectionId}`);
                   }
                 }
               }
@@ -312,7 +423,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isAllEquipmentModalOpen]);
+  }, [isAllEquipmentModalOpen, isAccountModalOpen, isCartModalOpen, isCalendarModalOpen, selectedItem]);
 
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
@@ -358,9 +469,9 @@ export const App: React.FC = () => {
       <LiquidNavbar 
         isVisible={isScrolled} 
         activeSection={activeSection}
-        onOpenAuth={() => setIsAccountModalOpen(true)}
-        onOpenCart={() => setIsCartModalOpen(true)}
-        cartCount={cartItems.reduce((acc, c) => acc + c.quantity, 0)}
+        onOpenAuth={openAccountModal}
+        onOpenCart={openCartModal}
+        cartCount={cartCount}
         onNavigate={handleScrollTo}
         isSearchMode={isAllEquipmentModalOpen}
         onCloseSearchMode={closeAllEquipment}
@@ -369,7 +480,7 @@ export const App: React.FC = () => {
           setFilterParams(params);
           handleSearch(params);
         }}
-        onOpenCalendar={() => setIsCalendarModalOpen(true)}
+        onOpenCalendar={openCalendarModal}
         isPhotoViewOnly={isPhotoViewOnly}
       />
 
@@ -400,12 +511,12 @@ export const App: React.FC = () => {
             onSearch={handleSearch}
             onSelectItem={(item) => {
               closeAllEquipment();
-              setSelectedItem(item as any);
+              handleSelectItem(item as any);
             }}
-            membershipTier={membershipTier}
+            membershipTier={effectiveTier}
             onOpenAllEquipment={openAllEquipment}
             filterParams={filterParams}
-            onOpenCalendar={() => setIsCalendarModalOpen(true)}
+            onOpenCalendar={openCalendarModal}
             cameras={cameras}
             lenses={lenses}
             accessories={accessories}
@@ -417,7 +528,7 @@ export const App: React.FC = () => {
         <ScrollFadeSection>
           <FeaturedCamera 
             cameras={featuredHotCameras} 
-            onSelectCamera={(cam) => setSelectedItem(cam)}
+            onSelectCamera={(cam) => handleSelectItem(cam)}
             onAddToCart={handleAddToCart}
             onPhotoViewChange={setIsPhotoViewOnly}
           />
@@ -427,7 +538,7 @@ export const App: React.FC = () => {
         <ScrollFadeSection>
           <FeaturedLens 
             lenses={featuredHotLenses} 
-            onSelectLens={(lens) => setSelectedItem(lens)}
+            onSelectLens={(lens) => handleSelectItem(lens)}
             onAddToCart={handleAddToCart}
           />
         </ScrollFadeSection>
@@ -451,14 +562,14 @@ export const App: React.FC = () => {
             onClose={closeAllEquipment}
             onSelectItem={(item) => {
               closeAllEquipment();
-              setSelectedItem(item as any);
+              handleSelectItem(item as any);
             }}
             filterParams={filterParams}
             onFilterChange={(params) => {
               setFilterParams(params);
               handleSearch(params);
             }}
-            membershipTier={membershipTier}
+            membershipTier={effectiveTier}
             cameras={cameras}
             lenses={lenses}
             accessories={accessories}
@@ -472,7 +583,7 @@ export const App: React.FC = () => {
         {isCalendarModalOpen && (
           <CalendarModal
             isOpen={isCalendarModalOpen}
-            onClose={() => setIsCalendarModalOpen(false)}
+            onClose={closeCalendarModal}
             initialStartDate="2026-10-29"
             initialEndDate="2026-10-31"
             onApplyDates={(rangeText) => {
@@ -489,12 +600,12 @@ export const App: React.FC = () => {
         {selectedItem && (
           <BookingModal 
             item={selectedItem} 
-            onClose={() => setSelectedItem(null)} 
-            membershipTier={membershipTier}
+            onClose={handleCloseItemModal} 
+            membershipTier={effectiveTier}
             allLenses={lenses}
             allAccessories={accessories}
             onAddToCart={handleAddToCart}
-            onOpenCart={() => setIsCartModalOpen(true)}
+            onOpenCart={openCartModal}
           />
         )}
       </AnimatePresence>
@@ -504,14 +615,14 @@ export const App: React.FC = () => {
         {isCartModalOpen && (
           <CartModal
             isOpen={isCartModalOpen}
-            onClose={() => setIsCartModalOpen(false)}
+            onClose={closeCartModal}
             cartItems={cartItems}
             onUpdateQuantity={handleUpdateCartQuantity}
             onRemoveItem={handleRemoveFromCart}
             onClearCart={handleClearCart}
-            onOpenCalendar={() => setIsCalendarModalOpen(true)}
+            onOpenCalendar={openCalendarModal}
             rentalDatesText={filterParams.dates}
-            membershipTier={membershipTier}
+            membershipTier={effectiveTier}
             allLenses={lenses}
             allAccessories={accessories}
             onAddToCart={handleAddToCart}
@@ -528,8 +639,8 @@ export const App: React.FC = () => {
         {isAccountModalOpen && (
           <AccountModal
             isOpen={isAccountModalOpen}
-            onClose={() => setIsAccountModalOpen(false)}
-            currentTier={membershipTier}
+            onClose={closeAccountModal}
+            currentTier={effectiveTier}
             onChangeTier={(tier) => {
               setMembershipTier(tier);
               setSearchNotification(`Đã cập nhật tài khoản: ${tier === 'PLATINUM' ? 'Bạch Kim (-15% cọc)' : tier === 'GOLD' ? 'Hạng Vàng (-10% cọc)' : tier === 'SILVER' ? 'Hạng Bạc (-5% cọc)' : 'Hạng Đồng'}`);
@@ -539,7 +650,43 @@ export const App: React.FC = () => {
         )}
       </AnimatePresence>
 
+      {/* REFUJI AUTHENTICATION MODAL POPUP (Login ⇋ Register ⇋ Forgot Password) */}
+      <AuthModal />
+
+      {/* Auth Success/Notification Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: 30, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-20 md:bottom-6 right-6 z-[140] crystal-liquid-glass border border-[#14171f]/15 bg-white/95 px-5 py-3.5 rounded-2xl text-xs sm:text-sm text-[#14171f] shadow-[0_16px_40px_rgba(20,24,32,0.16)] flex items-center gap-3 font-medium max-w-md"
+          >
+            <span
+              className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                toast.type === 'error'
+                  ? 'bg-rose-500'
+                  : toast.type === 'info'
+                  ? 'bg-blue-500'
+                  : 'bg-emerald-500'
+              } radar-pulse-white`}
+            />
+            <span className="leading-relaxed">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 };
 

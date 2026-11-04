@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CameraModel, LensModel, AccessoryModel, EquipmentItem } from '../types';
 import { 
   X, 
@@ -17,6 +17,7 @@ import {
   Plus
 } from 'lucide-react';
 import { getRecommendedItemsForCamera } from '../data/travelCombos';
+import { useAuth } from '../context/AuthContext';
 
 interface BookingModalProps {
   item: CameraModel | LensModel | AccessoryModel | null;
@@ -43,14 +44,40 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
 
+  const { isAuthenticated, openAuthModal, user, pendingIntent } = useAuth();
+
   if (!item) return null;
 
-  const discountRate = membershipTier === 'PLATINUM' ? 0.15 : membershipTier === 'GOLD' ? 0.10 : membershipTier === 'SILVER' ? 0.05 : 0;
+  const effectiveTier = user?.membership_tier || membershipTier;
+  const discountRate = effectiveTier === 'PLATINUM' ? 0.15 : effectiveTier === 'GOLD' ? 0.10 : effectiveTier === 'SILVER' ? 0.05 : 0;
   const discountedDeposit = Math.round(item.depositRate * (1 - discountRate));
   const totalRent = item.dailyRate * days;
   const totalDue = totalRent + discountedDeposit;
 
+  // Tự động chuyển sang trạng thái Booked khi người dùng vừa đăng nhập thành công từ intent dở dang
+  useEffect(() => {
+    if (isAuthenticated && pendingIntent && String(pendingIntent.modelId) === String(item.id)) {
+      setIsBooked(true);
+    }
+  }, [isAuthenticated, pendingIntent, item.id]);
+
   const handleConfirm = () => {
+    if (!isAuthenticated) {
+      // Yêu cầu 4: Lưu thông số Ts, Te và mở AuthModal
+      openAuthModal('login', {
+        type: 'BOOK_RENTAL',
+        modelId: item.id,
+        modelName: item.name,
+        startDate: '2026-10-29',
+        expectedReturnDate: '2026-10-31',
+        dailyRate: item.dailyRate,
+        depositRate: discountedDeposit,
+        days,
+        totalRent,
+        totalDue,
+      });
+      return;
+    }
     setIsBooked(true);
   };
 
@@ -93,7 +120,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         exit={{ opacity: 0, scale: 0.96, y: 16 }}
         transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl bg-white border border-[#14171f]/10 rounded-[28px] overflow-hidden shadow-[0_24px_80px_rgba(20,24,32,0.18)] text-[#14171f] my-auto max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-4xl bg-white border border-[#14171f]/10 rounded-[28px] overflow-hidden shadow-[0_24px_80px_rgba(20,24,32,0.18)] text-[#14171f] my-auto h-[740px] max-h-[92vh] flex flex-col"
       >
         
         {/* NÚT ĐÓNG (X) DẠNG TRÒN NỔI BẬT THEO STYLE RYTOXGROUP */}
@@ -105,8 +132,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           <X size={18} />
         </button>
 
-        {!isBooked ? (
-          <div className="overflow-y-auto flex-1">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {!isBooked ? (
+            <motion.div
+              key="booking-form-view"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98, filter: 'blur(4px)' }}
+              transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              className="overflow-y-auto flex-1 scrollbar-thin flex flex-col"
+            >
             {/* 1. HERO PRODUCT STAGE */}
             <div className="relative pt-6 pb-5 px-6 sm:px-8 bg-gradient-to-b from-[#f6f7fa] to-[#ffffff] border-b border-[#14171f]/[0.08] flex flex-col items-center">
               
@@ -368,7 +403,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       </>
                     )}
 
-                    {/* Quy tắc v1.1: Khách đặt thuê online là đặt trên ProductModels (assigned_item_id = NULL) */}
+                    {/* Quy tắc: Khách đặt thuê online là đặt trên ProductModels (assigned_item_id = NULL) */}
                     <div className="pb-2 border-b border-[#14171f]/[0.06] space-y-1.5">
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-[#6e7587]">Quy chế gán Serial máy:</span>
@@ -539,10 +574,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 )}
               </div>
             )}
-          </div>
+          </motion.div>
         ) : (
           /* TRẠNG THÁI GIỮ MÁY THÀNH CÔNG (SUCCESS HOLD STATE) */
-          <div className="p-8 sm:p-12 text-center my-auto">
+          <motion.div
+            key="booking-success-view"
+            initial={{ opacity: 0, scale: 0.96, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+            className="p-8 sm:p-12 text-center my-auto flex-1 flex flex-col items-center justify-center"
+          >
             <div className="w-16 h-16 rounded-full bg-[#14171f]/[0.06] text-[#14171f] flex items-center justify-center mx-auto mb-5 border border-[#14171f]/15 shadow-sm">
               <Check size={32} />
             </div>
@@ -558,7 +600,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <span>Thời hạn thanh toán cọc: <strong>14:59</strong> còn lại</span>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-sm mx-auto">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-sm mx-auto w-full">
               <button
                 onClick={onClose}
                 className="w-full py-3 bg-[#14171f] text-white hover:bg-[#252a37] font-bold text-xs sm:text-sm rounded-full transition-all cursor-pointer shadow-md active:scale-95"
@@ -566,8 +608,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 Hoàn tất &amp; Đóng
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
 
       </motion.div>
     </motion.div>

@@ -1,97 +1,69 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PrismaClient } from '@prisma/client';
+import { initDatabase, db } from './db.js';
+import { authRouter, meRouter } from './modules/auth/auth.routes.js';
+import { ordersRouter } from './modules/orders/orders.routes.js';
+import { catalogRouter } from './modules/catalog/catalog.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env from root of refuji-system if not found locally
+// Load .env
 dotenv.config();
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5174',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ],
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 app.use(express.json());
 
-// Health check
-app.get('/api/health', (_req, res) => {
+// Khởi tạo Database SQLite ReFuji v1.1
+initDatabase();
+
+// 1. Health check
+app.get(['/api/health', '/api/v1/health'], (_req, res) => {
   res.json({ status: 'ok', service: 'refuji-api', timestamp: new Date().toISOString() });
 });
 
-// GET /api/models - Lấy toàn bộ danh sách thiết bị kèm ProductItems
-app.get('/api/models', async (req, res) => {
-  try {
-    const { category } = req.query;
-    const whereClause: any = { is_active: true };
-
-    if (category && typeof category === 'string') {
-      whereClause.category = category.toUpperCase();
-    }
-
-    const models = await prisma.productModel.findMany({
-      where: whereClause,
-      include: {
-        items: true,
-      },
-      orderBy: {
-        id: 'asc',
-      },
-    });
-
-    res.json(models);
-  } catch (error) {
-    console.error('❌ Error fetching models:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// GET /api/models/:id - Chi tiết mẫu máy kèm danh sách ProductItems
-app.get('/api/models/:id', async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid ID format' });
-    }
-
-    const model = await prisma.productModel.findUnique({
-      where: { id },
-      include: {
-        items: true,
-      },
-    });
-
-    if (!model) {
-      return res.status(404).json({ error: 'Product model not found' });
-    }
-
-    res.json(model);
-  } catch (error) {
-    console.error(`❌ Error fetching model ${req.params.id}:`, error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// 2. Định tuyến các phân hệ (Hỗ trợ cả /api và /api/v1)
+app.use(['/api/auth', '/api/v1/auth'], authRouter);
+app.use(['/api/users', '/api/v1/users'], meRouter);
+app.use(['/api/orders', '/api/v1/orders'], ordersRouter);
+app.use(['/api/models', '/api/v1/models'], catalogRouter);
 
 // Start API server
 const server = app.listen(PORT, () => {
   console.log(`🚀 REFUJI API Server running at http://localhost:${PORT}`);
-  console.log(`📡 Endpoints available:`);
-  console.log(`   - GET http://localhost:${PORT}/api/models`);
-  console.log(`   - GET http://localhost:${PORT}/api/models/:id`);
-  console.log(`   - GET http://localhost:${PORT}/api/health`);
+  console.log(`📡 Endpoints ready:`);
+  console.log(`   - Auth:   http://localhost:${PORT}/api/auth`);
+  console.log(`   - Users:  http://localhost:${PORT}/api/users/me`);
+  console.log(`   - Orders: http://localhost:${PORT}/api/orders`);
+  console.log(`   - Models: http://localhost:${PORT}/api/models`);
 });
 
-// Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM signal received: closing HTTP server');
   server.close(async () => {
-    await prisma.$disconnect();
-    console.log('HTTP server closed & Prisma disconnected');
+    db.close();
+    console.log('HTTP server closed');
   });
 });

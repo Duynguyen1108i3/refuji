@@ -1,10 +1,8 @@
 # REFUJI — HỆ THỐNG QUẢN LÝ & CHO THUÊ MÁY ẢNH FUJIFILM
-## BẢN ĐẶC TẢ KỸ THUẬT & NGHIỆP VỤ — PHIÊN BẢN 1.1
+## BẢN ĐẶC TẢ KỸ THUẬT & NGHIỆP VỤ HỆ THỐNG
 
 > [!NOTE]
-> **Lịch sử phiên bản:**
-> - **v1.0 (21/08/2026):** Bản khởi tạo mở rộng từ 6 bảng gốc lên 13 bảng.
-> - **v1.1 (29/10/2026):** Bản chuẩn hóa toàn diện — Khắc phục lỗi thiết kế `quantity`/`assigned_item_id`, vá lỗ hổng công thức Availability & Race Condition, chuẩn hóa pháp lý theo Luật Căn cước 2023 & Luật Bảo vệ Dữ liệu Cá nhân 2025, nâng cấp MySQL 8.4 LTS, tách luồng VNPAY Return/IPN và bổ sung đặc tả kiểm thử cho 3 học phần.
+> **Tài liệu chuẩn hóa toàn diện:** Khắc phục lỗi thiết kế `quantity`/`assigned_item_id`, hoàn thiện công thức Availability & Race Condition, chuẩn hóa pháp lý theo Luật Căn cước 2023 & Luật Bảo vệ Dữ liệu Cá nhân 2025, nâng cấp MySQL 8.4 LTS, tách luồng VNPAY Return/IPN và bổ sung đặc tả kiểm thử cho 3 học phần.
 > 
 > **Chủ dự án:** Tran Txi — Đại học Công nghệ Sài Gòn (STU), Khoa Công nghệ Thông tin
 
@@ -25,7 +23,7 @@
 11. [Bảo mật, Pháp lý & Bảo vệ dữ liệu cá nhân](#11-bảo-mật-pháp-lý--bảo-vệ-dữ-liệu-cá-nhân)
 12. [Scheduled Jobs (Cron Tasks)](#12-scheduled-jobs-cron-tasks)
 13. [Kế hoạch Kiểm thử (Test Plan & Concurrency Test)](#13-kế-hoạch-kiểm-thử-test-plan--concurrency-test)
-14. [Tóm tắt nhật ký chỉnh sửa (Changelog v1.0 → v1.1)](#14-tóm-tắt-nhật-ký-chỉnh-sửa-changelog-v10--v11)
+14. [Tóm tắt nhật ký hoàn thiện hệ thống](#14-tóm-tắt-nhật-ký-hoàn-thiện-hệ-thống)
 
 ---
 
@@ -55,7 +53,7 @@ Hệ thống cho phép khách hàng tra cứu danh mục thiết bị nhiếp �
 | **Must have** *(Bắt buộc)* | • Phân tách `ProductModels` (Mẫu mã) và `ProductItems` (Serial Number)<br/>• Thuật toán kiểm tra Availability theo khung thời gian & chống Race Condition<br/>• Đặt đơn thuê với cơ chế giữ chỗ tạm thời (Reservation Hold 15 phút)<br/>• Quy trình Check-out (gán Serial, chụp ảnh, thu tiền thuê) & Check-in (kiểm tra, tính phí trễ hạn/hư hỏng, hoàn cọc)<br/>• Tích hợp thanh toán VNPAY Sandbox (tách biệt ReturnURL và IPN Webhook)<br/>• Bảo mật JWT (HttpOnly Cookie + Refresh Token) & Mã hóa dữ liệu căn cước | HP 2 (Core) & HP 3 (Full) |
 | **Should have** *(Nên có)* | • Hệ thống hạng thành viên (`MembershipTiers`) & Điểm uy tín (`Reputation Score`)<br/>• Quản lý lịch sử bảo dưỡng thiết bị (`MaintenanceLogs`)<br/>• Cron jobs tự động giải phóng đơn quá hạn thanh toán và cảnh báo đơn trễ hạn<br/>• Báo cáo thống kê doanh thu và tần suất khai thác thiết bị | HP 3 |
 | **Could have** *(Có thể làm thêm)* | • Thông báo Email tự động (nhắc lịch trả máy, xác nhận đơn)<br/>• Giao diện tra cứu nhật ký hệ thống (`AuditLogs`) trực quan cho Admin<br/>• Xuất biên bản bàn giao / quyết toán ra file PDF in ấn tại quầy | HP 3 (Điểm cộng) |
-| **Won't have (v1.1)** *(Ngoài phạm vi)* | • Tích hợp cổng MoMo & SePay/payOS thực tế (chỉ thiết kế sẵn cấu trúc DB mở rộng)<br/>• Giao hàng tận nơi qua bên thứ 3 (do đặc thù thiết bị máy ảnh giá trị cao, khách bắt buộc nhận/trả và kiểm tra máy trực tiếp tại cửa hàng) | N/A |
+| **Won't have** *(Ngoài phạm vi)* | • Tích hợp cổng MoMo & SePay/payOS thực tế (chỉ thiết kế sẵn cấu trúc DB mở rộng)<br/>• Giao hàng tận nơi qua bên thứ 3 (do đặc thù thiết bị máy ảnh giá trị cao, khách bắt buộc nhận/trả và kiểm tra máy trực tiếp tại cửa hàng) | N/A |
 
 ---
 
@@ -1042,9 +1040,9 @@ Tất cả các tiến trình chạy ngầm được cấu hình với múi gi�
 
 ---
 
-## 14. TÓM TẮT NHẬT KÝ CHỈNH SỬA (CHANGELOG v1.0 → v1.1)
+## 14. TÓM TẮT NHẬT KÝ HOÀN THIỆN HỆ THỐNG
 
-| # | Hạng mục phát hiện ở v1.0 | Cách khắc phục triệt để trong bản v1.1 |
+| # | Hạng mục tồn đọng ban đầu | Giải pháp khắc phục triệt để |
 |---|---|---|
 | 1 | MySQL 8.0 hết vòng đời hỗ trợ (EoL tháng 04/2026) | Nâng cấp toàn bộ đặc tả và cấu hình Docker lên **MySQL 8.4 LTS** |
 | 2 | Quy trình "Giữ CCCD gốc" vi phạm Luật Căn cước 2023 | Loại bỏ cột `id_document_held`; thay bằng quy trình đối chiếu trực tiếp tại quầy (`kyc_verification_method`, `kyc_document_last4`) + ký biên bản |

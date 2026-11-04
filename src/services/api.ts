@@ -72,7 +72,7 @@ function transformRawModelToCamera(raw: RawProductModel, index: number): CameraM
   if (specsList.length === 0) specsList.push('Cảm biến X-Trans CMOS', 'Fujifilm X-Mount');
 
   return {
-    id: `fuji-cam-${raw.id}`,
+    id: `fuji-cam-${raw.id ?? index + 1}`,
     name: raw.model_name,
     category: 'BODY',
     series: getSeriesFromName(raw.model_name),
@@ -116,7 +116,7 @@ function transformRawModelToLens(raw: RawProductModel, index: number): LensModel
   if (features.length === 0) features.push('Fujinon Aspherical Lens', 'Kháng bụi và nước WR');
 
   return {
-    id: `fuji-lens-${raw.id}`,
+    id: `fuji-lens-${raw.id ?? index + 1}`,
     name: raw.model_name,
     category: 'LENS',
     mount: raw.mount_type === 'G_MOUNT' ? 'GF' : 'X',
@@ -198,7 +198,7 @@ function transformRawModelToAccessory(raw: RawProductModel, index: number): Acce
   if (specsList.length === 0) specsList.push('Phụ kiện chính hãng Fujifilm');
 
   return {
-    id: `fuji-acc-${raw.id}`,
+    id: `fuji-acc-${raw.id ?? index + 1}`,
     name: raw.model_name,
     category: 'ACCESSORY',
     brand: raw.brand || 'Fujifilm',
@@ -226,14 +226,39 @@ function transformRawModelToAccessory(raw: RawProductModel, index: number): Acce
 
 /**
  * Gọi API GET /api/models và phân loại theo 3 danh mục
+ * Tự động chuyển đổi mượt mà sang local catalog nếu MySQL API chưa khởi động
  */
 export async function fetchCatalog(): Promise<CatalogData> {
-  const response = await fetch('/api/models');
-  if (!response.ok) {
-    throw new Error(`Failed to fetch models from API: ${response.status} ${response.statusText}`);
-  }
+  let rawModels: RawProductModel[] = [];
 
-  const rawModels: RawProductModel[] = await response.json();
+  try {
+    const response = await fetch('/api/models');
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        rawModels = data;
+      } else if (data && Array.isArray((data as any).productModels)) {
+        rawModels = (data as any).productModels;
+      }
+    } else {
+      throw new Error(`Failed to fetch models from API: ${response.status}`);
+    }
+  } catch (err) {
+    console.info('ℹ️ Đang tải danh mục thiết bị từ local catalog fallback...');
+    try {
+      const fallbackRes = await fetch('/fujifilm-catalog.json');
+      if (fallbackRes.ok) {
+        const fallbackData = await fallbackRes.json();
+        if (Array.isArray(fallbackData)) {
+          rawModels = fallbackData;
+        } else if (fallbackData && Array.isArray((fallbackData as any).productModels)) {
+          rawModels = (fallbackData as any).productModels;
+        }
+      }
+    } catch (fallbackErr) {
+      console.error('Không thể tải catalog dự phòng:', fallbackErr);
+    }
+  }
 
   const cameras: CameraModel[] = [];
   const lenses: LensModel[] = [];

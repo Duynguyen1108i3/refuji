@@ -21,7 +21,7 @@ export const FeaturedLens: React.FC<FeaturedLensProps> = ({ lenses, onSelectLens
   return (
     <section 
       id="lenses" 
-      className="relative w-full min-h-[calc(100vh-84px)] scroll-mt-[84px] select-none flex flex-col justify-center items-center py-6 sm:py-8 lg:py-10 overflow-hidden bg-white"
+      className="relative w-full min-h-screen scroll-mt-0 select-none flex flex-col justify-start items-center pt-24 sm:pt-28 pb-12 sm:pb-16 overflow-hidden bg-white"
     >
       <div className="relative z-10 w-full max-w-6xl mx-auto px-6 sm:px-8">
         

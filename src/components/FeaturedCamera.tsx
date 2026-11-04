@@ -150,7 +150,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
   return (
     <section 
       id="cameras" 
-      className="relative w-full min-h-[calc(100vh-84px)] scroll-mt-[84px] select-none flex flex-col justify-center items-center py-6 sm:py-8 lg:py-10 overflow-hidden"
+      className="relative w-full min-h-screen scroll-mt-0 select-none flex flex-col justify-center items-center pt-24 sm:pt-28 pb-10 sm:pb-14 overflow-hidden"
     >
       {/* 
         ========================================================================
@@ -211,13 +211,9 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
           }`} 
         />
 
-        {/* Nút điều khiển ở góc trên bên phải: Nút icon Play/Pause và nút Đóng */}
-        <div className={`z-[70] flex items-center gap-2 sm:gap-2.5 pointer-events-auto transition-all duration-300 ${
-          isViewPhotoOnly 
-            ? 'fixed top-5 right-6 sm:top-6 sm:right-10' 
-            : 'absolute top-4 right-6'
-        }`}>
-          {isViewPhotoOnly && (
+        {/* Nút điều khiển ở góc trên bên phải khi đang mở chế độ Xem ảnh toàn màn hình */}
+        {isViewPhotoOnly && (
+          <div className="fixed top-5 right-6 sm:top-6 sm:right-10 z-[70] flex items-center gap-2 sm:gap-2.5 pointer-events-auto transition-all duration-300">
             <button
               type="button"
               onClick={isPaused ? handleResumeSlide : () => setIsPaused(true)}
@@ -231,22 +227,18 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
             >
               {isPaused ? <Play size={16} fill="currentColor" className="ml-0.5" /> : <Pause size={16} />}
             </button>
-          )}
 
-          <button
-            type="button"
-            onClick={() => handleToggleViewPhoto(!isViewPhotoOnly)}
-            className={`px-4 sm:px-5 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-2 active:scale-95 transition-all shadow-md cursor-pointer ${
-              isViewPhotoOnly 
-                ? 'h-11 bg-[#14171f] text-white hover:bg-[#282e3c] border border-white/20' 
-                : 'h-10 liquid-glass text-[#14171f] hover:bg-neutral-50 border border-[#14171f]/15'
-            }`}
-            title={isViewPhotoOnly ? 'Đóng chế độ xem ảnh' : 'Xem rõ bộ ảnh nền Fujifilm tràn toàn màn hình'}
-          >
-            {isViewPhotoOnly ? <X size={15} /> : <Eye size={14} />}
-            <span>{isViewPhotoOnly ? 'Đóng' : 'Xem ảnh'}</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => handleToggleViewPhoto(false)}
+              className="h-11 px-4 sm:px-5 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-2 active:scale-95 transition-all shadow-md cursor-pointer bg-[#14171f] text-white hover:bg-[#282e3c] border border-white/20"
+              title="Đóng chế độ xem ảnh"
+            >
+              <X size={15} />
+              <span>Đóng</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 
@@ -258,8 +250,8 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
         isViewPhotoOnly ? 'opacity-0 pointer-events-none translate-y-6 hidden lg:hidden' : 'opacity-100'
       }`}>
 
-        {/* Thanh chuyển đổi nhanh đúng 4 máy hot nhất */}
-        <div className="flex items-center justify-center mb-6">
+        {/* Thanh chuyển đổi nhanh đúng 4 máy hot nhất & Nút Xem ảnh hình tròn con mắt */}
+        <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-6">
           <div className="liquid-glass p-1.5 rounded-full flex flex-wrap items-center justify-center gap-1.5 shadow-md max-w-full">
             {hotCameras.map((cam, idx) => {
               const isSelected = idx === currentIndex;
@@ -278,6 +270,17 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
               );
             })}
           </div>
+
+          {/* Nút Xem ảnh: Chỉ giữ lại hình tròn và con mắt, nằm cùng hàng kế bên thanh chọn máy */}
+          <button
+            type="button"
+            onClick={() => handleToggleViewPhoto(true)}
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full liquid-glass flex items-center justify-center text-[#14171f] hover:text-black hover:bg-white hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer border border-[#14171f]/15 flex-shrink-0"
+            title="Xem ảnh tràn toàn màn hình"
+            aria-label="Xem ảnh"
+          >
+            <Eye size={18} />
+          </button>
         </div>
 
         {/* Khung nội dung 2 cột: Ảnh thân máy & Thông số chi tiết */}

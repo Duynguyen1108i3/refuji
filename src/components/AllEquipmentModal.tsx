@@ -393,8 +393,16 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item, idx) => {
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={filterParams.category}
+              initial={{ opacity: 0, y: 12, filter: 'blur(3px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {filteredItems.map((item, idx) => {
               const discountedDeposit = Math.round(item.depositRate * (1 - currentTier.discount));
               const isLowStock = item.availableCount === 1;
               const isFav = favorites.has(item.id);
@@ -536,7 +544,8 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
                 </motion.div>
               );
             })}
-          </div>
+            </motion.div>
+          </AnimatePresence>
         )}
       </motion.div>
     </motion.div>

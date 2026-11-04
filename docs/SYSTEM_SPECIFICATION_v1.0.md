@@ -2,7 +2,7 @@
 ## BẢN ĐẶC TẢ CHÍNH THỨC — PHIÊN BẢN 1.0
 
 > [!NOTE]
-> Đây là bản đặc tả gốc chính thức của dự án **ReFuji**. Mọi phiên bản sau sẽ được đánh số từ v1.1, v1.2,... trở đi.
+> Đây là bản đặc tả gốc chính thức của dự án **ReFuji**.
 > Ngày tạo: 21/08/2026 · Chủ dự án: **Tran Txi** — Đại học Công nghệ Sài Gòn (STU), Khoa CNTT
 
 ---

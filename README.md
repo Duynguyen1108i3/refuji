@@ -44,32 +44,54 @@
 
 ---
 
-## 2. CẤU TRÚC THƯ MỤC DỰ ÁN
+## 2. CẤU TRÚC THƯ MỤC DỰ ÁN (ĐÃ TÁCH MODULE CHUẨN HOÁ)
 
 ```text
 refuji/
-├── src/                          # [CHÍNH] Source code Frontend Website khách hàng
-│   ├── components/               # Các UI Components (Hero, LiquidNavbar, AvailabilityExplorer,...)
-│   ├── services/api.ts           # Tầng kết nối gọi Backend API (/api/models)
-│   ├── types.ts                  # Định nghĩa TypeScript interface
-│   ├── App.tsx                   # Component gốc điều phối toàn bộ luồng trang
-│   ├── index.css                 # CSS toàn cục & hiệu ứng Liquid Glass
-│   └── main.tsx                  # Điểm khởi chạy React
-├── public/                       # Static assets (ảnh Fujifilm, catalog, logo)
-├── docs/                         # Tài liệu đặc tả hệ thống SRS v1.0 & v1.1
-├── README.md                     # Bản đặc tả kỹ thuật & nghiệp vụ SRS 13 bảng
-├── package.json                  # Cấu hình dependencies Frontend
-├── vite.config.ts                # Cấu hình Vite & Proxy tự động sang Backend (:4000)
+├── src/                                  # [CHÍNH] Source code Frontend Website khách hàng
+│   ├── components/                       # Các UI Components giao diện
+│   │   ├── account/                      # [ĐÃ TÁCH] Phân hệ Tài khoản & Hội viên
+│   │   │   ├── types.ts                  # Interface, Types và Variants chuyển cảnh
+│   │   │   ├── MembershipTiersTab.tsx    # Tab hạng thành viên & mã ưu đãi cọc
+│   │   │   ├── RentalOrdersTab.tsx       # Tab lịch sử đơn thuê & tiến độ
+│   │   │   ├── UserProfileTab.tsx        # Tab hồ sơ cá nhân & định danh
+│   │   │   ├── ChangePasswordForm.tsx    # Form đổi mật khẩu bảo mật
+│   │   │   └── ChangeCccdForm.tsx        # Form cập nhật CCCD chuẩn 2025
+│   │   ├── AccountModal.tsx              # Component điều phối modal tài khoản gọn gàng
+│   │   ├── AvailabilityExplorer.tsx      # Bộ lọc & ma trận lịch 7 ngày
+│   │   ├── BookingModal.tsx              # Modal chi tiết thuê máy & combo gợi ý
+│   │   ├── CartModal.tsx                 # Giỏ hàng thuê thiết bị Liquid Glass
+│   │   ├── Hero.tsx                      # Màn hình mở đầu 100vh tối giản
+│   │   └── LiquidNavbar.tsx              # Thanh điều hướng nổi đa trạng thái
+│   ├── hooks/                            # [ĐÃ TÁCH] Custom Hooks tái sử dụng logic
+│   │   └── useCart.ts                    # Hook quản lý giỏ hàng & lưu trữ localStorage
+│   ├── services/api.ts                   # Tầng kết nối gọi Backend API (/api/models)
+│   ├── types.ts                          # Định nghĩa TypeScript domain interface
+│   ├── App.tsx                           # Component gốc điều phối toàn bộ trang
+│   ├── index.css                         # CSS toàn cục & hiệu ứng Liquid Glass
+│   └── main.tsx                          # Điểm khởi chạy React
+├── public/                               # Static assets (ảnh Fujifilm, catalog, logo)
+├── docs/                                 # Tài liệu đặc tả hệ thống SRS và CSDL
+├── README.md                             # Hướng dẫn kiến trúc, cài đặt & sử dụng
+├── package.json                          # Cấu hình dependencies Frontend
+├── vite.config.ts                        # Cấu hình Vite & Proxy tự động sang Backend (:4000)
 │
-└── refuji-system/                # [HỆ THỐNG BACKEND & ADMIN MONOREPO]
+└── refuji-system/                        # [HỆ THỐNG BACKEND & ADMIN MONOREPO]
     ├── apps/
-    │   ├── api/                  # Express REST API Server
-    │   │   ├── prisma/           # Schema database & file seed 139 thiết bị thực tế
-    │   │   └── src/index.ts      # Khởi chạy API server port 4000
-    │   └── web/                  # Giao diện POS / Quản trị nội bộ dành cho nhân viên cửa hàng
+    │   ├── api/                          # Express REST API Server (3-Tier Layered)
+    │   │   ├── prisma/                   # Schema database MySQL & file seed 139 thiết bị
+    │   │   ├── data/                     # Thư mục lưu trữ SQLite tự động (refuji.sqlite)
+    │   │   └── src/
+    │   │       ├── modules/              # [ĐÃ TÁCH] Các Router phân hệ nghiệp vụ
+    │   │       │   ├── auth/             # Xác thực JWT, User Profile, KYC CCCD
+    │   │       │   ├── catalog/          # Danh mục 139 dòng máy Fujifilm & Serial
+    │   │       │   └── orders/           # Tạo đơn giữ chỗ 15 phút & quản lý đơn
+    │   │       ├── db.ts                 # Khởi tạo SQLite engine tự động & Seed
+    │   │       └── index.ts              # Server bootstrap sạch gọn
+    │   └── web/                          # Giao diện POS / Quản trị nội bộ dành cho nhân viên (Port 5174)
     ├── packages/
-    │   └── shared/               # Thư viện dùng chung (Types, Zod Schemas, Enums)
-    └── .env                      # File cấu hình biến môi trường toàn hệ thống
+    │   └── shared/                       # Thư viện dùng chung (Types, Zod Schemas, Enums)
+    └── .env                              # File cấu hình biến môi trường toàn hệ thống
 ```
 
 ---
@@ -79,56 +101,60 @@ refuji/
 Trước khi chạy, máy tính cần cài đặt:
 1. **Node.js**: Phiên bản 20 LTS trở lên (`node -v`).
 2. **NPM**: Phiên bản 10 trở lên (`npm -v`).
-3. **MySQL**: MySQL 8.0+ hoặc XAMPP MySQL đang chạy tại cổng `3306`.
+3. **Cơ sở dữ liệu**:
+   - Hệ thống đã tích hợp sẵn **SQLite tự động** (`better-sqlite3`), có thể khởi chạy ngay mà không cần cài đặt thêm phần mềm cơ sở dữ liệu bên ngoài.
+   - *(Tùy chọn nâng cao)*: Hỗ trợ kết nối MySQL 8.0+ / XAMPP qua Prisma ORM khi cấu hình file `.env`.
 
 ---
 
 ## 4. HƯỚNG DẪN CÀI ĐẶT & KHỞI CHẠY TOÀN BỘ HỆ THỐNG
 
-Quy trình khởi chạy hệ thống gồm 3 bước tuần tự:
+Quy trình khởi chạy đồng thời cả 3 dịch vụ trên Localhost:
 
-### Bước 1: Khởi động Cơ sở dữ liệu MySQL
-- Khởi động MySQL server trên cổng `3306`.
-- Đảm bảo database `refuji_db` đã được tạo và cấp quyền:
-  - **User:** `refuji_user`
-  - **Password:** `RefujiPass@2026`
-  - **Database:** `refuji_db`
-- *(Nếu chưa nạp dữ liệu)*: Chạy lệnh seed trong thư mục `refuji-system/apps/api`:
-  ```bash
-  cd refuji-system/apps/api
-  npx prisma db push
-  npm run prisma:seed
-  ```
-
-### Bước 2: Khởi động Backend API Server (Port 4000)
+### Bước 1: Khởi động Backend API Server (Port 4000)
 Mở Terminal thứ nhất:
 ```bash
 cd refuji-system/apps/api
 npm install
-npx tsx src/index.ts
+npx tsx watch src/index.ts
 ```
-> Khi màn hình hiện `🚀 REFUJI API Server running at http://localhost:4000` là thành công.
+> Khi màn hình hiện `🚀 REFUJI API Server running at http://localhost:4000` là thành công. Hệ thống tự động seed 139 dòng máy và 140 serial vật lý vào database.
 
-### Bước 3: Khởi động Website Frontend Khách hàng (Port 5173)
+### Bước 2: Khởi động Website Khách hàng (Port 5173)
 Mở Terminal thứ hai tại thư mục gốc của dự án:
 ```bash
 cd /Users/tx/Documents/refuji
 npm install
 npm run dev
 ```
-> Website sẵn sàng tại: **`http://localhost:5173`** (Vite tự động chuyển tiếp request `/api/*` về cổng `4000`).
+> Website sẵn sàng tại: **`http://localhost:5173`** (Vite tự động proxy request `/api/*` về cổng `4000`).
+
+### Bước 3: Khởi động Cổng Quản trị POS Nhân viên (Port 5174)
+Mở Terminal thứ ba:
+```bash
+cd refuji-system/apps/web
+npm install
+npx vite
+```
+> Cổng POS nội bộ sẵn sàng tại: **`http://localhost:5174`**.
 
 ---
 
 ## 5. THÔNG TIN CỔNG DỊCH VỤ & TÀI KHOẢN TRUY CẬP
 
-| Dịch vụ | Địa chỉ URL | Chức năng |
-|---|---|---|
-| **Website Khách hàng** | `http://localhost:5173/` | Trang chủ, tra cứu lịch khả dụng, chọn máy, giỏ hàng thuê |
-| **Backend REST API** | `http://localhost:4000/api` | Cung cấp dữ liệu 139 sản phẩm, kiểm tra sức khỏe hệ thống |
-| **API Health Check** | `http://localhost:4000/api/health` | Kiểm tra kết nối Backend & MySQL |
-| **API Danh mục** | `http://localhost:4000/api/models` | Lấy danh sách 139 dòng máy kèm serial kho vật lý |
-| **MySQL Server** | `localhost:3306` | Lưu trữ 13 bảng CSDL chuẩn 3NF |
+| Dịch vụ | Địa chỉ URL | Chức năng | Trạng thái |
+|---|---|---|:---:|
+| **Website Khách hàng** | `http://localhost:5173/` | Trang chủ, tra cứu lịch khả dụng, giỏ hàng, đặt giữ chỗ 15 phút | 🟢 Hoạt động |
+| **Cổng Quản trị & POS** | `http://localhost:5174/` | Bàn giao thiết bị, kiểm định ngoại hình, duyệt đơn, xuất kho | 🟢 Hoạt động |
+| **Backend REST API** | `http://localhost:4000/api` | REST API (Auth, Models, Orders, Users, Health) | 🟢 Hoạt động |
+| **API Health Check** | `http://localhost:4000/api/health` | Kiểm tra trạng thái máy chủ Backend | 🟢 Hoạt động |
+| **API Danh mục** | `http://localhost:4000/api/models` | Trả về 139 dòng máy kèm danh sách cá thể serial | 🟢 Hoạt động |
+
+### Tài khoản mẫu thử nghiệm hệ thống:
+- **Tài khoản Khách hàng / Quản trị viên:**
+  - **Email:** `fuji@refuji.vn`
+  - **Mật khẩu:** `test@123`
+  - **Tên hiển thị:** `Admin Fuji`
 
 ---
 

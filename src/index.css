@@ -21,6 +21,108 @@
   --ios-spring-elastic: cubic-bezier(0.25, 1.1, 0.3, 1);
   --ios-spring-soft: cubic-bezier(0.25, 1, 0.2, 1);
   --ios-spring-slow: cubic-bezier(0.15, 1, 0.2, 1);
+
+  /* REFUJI DESIGN TOKENS & SYSTEM THEME VARIABLES (DYNAMIC THEME COMPATIBLE) */
+  --refuji-bg-overlay: rgba(12, 15, 23, 0.58);
+  --refuji-backdrop-blur: 24px;
+  --refuji-modal-bg: #ffffff;
+  --refuji-modal-surface: #f9fafb;
+  --refuji-modal-border: rgba(20, 24, 32, 0.1);
+  --refuji-modal-border-light: rgba(20, 24, 32, 0.06);
+  --refuji-modal-shadow: 0 24px 70px rgba(20, 24, 32, 0.18);
+
+  --refuji-text-primary: #14171f;
+  --refuji-text-secondary: #4b5262;
+  --refuji-text-muted: #8c93a4;
+  --refuji-text-inverted: #ffffff;
+
+  --refuji-input-bg: rgba(20, 24, 32, 0.035);
+  --refuji-input-bg-focus: rgba(20, 24, 32, 0.06);
+  --refuji-input-border: rgba(20, 24, 32, 0.12);
+  --refuji-input-border-focus: rgba(20, 24, 32, 0.35);
+  --refuji-input-placeholder: #9ca3af;
+
+  --refuji-btn-primary-bg: #14171f;
+  --refuji-btn-primary-text: #ffffff;
+  --refuji-btn-primary-hover: #262c3a;
+  --refuji-btn-primary-active: #0c0e13;
+
+  --refuji-btn-secondary-bg: rgba(20, 24, 32, 0.05);
+  --refuji-btn-secondary-text: #14171f;
+  --refuji-btn-secondary-hover: rgba(20, 24, 32, 0.09);
+
+  --refuji-accent-emerald: #10B981;
+  --refuji-accent-emerald-bg: rgba(16, 185, 129, 0.12);
+  --refuji-accent-amber: #E58E3C;
+  --refuji-accent-amber-bg: rgba(229, 142, 60, 0.12);
+  --refuji-accent-rose: #F43F5E;
+  --refuji-accent-rose-bg: rgba(244, 63, 94, 0.12);
+
+  --refuji-badge-bronze-bg: rgba(180, 83, 9, 0.1);
+  --refuji-badge-bronze-text: #b45309;
+  --refuji-badge-bronze-border: rgba(180, 83, 9, 0.25);
+
+  --refuji-badge-silver-bg: rgba(100, 116, 139, 0.12);
+  --refuji-badge-silver-text: #475569;
+  --refuji-badge-silver-border: rgba(100, 116, 139, 0.25);
+
+  --refuji-badge-gold-bg: rgba(234, 179, 8, 0.14);
+  --refuji-badge-gold-text: #a16207;
+  --refuji-badge-gold-border: rgba(234, 179, 8, 0.3);
+
+  --refuji-badge-platinum-bg: rgba(99, 102, 241, 0.12);
+  --refuji-badge-platinum-text: #4f46e5;
+  --refuji-badge-platinum-border: rgba(99, 102, 241, 0.3);
+
+  --refuji-radius-modal: 28px;
+  --refuji-radius-input: 16px;
+  --refuji-radius-button: 9999px;
+  --refuji-radius-card: 20px;
+}
+
+[data-theme='dark'], .dark {
+  --refuji-bg-overlay: rgba(3, 5, 8, 0.82);
+  --refuji-modal-bg: #11151f;
+  --refuji-modal-surface: #171c2a;
+  --refuji-modal-border: rgba(255, 255, 255, 0.1);
+  --refuji-modal-border-light: rgba(255, 255, 255, 0.06);
+  --refuji-modal-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
+
+  --refuji-text-primary: #f3f4f6;
+  --refuji-text-secondary: #9ca3af;
+  --refuji-text-muted: #6b7280;
+  --refuji-text-inverted: #14171f;
+
+  --refuji-input-bg: rgba(255, 255, 255, 0.05);
+  --refuji-input-bg-focus: rgba(255, 255, 255, 0.08);
+  --refuji-input-border: rgba(255, 255, 255, 0.14);
+  --refuji-input-border-focus: rgba(255, 255, 255, 0.4);
+  --refuji-input-placeholder: #6b7280;
+
+  --refuji-btn-primary-bg: #f3f4f6;
+  --refuji-btn-primary-text: #11151f;
+  --refuji-btn-primary-hover: #ffffff;
+  --refuji-btn-primary-active: #d1d5db;
+
+  --refuji-btn-secondary-bg: rgba(255, 255, 255, 0.08);
+  --refuji-btn-secondary-text: #f3f4f6;
+  --refuji-btn-secondary-hover: rgba(255, 255, 255, 0.14);
+
+  --refuji-badge-bronze-bg: rgba(217, 119, 6, 0.2);
+  --refuji-badge-bronze-text: #fbbf24;
+  --refuji-badge-bronze-border: rgba(217, 119, 6, 0.4);
+
+  --refuji-badge-silver-bg: rgba(148, 163, 184, 0.2);
+  --refuji-badge-silver-text: #cbd5e1;
+  --refuji-badge-silver-border: rgba(148, 163, 184, 0.4);
+
+  --refuji-badge-gold-bg: rgba(250, 204, 21, 0.2);
+  --refuji-badge-gold-text: #fde047;
+  --refuji-badge-gold-border: rgba(250, 204, 21, 0.4);
+
+  --refuji-badge-platinum-bg: rgba(129, 140, 248, 0.2);
+  --refuji-badge-platinum-text: #a5b4fc;
+  --refuji-badge-platinum-border: rgba(129, 140, 248, 0.4);
 }
 
 @layer base {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw, Check, Clock } from 'lucide-react';
 
 interface CalendarModalProps {
@@ -153,7 +153,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-white border border-[#14171f]/10 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_rgba(20,24,32,0.18)] text-[#14171f] flex flex-col max-h-[92vh] overflow-hidden"
+        className="relative w-full max-w-2xl bg-white border border-[#14171f]/10 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_rgba(20,24,32,0.18)] text-[#14171f] flex flex-col h-[650px] max-h-[92vh] overflow-hidden justify-between"
       >
         {/* NÚT ĐÓNG (X) DẠNG TRÒN */}
         <button
@@ -232,13 +232,25 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                       setCurrentYear(m.year);
                       setCurrentMonth(m.monthIndex);
                     }}
-                    className={`text-left px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all shrink-0 cursor-pointer ${
+                    className={`relative text-left px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all shrink-0 cursor-pointer ${
                       isSelected
-                        ? 'bg-[#14171f] text-white font-bold shadow-sm scale-[1.02]'
+                        ? 'text-white font-bold shadow-sm'
                         : 'text-[#525868] hover:text-[#14171f] hover:bg-[#14171f]/[0.05]'
                     }`}
                   >
-                    {m.name} {m.year !== 2026 && `(${m.year})`}
+                    {isSelected && (
+                      <motion.div
+                        layoutId="active-calendar-month-pill"
+                        transition={{
+                          type: 'spring',
+                          stiffness: 450,
+                          damping: 32,
+                          mass: 0.8,
+                        }}
+                        className="absolute inset-0 rounded-xl bg-[#14171f] -z-10"
+                      />
+                    )}
+                    <span className="relative z-10">{m.name} {m.year !== 2026 && `(${m.year})`}</span>
                   </button>
                 );
               })}
@@ -283,57 +295,66 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                 <span>CN</span>
               </div>
 
-              {/* Lưới các ô ngày */}
-              <div className="grid grid-cols-7 gap-1 text-center">
-                {/* Ô trống offset trước ngày mùng 1 */}
-                {Array.from({ length: startDayOffset }).map((_, i) => (
-                  <div key={`empty-${i}`} className="h-9" />
-                ))}
+              {/* Lưới các ô ngày chuyển cảnh mượt theo chuẩn Apple */}
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.div
+                  key={`${currentYear}-${currentMonth}`}
+                  initial={{ opacity: 0, scale: 0.98, filter: 'blur(3px)' }}
+                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, scale: 0.98, filter: 'blur(3px)' }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  className="grid grid-cols-7 gap-1 text-center"
+                >
+                  {/* Ô trống offset trước ngày mùng 1 */}
+                  {Array.from({ length: startDayOffset }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-9" />
+                  ))}
 
-                {/* Các ngày trong tháng */}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const day = i + 1;
-                  const thisDateKey = formatDateKey(currentYear, currentMonth, day);
-                  const isStart = startDateStr === thisDateKey;
-                  const isEnd = endDateStr === thisDateKey;
-                  const isInRange =
-                    startDateStr &&
-                    endDateStr &&
-                    thisDateKey > startDateStr &&
-                    thisDateKey < endDateStr;
+                  {/* Các ngày trong tháng */}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const day = i + 1;
+                    const thisDateKey = formatDateKey(currentYear, currentMonth, day);
+                    const isStart = startDateStr === thisDateKey;
+                    const isEnd = endDateStr === thisDateKey;
+                    const isInRange =
+                      startDateStr &&
+                      endDateStr &&
+                      thisDateKey > startDateStr &&
+                      thisDateKey < endDateStr;
 
-                  // Highlight ngày hôm nay (29/10/2026)
-                  const isToday = thisDateKey === '2026-10-29';
+                    // Highlight ngày hôm nay (29/10/2026)
+                    const isToday = thisDateKey === '2026-10-29';
 
-                  return (
-                    <div
-                      key={`day-${day}`}
-                      className={`relative h-9 flex items-center justify-center select-none ${
-                        isInRange ? 'bg-[#14171f]/10' : ''
-                      } ${isStart && endDateStr ? 'rounded-l-full bg-[#14171f]/10' : ''} ${
-                        isEnd && startDateStr ? 'rounded-r-full bg-[#14171f]/10' : ''
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleDateClick(day)}
-                        className={`w-8 h-8 rounded-full text-xs font-semibold flex items-center justify-center transition-all cursor-pointer relative z-10 ${
-                          isStart || isEnd
-                            ? 'bg-[#14171f] text-white font-bold shadow-md scale-105'
-                            : isInRange
-                            ? 'text-[#14171f] font-semibold hover:bg-[#14171f]/15'
-                            : 'text-[#2d3342] hover:bg-[#14171f]/[0.08] hover:text-[#14171f]'
+                    return (
+                      <div
+                        key={`day-${day}`}
+                        className={`relative h-9 flex items-center justify-center select-none ${
+                          isInRange ? 'bg-[#14171f]/10' : ''
+                        } ${isStart && endDateStr ? 'rounded-l-full bg-[#14171f]/10' : ''} ${
+                          isEnd && startDateStr ? 'rounded-r-full bg-[#14171f]/10' : ''
                         }`}
                       >
-                        <span>{day}</span>
-                        {isToday && !isStart && !isEnd && (
-                          <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#14171f]" />
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDateClick(day)}
+                          className={`w-8 h-8 rounded-full text-xs font-semibold flex items-center justify-center transition-all cursor-pointer relative z-10 ${
+                            isStart || isEnd
+                              ? 'bg-[#14171f] text-white font-bold shadow-md scale-105'
+                              : isInRange
+                              ? 'text-[#14171f] font-semibold hover:bg-[#14171f]/15'
+                              : 'text-[#2d3342] hover:bg-[#14171f]/[0.08] hover:text-[#14171f]'
+                          }`}
+                        >
+                          <span>{day}</span>
+                          {isToday && !isStart && !isEnd && (
+                            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#14171f]" />
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              </AnimatePresence>
 
             </div>
 
