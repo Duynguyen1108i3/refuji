@@ -44,7 +44,7 @@
 
 ---
 
-## 2. CẤU TRÚC THƯ MỤC DỰ ÁN (ĐÃ TÁCH MODULE CHUẨN HOÁ)
+## 2. CẤU TRÚC THƯ MỤC DỰ ÁN
 
 ```text
 refuji/
