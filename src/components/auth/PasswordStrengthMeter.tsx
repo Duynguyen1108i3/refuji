@@ -40,33 +40,33 @@ export const evaluatePasswordStrength = (password: string) => {
   let label = 'Rất yếu';
   let colorVar = 'var(--refuji-accent-rose)';
   let bgVar = 'var(--refuji-accent-rose-bg)';
-  let textClass = 'text-rose-600 dark:text-rose-400';
+  let textClass = 'text-rose-600';
 
   if (metCount === 0 || password.length === 0) {
     label = 'Chưa đạt yêu cầu';
     colorVar = 'var(--refuji-text-muted)';
     bgVar = 'var(--refuji-input-bg)';
-    textClass = 'text-neutral-400 dark:text-neutral-500';
+    textClass = 'text-neutral-500';
   } else if (metCount === 1) {
     label = 'Rất yếu';
     colorVar = 'var(--refuji-accent-rose)';
     bgVar = 'var(--refuji-accent-rose-bg)';
-    textClass = 'text-rose-600 dark:text-rose-400';
+    textClass = 'text-rose-600';
   } else if (metCount === 2) {
     label = 'Yếu';
     colorVar = 'var(--refuji-accent-amber)';
     bgVar = 'var(--refuji-accent-amber-bg)';
-    textClass = 'text-amber-600 dark:text-amber-400';
+    textClass = 'text-amber-600';
   } else if (metCount === 3) {
     label = 'Trung bình';
     colorVar = 'var(--refuji-accent-amber)';
     bgVar = 'var(--refuji-accent-amber-bg)';
-    textClass = 'text-amber-600 dark:text-amber-400';
+    textClass = 'text-amber-600';
   } else if (metCount === 4) {
     label = 'Rất mạnh (Đạt chuẩn bảo mật)';
     colorVar = 'var(--refuji-accent-emerald)';
     bgVar = 'var(--refuji-accent-emerald-bg)';
-    textClass = 'text-emerald-600 dark:text-emerald-400';
+    textClass = 'text-emerald-600';
   }
 
   return {

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: light only !important;
   --system-glassness: 0.85;
   --glass-blur: 32px;
   --glass-bg-opacity: 0.32;
@@ -80,60 +80,17 @@
   --refuji-radius-card: 20px;
 }
 
-[data-theme='dark'], .dark {
-  --refuji-bg-overlay: rgba(3, 5, 8, 0.82);
-  --refuji-modal-bg: #11151f;
-  --refuji-modal-surface: #171c2a;
-  --refuji-modal-border: rgba(255, 255, 255, 0.1);
-  --refuji-modal-border-light: rgba(255, 255, 255, 0.06);
-  --refuji-modal-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
-
-  --refuji-text-primary: #f3f4f6;
-  --refuji-text-secondary: #9ca3af;
-  --refuji-text-muted: #6b7280;
-  --refuji-text-inverted: #14171f;
-
-  --refuji-input-bg: rgba(255, 255, 255, 0.05);
-  --refuji-input-bg-focus: rgba(255, 255, 255, 0.08);
-  --refuji-input-border: rgba(255, 255, 255, 0.14);
-  --refuji-input-border-focus: rgba(255, 255, 255, 0.4);
-  --refuji-input-placeholder: #6b7280;
-
-  --refuji-btn-primary-bg: #f3f4f6;
-  --refuji-btn-primary-text: #11151f;
-  --refuji-btn-primary-hover: #ffffff;
-  --refuji-btn-primary-active: #d1d5db;
-
-  --refuji-btn-secondary-bg: rgba(255, 255, 255, 0.08);
-  --refuji-btn-secondary-text: #f3f4f6;
-  --refuji-btn-secondary-hover: rgba(255, 255, 255, 0.14);
-
-  --refuji-badge-bronze-bg: rgba(217, 119, 6, 0.2);
-  --refuji-badge-bronze-text: #fbbf24;
-  --refuji-badge-bronze-border: rgba(217, 119, 6, 0.4);
-
-  --refuji-badge-silver-bg: rgba(148, 163, 184, 0.2);
-  --refuji-badge-silver-text: #cbd5e1;
-  --refuji-badge-silver-border: rgba(148, 163, 184, 0.4);
-
-  --refuji-badge-gold-bg: rgba(250, 204, 21, 0.2);
-  --refuji-badge-gold-text: #fde047;
-  --refuji-badge-gold-border: rgba(250, 204, 21, 0.4);
-
-  --refuji-badge-platinum-bg: rgba(129, 140, 248, 0.2);
-  --refuji-badge-platinum-text: #a5b4fc;
-  --refuji-badge-platinum-border: rgba(129, 140, 248, 0.4);
-}
-
 @layer base {
   html, body {
-    color-scheme: light;
+    color-scheme: light only !important;
+    background-color: #ffffff !important;
+    color: #14171f !important;
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */
   }
   body {
-    background-color: #ffffff;
-    color: #14171f;
+    background-color: #ffffff !important;
+    color: #14171f !important;
     font-family: 'Poppins', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 
