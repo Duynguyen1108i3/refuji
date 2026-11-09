@@ -19,6 +19,8 @@ interface LiquidNavbarProps {
   onSearchChange?: (params: SearchFilterParams) => void;
   onOpenCalendar?: () => void;
   isPhotoViewOnly?: boolean;
+  onOpenReservation?: () => void;
+  hasActiveReservation?: boolean;
 }
 
 export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
@@ -34,6 +36,8 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
   onSearchChange,
   onOpenCalendar,
   isPhotoViewOnly = false,
+  onOpenReservation,
+  hasActiveReservation = false,
 }) => {
   const navItems: NavScrubberItem[] = [
     { id: 'hero', label: 'Trang chủ', shortLabel: 'Home', icon: <Home size={16} /> },
@@ -159,7 +163,11 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
 
           {/* Nút Tài khoản / Đăng nhập: Tự động hiển thị Tên, Avatar, Badge Hạng thành viên */}
           {!isSearchMode && (
-            <UserNavButton onOpenAccountModal={onOpenAuth} />
+            <UserNavButton
+              onOpenAccountModal={onOpenAuth}
+              onOpenReservationModal={onOpenReservation}
+              hasActiveReservation={hasActiveReservation}
+            />
           )}
         </div>
       </header>

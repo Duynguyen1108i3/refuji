@@ -14,6 +14,8 @@ export interface RentalOrderRecord {
   order_status: string;
   payment_deadline: string;
   created_at: string;
+  assigned_serials?: string;
+  items_detail?: string;
 }
 
 export interface AccountModalProps {

@@ -55,6 +55,36 @@ catalogRouter.get('/', async (req: Request, res: Response) => {
 
     // 2. Thử truy vấn SQLite db
     try {
+      // Dọn các đơn giữ chỗ hết hạn
+      try {
+        db.prepare(`
+          UPDATE rental_orders 
+          SET order_status = 'CANCELLED' 
+          WHERE order_status = 'PENDING_PAYMENT' 
+            AND datetime(payment_deadline) < datetime('now')
+        `).run();
+      } catch (_) {}
+
+      // Lấy danh sách serial đang bị khóa bởi đơn hàng đang có hiệu lực
+      const activeOrders = db.prepare(`
+        SELECT assigned_serials FROM rental_orders 
+        WHERE (
+          order_status IN ('CONFIRMED', 'DELIVERED')
+          OR (order_status = 'PENDING_PAYMENT' AND datetime(payment_deadline) > datetime('now'))
+        )
+      `).all() as any[];
+
+      const lockedSerials = new Set<string>();
+      for (const o of activeOrders) {
+        if (o.assigned_serials) {
+          o.assigned_serials
+            .split(',')
+            .map((s: string) => s.trim())
+            .filter(Boolean)
+            .forEach((s: string) => lockedSerials.add(s));
+        }
+      }
+
       let query = 'SELECT * FROM product_models WHERE is_active = 1';
       const params: any[] = [];
       if (category && typeof category === 'string') {
@@ -65,7 +95,12 @@ catalogRouter.get('/', async (req: Request, res: Response) => {
       const rows = db.prepare(query).all(...params) as any[];
       if (rows && rows.length > 0) {
         const modelsWithItems = rows.map((r) => {
-          const items = db.prepare('SELECT * FROM product_items WHERE model_id = ?').all(r.id);
+          const rawItems = db.prepare('SELECT * FROM product_items WHERE model_id = ?').all(r.id) as any[];
+          const items = rawItems.map((item) => ({
+            ...item,
+            status: lockedSerials.has(item.serial_number) ? 'RENTED' : item.status,
+          }));
+
           let specs = {};
           try {
             specs = JSON.parse(r.specs_json || '{}');

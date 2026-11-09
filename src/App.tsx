@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Hero } from './components/Hero';
 import { LiquidNavbar } from './components/LiquidNavbar';
@@ -10,13 +10,32 @@ import { FeaturedLens } from './components/FeaturedLens';
 import { BookingModal } from './components/BookingModal';
 import { AccountModal, MembershipTierType } from './components/AccountModal';
 import { CartModal } from './components/CartModal';
+import { PaymentModal } from './components/PaymentModal';
+import { ReservationFloatingWidget } from './components/ReservationFloatingWidget';
 import { ScrollFadeSection } from './components/ScrollFadeSection';
 import { Footer } from './components/Footer';
-import { CameraModel, LensModel, AccessoryModel, EquipmentItem, CartItem } from './types';
+import { CameraModel, LensModel, AccessoryModel, EquipmentItem, CartItem, ActiveReservation } from './types';
 import { fetchCatalog } from './services/api';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { useCart } from './hooks/useCart';
+import { getAccessTokenInMemory } from './services/authApi';
+
+// Helper tính toán ngày thuê mặc định động từ hôm nay
+const getInitialDates = () => {
+  const now = new Date();
+  const d3 = new Date();
+  d3.setDate(d3.getDate() + 3);
+  const startD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const endD = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, '0')}-${String(d3.getDate()).padStart(2, '0')}`;
+  const startShort = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const endShort = `${String(d3.getDate()).padStart(2, '0')}/${String(d3.getMonth() + 1).padStart(2, '0')}`;
+  return {
+    startDate: startD,
+    endDate: endD,
+    datesText: `${startShort} — ${endShort} (3 ngày)`,
+  };
+};
 
 const MainApp: React.FC = () => {
   const { user, toast } = useAuth();
@@ -26,7 +45,7 @@ const MainApp: React.FC = () => {
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
 
   // Fetch real data from backend API (GET /api/models)
-  useEffect(() => {
+  const loadCatalog = useCallback(() => {
     fetchCatalog()
       .then((data) => {
         setCameras(data.cameras);
@@ -40,6 +59,23 @@ const MainApp: React.FC = () => {
         setIsLoadingCatalog(false);
       });
   }, []);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
+  // Tự động làm mới số lượng khả dụng kho khi có sự kiện đặt đơn / giữ chỗ
+  useEffect(() => {
+    const handleRefresh = () => {
+      loadCatalog();
+    };
+    window.addEventListener('refuji_catalog_refresh', handleRefresh);
+    window.addEventListener('refuji_reservation_updated', handleRefresh);
+    return () => {
+      window.removeEventListener('refuji_catalog_refresh', handleRefresh);
+      window.removeEventListener('refuji_reservation_updated', handleRefresh);
+    };
+  }, [loadCatalog]);
 
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -111,7 +147,116 @@ const MainApp: React.FC = () => {
   const [isCartModalOpen, setIsCartModalOpen] = useState(getInitialCartModalState);
   const [isPhotoViewOnly, setIsPhotoViewOnly] = useState(false);
 
-  // Quản lý giỏ hàng qua Custom Hook
+  // Quản lý đơn giữ chỗ 15 phút chống đặt trùng (Persistent 15-Minute Reservation Hold)
+  const [activeReservation, setActiveReservation] = useState<ActiveReservation | null>(() => {
+    try {
+      const saved = localStorage.getItem('refuji_active_reservation');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.expiresAt && Date.now() < parsed.expiresAt) {
+          return parsed;
+        } else {
+          localStorage.removeItem('refuji_active_reservation');
+        }
+      }
+    } catch (_) {}
+    return null;
+  });
+  const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
+
+  // Đồng bộ đơn giữ chỗ 15 phút với máy chủ và các sự kiện đặt thuê
+  useEffect(() => {
+    const handleReservationUpdate = (e: any) => {
+      if (e.detail) {
+        setActiveReservation(e.detail);
+      } else {
+        try {
+          const saved = localStorage.getItem('refuji_active_reservation');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.expiresAt && Date.now() < parsed.expiresAt) {
+              setActiveReservation(parsed);
+              return;
+            }
+          }
+          setActiveReservation(null);
+        } catch (_) {
+          setActiveReservation(null);
+        }
+      }
+    };
+    window.addEventListener('refuji_reservation_updated', handleReservationUpdate);
+
+    // Kiểm tra đơn giữ chỗ 15 phút từ Backend nếu local chưa có
+    const token = getAccessTokenInMemory();
+    fetch('/api/orders/my-orders', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((orders: any[]) => {
+        if (!Array.isArray(orders)) return;
+        const pending = orders.find((o) => o.order_status === 'PENDING_PAYMENT');
+        if (pending) {
+          const assignedSerials = pending.assigned_serials
+            ? pending.assigned_serials.split(',').map((s: string) => s.trim())
+            : [];
+          const deadlineTime = pending.payment_deadline
+            ? new Date(pending.payment_deadline).getTime()
+            : 0;
+
+          // Chỉ nhận đơn nếu THỜI GIAN GIỮ CHỖ THỰC TẾ TRÊN MÁY CHỦ CHƯA HẾT HẠN
+          if (deadlineTime > Date.now()) {
+            let itemsDetail: any[] = [];
+            if (pending.items_detail) {
+              try {
+                itemsDetail = JSON.parse(pending.items_detail);
+              } catch (_) {}
+            }
+
+            const createdTime = new Date(pending.created_at || Date.now()).getTime();
+            const resData: ActiveReservation = {
+              orderCode: pending.order_code,
+              modelName: pending.model_name || 'Thiết bị Fujifilm',
+              items: itemsDetail,
+              assignedSerials,
+              startDate: pending.start_date,
+              expectedReturnDate: pending.expected_return_date,
+              days: Math.max(
+                1,
+                Math.round(
+                  (new Date(pending.expected_return_date).getTime() - new Date(pending.start_date).getTime()) /
+                    (1000 * 3600 * 24)
+                )
+              ),
+              totalRent: pending.total_rent,
+              depositAmount: pending.deposit_amount,
+              totalDue: (pending.total_rent || 0) + (pending.deposit_amount || 0),
+              createdAt: createdTime,
+              paymentDeadline: pending.payment_deadline,
+              expiresAt: deadlineTime, // Sử dụng chính xác thời gian thực từ database
+            };
+            setActiveReservation(resData);
+            try {
+              localStorage.setItem('refuji_active_reservation', JSON.stringify(resData));
+            } catch (_) {}
+          } else {
+            // Đã hết hạn -> xóa khỏi local để không hiện nút cũ
+            setActiveReservation(null);
+            try {
+              localStorage.removeItem('refuji_active_reservation');
+            } catch (_) {}
+          }
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      window.removeEventListener('refuji_reservation_updated', handleReservationUpdate);
+    };
+  }, []);
+
+  // Quản lý giỏ hàng qua Custom Hook (đồng bộ trạng thái tài khoản & tự động xóa khi đăng xuất)
   const {
     cartItems,
     cartCount,
@@ -122,7 +267,7 @@ const MainApp: React.FC = () => {
   } = useCart((msg) => {
     setSearchNotification(msg);
     setTimeout(() => setSearchNotification(null), 3000);
-  });
+  }, user?.id);
 
   // 4 dòng máy ảnh Hot nhất theo yêu cầu: FUJIFILM X100VI, X-T50, X-T5, X-S20
   const featuredHotCameras = React.useMemo(() => {
@@ -162,11 +307,15 @@ const MainApp: React.FC = () => {
   // Trạng thái mở popup toàn bộ máy & phụ kiện kèm chế độ tìm kiếm thay thế thanh navbar
   const [isAllEquipmentModalOpen, setIsAllEquipmentModalOpen] = useState(getInitialModalState);
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(getInitialCalendarModalState);
-  const [filterParams, setFilterParams] = useState({
-    category: 'Tất cả thiết bị',
-    mount: 'Hệ ngàm X (APS-C)',
-    series: 'Tất cả dòng máy',
-    dates: '29/10 — 31/10 (3 ngày)',
+  const [rentalDates, setRentalDates] = useState(getInitialDates);
+  const [filterParams, setFilterParams] = useState(() => {
+    const init = getInitialDates();
+    return {
+      category: 'Tất cả thiết bị',
+      mount: 'Hệ ngàm X (APS-C)',
+      series: 'Tất cả dòng máy',
+      dates: init.datesText,
+    };
   });
 
   const isManualScrolling = useRef(false);
@@ -482,6 +631,8 @@ const MainApp: React.FC = () => {
         }}
         onOpenCalendar={openCalendarModal}
         isPhotoViewOnly={isPhotoViewOnly}
+        onOpenReservation={() => setIsReservationModalOpen(true)}
+        hasActiveReservation={!!activeReservation}
       />
 
       {/* Search Feedback Toast with Rytox Spring Physics */}
@@ -584,11 +735,18 @@ const MainApp: React.FC = () => {
           <CalendarModal
             isOpen={isCalendarModalOpen}
             onClose={closeCalendarModal}
-            initialStartDate="2026-10-29"
-            initialEndDate="2026-10-31"
-            onApplyDates={(rangeText) => {
+            initialStartDate={rentalDates.startDate}
+            initialEndDate={rentalDates.endDate}
+            onApplyDates={(rangeText, totalDays, startStr, endStr) => {
               const newParams = { ...filterParams, dates: rangeText };
               setFilterParams(newParams);
+              if (startStr && endStr) {
+                setRentalDates({
+                  startDate: startStr,
+                  endDate: endStr,
+                  datesText: rangeText,
+                });
+              }
               handleSearch(newParams);
             }}
           />
@@ -606,6 +764,9 @@ const MainApp: React.FC = () => {
             allAccessories={accessories}
             onAddToCart={handleAddToCart}
             onOpenCart={openCartModal}
+            initialStartDate={rentalDates.startDate}
+            initialEndDate={rentalDates.endDate}
+            onOpenCalendar={openCalendarModal}
           />
         )}
       </AnimatePresence>
@@ -622,6 +783,8 @@ const MainApp: React.FC = () => {
             onClearCart={handleClearCart}
             onOpenCalendar={openCalendarModal}
             rentalDatesText={filterParams.dates}
+            startDate={rentalDates.startDate}
+            expectedReturnDate={rentalDates.endDate}
             membershipTier={effectiveTier}
             allLenses={lenses}
             allAccessories={accessories}
@@ -658,11 +821,23 @@ const MainApp: React.FC = () => {
         {toast && (
           <motion.div
             key={toast.id}
+            onClick={() => {
+              // Bấm vào thông báo giữ chỗ để mở ngay giao diện xem lại
+              if (activeReservation && (toast.message.includes('giữ chỗ') || toast.message.includes('Serial'))) {
+                setIsReservationModalOpen(true);
+              }
+            }}
             initial={{ opacity: 0, y: 30, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-20 md:bottom-6 right-6 z-[140] crystal-liquid-glass border border-[#14171f]/15 bg-white/95 px-5 py-3.5 rounded-2xl text-xs sm:text-sm text-[#14171f] shadow-[0_16px_40px_rgba(20,24,32,0.16)] flex items-center gap-3 font-medium max-w-md"
+            className={`fixed ${
+              activeReservation ? 'bottom-36 md:bottom-32' : 'bottom-20 md:bottom-6'
+            } right-6 z-[140] crystal-liquid-glass border border-[#14171f]/15 bg-white/95 px-5 py-3.5 rounded-2xl text-xs sm:text-sm text-[#14171f] shadow-[0_16px_40px_rgba(20,24,32,0.16)] flex items-center gap-3 font-medium max-w-md ${
+              activeReservation && (toast.message.includes('giữ chỗ') || toast.message.includes('Serial'))
+                ? 'cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-50/50'
+                : ''
+            }`}
           >
             <span
               className={`w-2.5 h-2.5 rounded-full shrink-0 ${
@@ -673,10 +848,61 @@ const MainApp: React.FC = () => {
                   : 'bg-emerald-500'
               } radar-pulse-white`}
             />
-            <span className="leading-relaxed">{toast.message}</span>
+            <span className="leading-relaxed flex-1">{toast.message}</span>
+            {activeReservation && (toast.message.includes('giữ chỗ') || toast.message.includes('Serial')) && (
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full underline shrink-0">
+                Mở xem
+              </span>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Nút / Widget Giữ chỗ 15 phút cố định ở góc dưới bên phải */}
+      {activeReservation && (
+        <ReservationFloatingWidget
+          reservation={activeReservation}
+          onOpenModal={() => setIsReservationModalOpen(true)}
+          onCancelHold={() => {
+            setActiveReservation(null);
+            try {
+              localStorage.removeItem('refuji_active_reservation');
+              window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+            } catch (_) {}
+            setSearchNotification('Đã hủy giữ chỗ thiết bị');
+            setTimeout(() => setSearchNotification(null), 3000);
+          }}
+        />
+      )}
+
+      {/* Giao diện Xem lại giữ chỗ 15 phút & Thanh toán cọc */}
+      {isReservationModalOpen && activeReservation && (
+        <PaymentModal
+          isOpen={isReservationModalOpen}
+          onClose={() => setIsReservationModalOpen(false)}
+          orderCode={activeReservation.orderCode}
+          modelName={activeReservation.modelName}
+          startDate={activeReservation.startDate}
+          expectedReturnDate={activeReservation.expectedReturnDate}
+          days={activeReservation.days}
+          totalRent={activeReservation.totalRent}
+          depositAmount={activeReservation.depositAmount}
+          totalDue={activeReservation.totalDue}
+          assignedSerials={activeReservation.assignedSerials}
+          itemsDetail={activeReservation.items as any}
+          initialTimeLeft={Math.max(0, Math.floor((activeReservation.expiresAt - Date.now()) / 1000))}
+          onPaymentSuccess={() => {
+            setActiveReservation(null);
+            try {
+              localStorage.removeItem('refuji_active_reservation');
+              window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+            } catch (_) {}
+            setIsReservationModalOpen(false);
+            setSearchNotification(`Thanh toán thành công đơn hàng #${activeReservation.orderCode}!`);
+            setTimeout(() => setSearchNotification(null), 4000);
+          }}
+        />
+      )}
 
     </div>
   );

@@ -8,15 +8,22 @@ import {
   ChevronDown,
   Sparkles,
   ExternalLink,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { MembershipTierType } from '../../services/authApi';
 
 interface UserNavButtonProps {
   onOpenAccountModal?: () => void;
+  onOpenReservationModal?: () => void;
+  hasActiveReservation?: boolean;
 }
 
-export const UserNavButton: React.FC<UserNavButtonProps> = ({ onOpenAccountModal }) => {
+export const UserNavButton: React.FC<UserNavButtonProps> = ({
+  onOpenAccountModal,
+  onOpenReservationModal,
+  hasActiveReservation,
+}) => {
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -110,8 +117,11 @@ export const UserNavButton: React.FC<UserNavButtonProps> = ({ onOpenAccountModal
         aria-label="Thông tin tài khoản thành viên"
       >
         {/* Avatar Circle with Initials */}
-        <div className="w-7 h-7 aspect-square rounded-full bg-[#14171f] text-white flex items-center justify-center font-bold text-[11px] shadow-sm shrink-0">
+        <div className="relative w-7 h-7 aspect-square rounded-full bg-[#14171f] text-white flex items-center justify-center font-bold text-[11px] shadow-sm shrink-0">
           {initials || 'U'}
+          {hasActiveReservation && (
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 radar-pulse-white ring-2 ring-white" />
+          )}
         </div>
 
         {/* User Name */}
@@ -162,6 +172,26 @@ export const UserNavButton: React.FC<UserNavButtonProps> = ({ onOpenAccountModal
                 </span>
               </div>
             </div>
+
+            {/* Mục xem đơn chờ thanh toán nếu có đơn giữ chỗ */}
+            {hasActiveReservation && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDropdownOpen(false);
+                  if (onOpenReservationModal) onOpenReservationModal();
+                }}
+                className="w-full mb-2 p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100/90 border border-amber-200 text-amber-950 flex items-center justify-between text-xs font-semibold transition-all cursor-pointer shadow-xs"
+              >
+                <span className="flex items-center gap-2">
+                  <Clock size={14} className="text-amber-700 animate-pulse" />
+                  <span>Đơn chờ thanh toán (15p)</span>
+                </span>
+                <span className="text-[10px] font-bold bg-amber-200/90 text-amber-950 px-2 py-0.5 rounded-full font-mono">
+                  Mở xem
+                </span>
+              </button>
+            )}
 
             {/* Menu Items */}
             <div className="space-y-1 text-xs">

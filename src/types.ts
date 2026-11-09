@@ -79,3 +79,21 @@ export interface CartItem {
   quantity: number;
   addedAt: string;
 }
+
+export interface ActiveReservation {
+  orderCode: string;
+  modelName: string;
+  items?: Array<{ modelId: string | number; modelName: string; quantity: number }>;
+  assignedSerials: string[];
+  startDate: string;
+  expectedReturnDate: string;
+  days: number;
+  totalRent: number;
+  depositAmount: number;
+  totalDue: number;
+  createdAt: number;
+  paymentDeadline: string;
+  expiresAt: number;
+  isPaid?: boolean;
+}
+

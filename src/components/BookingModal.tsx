@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CameraModel, LensModel, AccessoryModel, EquipmentItem } from '../types';
 import { 
   X, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   ShieldCheck, 
   Check, 
   Clock, 
@@ -14,10 +14,17 @@ import {
   Zap,
   ShoppingBag,
   Sparkles,
-  Plus
+  Plus,
+  QrCode,
+  CreditCard,
+  Store,
+  Copy,
+  Loader2,
+  CalendarDays
 } from 'lucide-react';
 import { getRecommendedItemsForCamera } from '../data/travelCombos';
 import { useAuth } from '../context/AuthContext';
+import { createRentalOrder, payRentalOrder } from '../services/authApi';
 
 interface BookingModalProps {
   item: CameraModel | LensModel | AccessoryModel | null;
@@ -27,7 +34,21 @@ interface BookingModalProps {
   allAccessories?: AccessoryModel[];
   onAddToCart?: (item: EquipmentItem) => void;
   onOpenCart?: () => void;
+  initialStartDate?: string;
+  initialEndDate?: string;
+  onOpenCalendar?: () => void;
 }
+
+const getTodayStr = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+const addDaysToStr = (baseStr: string, addDays: number) => {
+  const d = new Date(baseStr);
+  d.setDate(d.getDate() + addDays);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 export const BookingModal: React.FC<BookingModalProps> = ({ 
   item, 
@@ -37,16 +58,71 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   allAccessories = [],
   onAddToCart,
   onOpenCart,
+  initialStartDate,
+  initialEndDate,
+  onOpenCalendar,
 }) => {
-  const [days, setDays] = useState(3);
+  const defStart = initialStartDate || getTodayStr();
+  const defEnd = initialEndDate || addDaysToStr(defStart, 3);
+
+  const [startDate, setStartDate] = useState(defStart);
+  const [expectedReturnDate, setExpectedReturnDate] = useState(defEnd);
+
+  // Tính số ngày thuê chính xác
+  const calculateDaysBetween = (s: string, e: string) => {
+    const sDate = new Date(s);
+    const eDate = new Date(e);
+    const diff = Math.round((eDate.getTime() - sDate.getTime()) / (1000 * 3600 * 24));
+    return diff > 0 ? diff : 1;
+  };
+
+  const days = calculateDaysBetween(startDate, expectedReturnDate);
+
   const [isBooked, setIsBooked] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
 
-  const { isAuthenticated, openAuthModal, user, pendingIntent } = useAuth();
+  // Trạng thái giữ chỗ và thanh toán
+  const [createdOrderCode, setCreatedOrderCode] = useState<string | null>(null);
+  const [assignedSerials, setAssignedSerials] = useState<string[]>([]);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'VIETQR' | 'VNPAY' | 'COUNTER'>('VIETQR');
+  const [isPaying, setIsPaying] = useState(false);
+  const [isPaidSuccess, setIsPaidSuccess] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Đồng hồ đếm ngược 15 phút (900 giây) thực tế
+  const [timeLeft, setTimeLeft] = useState(900);
+
+  const { isAuthenticated, openAuthModal, user, setToast } = useAuth();
+
+  useEffect(() => {
+    if (initialStartDate) setStartDate(initialStartDate);
+    if (initialEndDate) setExpectedReturnDate(initialEndDate);
+  }, [initialStartDate, initialEndDate]);
+
+  // Bộ đếm ngược 15 phút chạy từng giây khi đã giữ chỗ
+  useEffect(() => {
+    if (!isBooked || isPaidSuccess) return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isBooked, isPaidSuccess]);
 
   if (!item) return null;
+
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  const timerDisplay = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
   const effectiveTier = user?.membership_tier || membershipTier;
   const discountRate = effectiveTier === 'PLATINUM' ? 0.15 : effectiveTier === 'GOLD' ? 0.10 : effectiveTier === 'SILVER' ? 0.05 : 0;
@@ -54,31 +130,176 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const totalRent = item.dailyRate * days;
   const totalDue = totalRent + discountedDeposit;
 
-  // Tự động chuyển sang trạng thái Booked khi người dùng vừa đăng nhập thành công từ intent dở dang
-  useEffect(() => {
-    if (isAuthenticated && pendingIntent && String(pendingIntent.modelId) === String(item.id)) {
-      setIsBooked(true);
-    }
-  }, [isAuthenticated, pendingIntent, item.id]);
+  // Xử lý khi chọn nhanh thời lượng ngày (1, 3, 5, 7, 14)
+  const handleQuickDays = (d: number) => {
+    const newEnd = addDaysToStr(startDate, d);
+    setExpectedReturnDate(newEnd);
+  };
 
-  const handleConfirm = () => {
+  // Thay đổi ngày nhận
+  const handleStartDateChange = (val: string) => {
+    setStartDate(val);
+    if (val >= expectedReturnDate) {
+      setExpectedReturnDate(addDaysToStr(val, 3));
+    }
+  };
+
+  // Thay đổi ngày trả
+  const handleEndDateChange = (val: string) => {
+    if (val <= startDate) {
+      setExpectedReturnDate(addDaysToStr(startDate, 1));
+    } else {
+      setExpectedReturnDate(val);
+    }
+  };
+
+  const isOutOfStock = (item?.availableCount ?? 1) <= 0 || item?.status === 'BOOKED';
+  const availableStock = item?.availableCount !== undefined ? item.availableCount : 1;
+
+  const handleConfirm = async () => {
+    if (isOutOfStock) {
+      setPaymentError(`Thiết bị "${item.name}" hiện đã hết hàng trong kho hoặc đang có người giữ chỗ.`);
+      return;
+    }
+
     if (!isAuthenticated) {
-      // Yêu cầu 4: Lưu thông số Ts, Te và mở AuthModal
       openAuthModal('login', {
         type: 'BOOK_RENTAL',
         modelId: item.id,
         modelName: item.name,
-        startDate: '2026-10-29',
-        expectedReturnDate: '2026-10-31',
+        startDate,
+        expectedReturnDate,
         dailyRate: item.dailyRate,
         depositRate: discountedDeposit,
         days,
         totalRent,
         totalDue,
+        quantity: 1,
+        items: [{
+          modelId: item.id,
+          modelName: item.name,
+          quantity: 1,
+        }],
       });
       return;
     }
-    setIsBooked(true);
+
+    setIsCreatingOrder(true);
+    setPaymentError(null);
+    try {
+      const res = await createRentalOrder(
+        {
+          type: 'BOOK_RENTAL',
+          modelId: item.id,
+          modelName: item.name,
+          startDate,
+          expectedReturnDate,
+          dailyRate: item.dailyRate,
+          depositRate: discountedDeposit,
+          days,
+          totalRent,
+          totalDue,
+          quantity: 1,
+          items: [{
+            modelId: item.id,
+            modelName: item.name,
+            quantity: 1,
+          }],
+        },
+        user?.id || 1
+      );
+
+      setCreatedOrderCode(res.orderId);
+      if (res.assignedSerials && res.assignedSerials.length > 0) {
+        setAssignedSerials(res.assignedSerials);
+      }
+      const realDeadline = res.payment_deadline
+        ? new Date(res.payment_deadline).getTime()
+        : Date.now() + 15 * 60 * 1000;
+      const initialSeconds = Math.max(0, Math.floor((realDeadline - Date.now()) / 1000));
+      setTimeLeft(initialSeconds);
+      setIsBooked(true);
+
+      // Lưu đơn giữ chỗ 15 phút vào localStorage để nút góc dưới bên phải luôn hiển thị
+      const reservationData = {
+        orderCode: res.orderId,
+        modelName: item.name,
+        items: [{
+          modelId: item.id,
+          modelName: item.name,
+          quantity: 1,
+        }],
+        assignedSerials: res.assignedSerials || [],
+        startDate,
+        expectedReturnDate,
+        days,
+        totalRent,
+        depositAmount: discountedDeposit,
+        totalDue,
+        createdAt: Date.now(),
+        paymentDeadline: res.payment_deadline || new Date(realDeadline).toISOString(),
+        expiresAt: realDeadline,
+      };
+      try {
+        localStorage.setItem('refuji_active_reservation', JSON.stringify(reservationData));
+        window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: reservationData }));
+      } catch (_) {}
+
+      // Xóa thiết bị khỏi giỏ hàng nếu đang có trong giỏ & làm mới số lượng kho
+      try {
+        const rawCart = localStorage.getItem('refuji_cart');
+        if (rawCart) {
+          const cartList = JSON.parse(rawCart);
+          const filtered = cartList.filter((ci: any) => ci.item?.id !== item.id);
+          localStorage.setItem('refuji_cart', JSON.stringify(filtered));
+        }
+      } catch (_) {}
+      window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+
+      if (setToast) {
+        setToast({
+          id: Date.now().toString(),
+          message: res.message || `Đã khóa giữ chỗ 15 phút thành công cho ${item.name}! Mã đơn: #${res.orderId}`,
+          type: 'success',
+        });
+      }
+    } catch (e: any) {
+      setPaymentError(e.message || 'Không thể tạo đơn giữ chỗ');
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
+  // Xử lý thanh toán cọc
+  const handlePayOrder = async () => {
+    if (!createdOrderCode) return;
+    setIsPaying(true);
+    setPaymentError(null);
+    try {
+      await payRentalOrder(createdOrderCode, paymentMethod);
+      setIsPaidSuccess(true);
+      try {
+        localStorage.removeItem('refuji_active_reservation');
+        window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+      } catch (_) {}
+      if (setToast) {
+        setToast({
+          id: Date.now().toString(),
+          message: `Thanh toán thành công đơn hàng #${createdOrderCode}! Thiết bị đã sẵn sàng.`,
+          type: 'success',
+        });
+      }
+    } catch (e: any) {
+      setPaymentError(e.message || 'Lỗi khi xử lý thanh toán');
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard?.writeText?.(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   const handleShare = () => {
@@ -94,58 +315,61 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     }
   };
 
-  // Trích xuất thông số kỹ thuật theo từng phân loại
+  const formatDateDisplay = (dStr: string) => {
+    if (!dStr) return '';
+    const parts = dStr.split('-');
+    if (parts.length < 3) return dStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
+
+  const vietQrUrl = `https://img.vietqr.io/image/mbbank-0901234567-compact.png?amount=${totalDue}&addInfo=REFUJI%20${createdOrderCode || 'ORD'}&accountName=CONG%20TY%20REFUJI`;
+
+  // Trích xuất thông số kỹ thuật
   const isCamera = 'sensor' in item;
   const isLens = 'focalLength' in item;
   const cameraItem = isCamera ? (item as CameraModel) : null;
   const lensItem = isLens ? (item as LensModel) : null;
 
-  // Lấy gợi ý combo ống kính và phụ kiện chính hãng nếu xem máy ảnh
-  const recommendedData = isCamera
+  const recommendedData = isCamera 
     ? getRecommendedItemsForCamera(item.name, allLenses, allAccessories)
-    : null;
+    : { lenses: [], accessories: [] };
 
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/40 backdrop-blur-xl overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/40 backdrop-blur-md"
     >
       <motion.div 
-        initial={{ opacity: 0, scale: 0.94, y: 24 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 16 }}
-        transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ scale: 0.96, opacity: 0, y: 16 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.96, opacity: 0, y: 16 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+        className="relative w-full max-w-4xl bg-white border border-[#14171f]/10 rounded-3xl shadow-[0_24px_70px_rgba(20,24,32,0.18)] overflow-hidden flex flex-col h-[670px] max-h-[92vh] select-text"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl bg-white border border-[#14171f]/10 rounded-[28px] overflow-hidden shadow-[0_24px_80px_rgba(20,24,32,0.18)] text-[#14171f] my-auto h-[740px] max-h-[92vh] flex flex-col select-text"
       >
-        
-        {/* NÚT ĐÓNG (X) DẠNG TRÒN NỔI BẬT THEO STYLE RYTOXGROUP */}
+        {/* Nút đóng tròn phong cách Apple */}
         <button 
           onClick={onClose}
-          aria-label="Đóng chi tiết"
-          className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-white/80 hover:bg-white border border-[#14171f]/15 text-[#14171f] flex items-center justify-center transition-all cursor-pointer active:scale-90 shadow-md backdrop-blur-md"
+          className="absolute top-5 right-5 z-20 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 border border-[#14171f]/10 text-[#6e7587] hover:text-[#14171f] flex items-center justify-center transition-all cursor-pointer active:scale-90"
+          aria-label="Đóng cửa sổ"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
-        <AnimatePresence mode="popLayout" initial={false}>
-          {!isBooked ? (
-            <motion.div
-              key="booking-form-view"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98, filter: 'blur(4px)' }}
-              transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-              className="overflow-y-auto flex-1 scrollbar-thin flex flex-col"
-            >
-            {/* 1. HERO PRODUCT STAGE */}
-            <div className="relative pt-6 pb-5 px-6 sm:px-8 bg-gradient-to-b from-[#f6f7fa] to-[#ffffff] border-b border-[#14171f]/[0.08] flex flex-col items-center">
-              
-              {/* Product Stage Image with generous height and clean white backing */}
-              <div className="relative h-56 sm:h-64 w-full flex items-center justify-center mb-5">
+        <AnimatePresence mode="wait">
+        {!isBooked ? (
+          <motion.div 
+            key="booking-content-view"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex-1 overflow-y-auto"
+          >
+            {/* 1. KHU VỰC HERO BANNER */}
+            <div className="relative pt-6 px-6 sm:px-8 pb-4 border-b border-[#14171f]/10 bg-gradient-to-b from-neutral-50/70 to-white">
+              <div className="w-full h-44 sm:h-52 flex items-center justify-center mb-4">
                 <img 
                   src={item.image} 
                   alt={item.name}
@@ -153,7 +377,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 />
               </div>
 
-              {/* Product Badges, Name, and Actions */}
               <div className="w-full flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
@@ -168,16 +391,40 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   <h3 className="font-serif text-2xl sm:text-3xl font-medium text-[#14171f] tracking-tight">
                     {item.name}
                   </h3>
+
+                  {/* Hiển thị giới hạn tồn kho thực tế */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={`w-2 h-2 rounded-full ${isOutOfStock ? 'bg-rose-500' : availableStock === 1 ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`} />
+                    <span className={`text-xs font-semibold ${isOutOfStock ? 'text-rose-600' : availableStock === 1 ? 'text-amber-800' : 'text-emerald-700'}`}>
+                      {isOutOfStock ? 'Tạm hết hàng trong kho' : availableStock === 1 ? 'Kho chỉ còn duy nhất 1 máy' : `Kho sẵn sàng: ${availableStock} máy (Kiểm định Serial)`}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Hàng nút tương tác: Đặt giữ chỗ + Yêu thích + Chia sẻ */}
                 <div className="flex items-center gap-2.5 shrink-0">
                   <button
                     onClick={handleConfirm}
-                    className="px-6 py-2.5 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_4px_16px_rgba(20,24,32,0.18)] active:scale-95 transition-all cursor-pointer"
+                    disabled={isCreatingOrder || isOutOfStock}
+                    className={`px-6 py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+                      isOutOfStock
+                        ? 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
+                        : 'bg-[#14171f] hover:bg-[#252a37] text-white shadow-[0_4px_16px_rgba(20,24,32,0.18)] active:scale-95 disabled:opacity-50'
+                    }`}
                   >
-                    <Zap size={16} className="fill-white" />
-                    <span>Thuê ngay (Giữ chỗ 15p)</span>
+                    {isCreatingOrder ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin text-white" />
+                        <span>Đang tạo giữ chỗ...</span>
+                      </>
+                    ) : isOutOfStock ? (
+                      <span>Tạm hết hàng trong kho</span>
+                    ) : (
+                      <>
+                        <Zap size={16} className="fill-white" />
+                        <span>Thuê ngay (Giữ chỗ 15p)</span>
+                      </>
+                    )}
                   </button>
 
                   <button
@@ -210,19 +457,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </div>
             </div>
 
-            {/* 2. DÒNG THÔNG SỐ NHANH & BADGES */}
+            {/* 2. DÒNG THÔNG SỐ NHANH */}
             <div className="px-5 sm:px-8 pt-4 pb-3 flex flex-wrap items-center gap-2.5 border-b border-[#14171f]/10 text-xs text-[#525868]">
               <div className="flex items-center gap-1 text-[#14171f] font-bold">
                 <Star size={14} className="fill-[#14171f] text-[#14171f]" />
                 <span>4.9</span>
                 <span className="text-[#888f9e] font-normal">(128 đánh giá)</span>
               </div>
-
               <span className="text-[#14171f]/20">•</span>
               <span className="px-2.5 py-0.5 rounded-full bg-[#14171f]/[0.04] border border-[#14171f]/10 text-[11px] font-medium text-[#2d3342]">
                 Thế hệ 2026
               </span>
-
               {isCamera && (
                 <>
                   <span className="px-2.5 py-0.5 rounded-full bg-[#14171f]/[0.04] border border-[#14171f]/10 text-[11px] font-medium text-[#2d3342]">
@@ -233,7 +478,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   </span>
                 </>
               )}
-
               {isLens && (
                 <>
                   <span className="px-2.5 py-0.5 rounded-full bg-[#14171f]/[0.04] border border-[#14171f]/10 text-[11px] font-medium text-[#2d3342]">
@@ -244,9 +488,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   </span>
                 </>
               )}
-
               <div className="flex items-center gap-1.5 ml-auto text-[#2d3342] text-[11.5px] font-medium">
-                <span className="w-2 h-2 rounded-full bg-[#14171f]/80 radar-pulse-white" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Sẵn sàng bàn giao tại cửa hàng</span>
               </div>
             </div>
@@ -254,8 +497,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             {/* 3. BỐ CỤC 2 CỘT CHÍNH */}
             <div className="p-5 sm:p-8 grid grid-cols-1 md:grid-cols-12 gap-8">
               
-              {/* CỘT TRÁI (7 COLS): MÔ TẢ & CHỌN NGÀY & DỰ TOÁN TÀI CHÍNH */}
-              <div className="md:col-span-7 flex flex-col justify-between">
+              {/* CỘT TRÁI (7 COLS): MÔ TẢ & CHỌN/SỬA NGÀY & DỰ TOÁN TÀI CHÍNH */}
+              <div className="md:col-span-7 flex flex-col justify-between space-y-6">
                 <div>
                   <h4 className="text-xs uppercase font-bold tracking-wider text-[#6e7587] mb-2">
                     Mô tả &amp; Trải nghiệm
@@ -264,31 +507,76 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     {item.description || 'Thiết bị Fujifilm nguyên bản được kiểm định nghiêm ngặt theo quy chuẩn 12 bước trước khi bàn giao. Đảm bảo cảm biến sạch tuyệt đối, hoạt động mượt mà và đi kèm trọn bộ phụ kiện cao cấp.'}
                   </p>
 
-                  {/* Chọn thời gian thuê máy */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between text-xs text-[#525868] font-medium mb-2.5">
-                      <span className="flex items-center gap-1.5">
-                        <Calendar size={13} className="text-[#3c4252]" />
-                        <span>Thời lượng thuê:</span>
+                  {/* KHU VỰC CHỌN & SỬA NGÀY THUÊ */}
+                  <div className="mb-6 p-4 rounded-2xl bg-[#f7f8fa] border border-[#14171f]/10 space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-[#14171f] uppercase tracking-wider flex items-center gap-1.5">
+                        <CalendarIcon size={14} className="text-[#14171f]" />
+                        <span>Thời Gian &amp; Lịch Thuê Máy</span>
                       </span>
-                      <span className="text-[#14171f] font-semibold">{days} ngày</span>
+                      {onOpenCalendar && (
+                        <button
+                          type="button"
+                          onClick={onOpenCalendar}
+                          className="inline-flex items-center gap-1 text-xs font-semibold underline text-[#14171f] hover:opacity-75 transition-opacity cursor-pointer"
+                        >
+                          <CalendarDays size={13} />
+                          <span>Mở xem trên lịch</span>
+                        </button>
+                      )}
                     </div>
 
-                    <div className="grid grid-cols-5 gap-2">
-                      {[1, 3, 5, 7, 14].map((d) => (
-                        <button
-                          key={d}
-                          type="button"
-                          onClick={() => setDays(d)}
-                          className={`py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                            days === d
-                              ? 'bg-[#14171f] text-white shadow-md font-bold scale-[1.02]'
-                              : 'bg-[#14171f]/[0.04] border border-[#14171f]/10 text-[#444a59] hover:bg-[#14171f]/[0.08] active:scale-95'
-                          }`}
-                        >
-                          {d} ngày
-                        </button>
-                      ))}
+                    {/* Hai ô chọn / sửa ngày nhận và trả */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-semibold text-[#6e7587]">
+                          Ngày nhận máy (Start Date)
+                        </label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          min={getTodayStr()}
+                          onChange={(e) => handleStartDateChange(e.target.value)}
+                          className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-neutral-300 bg-white text-[#14171f] outline-none focus:border-[#14171f]"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-semibold text-[#6e7587]">
+                          Ngày trả máy (Return Date)
+                        </label>
+                        <input
+                          type="date"
+                          value={expectedReturnDate}
+                          min={startDate}
+                          onChange={(e) => handleEndDateChange(e.target.value)}
+                          className="w-full px-3 py-2 text-xs font-medium rounded-xl border border-neutral-300 bg-white text-[#14171f] outline-none focus:border-[#14171f]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Chọn nhanh số ngày */}
+                    <div className="pt-2">
+                      <div className="flex items-center justify-between text-[11.5px] text-[#525868] mb-2">
+                        <span>Chọn nhanh số ngày thuê:</span>
+                        <span className="font-bold text-[#14171f]">{days} ngày</span>
+                      </div>
+                      <div className="grid grid-cols-5 gap-2">
+                        {[1, 3, 5, 7, 14].map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => handleQuickDays(d)}
+                            className={`py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                              days === d
+                                ? 'bg-[#14171f] text-white shadow-sm font-bold scale-[1.02]'
+                                : 'bg-white border border-[#14171f]/10 text-[#444a59] hover:bg-neutral-100 active:scale-95'
+                            }`}
+                          >
+                            {d} ngày
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -335,7 +623,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
               </div>
 
-              {/* CỘT PHẢI (5 COLS): THÔNG SỐ KỸ THUẬT & PHỤ KIỆN ĐI KÈM */}
+              {/* CỘT PHẢI (5 COLS): THÔNG SỐ KỸ THUẬT */}
               <div className="md:col-span-5 bg-[#f7f8fa] border border-[#14171f]/10 rounded-2xl p-5 flex flex-col justify-between">
                 <div>
                   <h4 className="text-xs uppercase font-bold tracking-wider text-[#6e7587] mb-3.5">
@@ -395,218 +683,342 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           <span className="text-[#6e7587]">Thương hiệu:</span>
                           <span className="text-[#14171f] font-medium">{item.brand || 'Fujifilm'}</span>
                         </div>
-                        <div className="flex justify-between pb-2 border-b border-[#14171f]/[0.06]">
-                          <span className="text-[#6e7587]">Tiêu chuẩn:</span>
-                          <span className="text-[#14171f] font-medium">Chính hãng Fujifilm 100%</span>
-                        </div>
                       </>
                     )}
-
-                    {/* Quy tắc: Khách đặt thuê online là đặt trên ProductModels (assigned_item_id = NULL) */}
-                    <div className="pb-2 border-b border-[#14171f]/[0.06] space-y-1.5">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-[#6e7587]">Quy chế gán Serial máy:</span>
-                        <span className="text-[#14171f] font-mono text-[11px] font-semibold bg-[#14171f]/[0.05] px-2 py-0.5 rounded-full">
-                          Chỉ định tại quầy (Check-out)
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-[#444a59] bg-[#14171f]/[0.025] p-2.5 rounded-xl border border-[#14171f]/[0.06] leading-relaxed">
-                        Kho hiện có <strong>{(item.items?.filter(i => i.status === 'AVAILABLE').length || item.availableCount || 1)} máy khả dụng</strong> (Độ mới 95%–99% • Số shot từ {Math.min(...(item.items?.map(i => i.shutter_count || 2150) || [2150])).toLocaleString('vi-VN')} shots) — <em>Số Serial cụ thể sẽ được nhân viên bàn giao và đối chiếu trực tiếp khi Check-out tại quầy</em>.
-                      </div>
-                    </div>
                   </div>
-
-                  {/* Trọn bộ phụ kiện đi kèm theo máy */}
-                  <h4 className="text-xs uppercase font-bold tracking-wider text-[#6e7587] mt-6 mb-3">
-                    Bộ phụ kiện đi kèm trọn gói
-                  </h4>
-                  <ul className="space-y-2 text-xs text-[#444a59]">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 size={13} className="text-[#14171f] shrink-0" />
-                      <span>02 Pin chính hãng (NP-W235/NP-W126S)</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 size={13} className="text-[#14171f] shrink-0" />
-                      <span>01 Sạc đôi nhanh cổng USB Type-C</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 size={13} className="text-[#14171f] shrink-0" />
-                      <span>01 Thẻ nhớ SD SanDisk Extreme 128GB</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 size={13} className="text-[#14171f] shrink-0" />
-                      <span>Dây đeo Peak Design &amp; Túi chống sốc</span>
-                    </li>
-                  </ul>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-[#14171f]/10 flex flex-col sm:flex-row gap-2.5">
+                <div className="pt-6">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (onAddToCart) onAddToCart(item);
-                    }}
-                    className="flex-1 py-3 bg-white border border-[#14171f]/20 hover:border-[#14171f]/40 text-[#14171f] font-semibold text-xs sm:text-sm rounded-full transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    disabled={isOutOfStock}
+                    onClick={() => !isOutOfStock && onAddToCart && onAddToCart(item)}
+                    className={`w-full py-2.5 rounded-full border text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-sm ${
+                      isOutOfStock
+                        ? 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed'
+                        : 'border-[#14171f]/20 bg-white hover:bg-[#14171f]/5 text-[#14171f] active:scale-95 cursor-pointer'
+                    }`}
                   >
-                    <ShoppingBag size={15} />
-                    <span>Thêm vào giỏ</span>
-                  </button>
-
-                  <button
-                    onClick={handleConfirm}
-                    className="flex-[1.5] py-3 bg-[#14171f] text-white hover:bg-[#252a37] font-bold text-xs sm:text-sm rounded-full transition-all shadow-[0_4px_16px_rgba(20,24,32,0.18)] hover:scale-[1.01] active:scale-[0.98] cursor-pointer"
-                  >
-                    Giữ chỗ 15 phút
+                    <ShoppingBag size={14} />
+                    <span>{isOutOfStock ? 'Thiết bị tạm hết trong kho' : 'Thêm vào giỏ thuê'}</span>
                   </button>
                 </div>
               </div>
-
             </div>
-
-            {/* GỢI Ý COMBO LENS & PHỤ KIỆN DU LỊCH CHÍNH HÃNG FUJIFILM */}
-            {isCamera && recommendedData && (
-              <div className="px-6 sm:px-8 pb-8 pt-6 border-t border-[#14171f]/10 bg-gradient-to-b from-white to-[#fbfcfd]">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/[0.08] text-amber-900 border border-amber-500/20 text-[11px] font-semibold mb-1.5">
-                      <Sparkles size={12} className="text-amber-600" />
-                      <span>{recommendedData.comboGuide.subtitle}</span>
-                    </div>
-                    <h4 className="text-base sm:text-lg font-serif font-normal text-[#14171f]">
-                      Gợi Ý Ống Kính &amp; Phụ Kiện Chuẩn Cẩm Nang Du Lịch
-                    </h4>
-                    <p className="text-xs text-[#525868] font-light max-w-2xl mt-0.5">
-                      {recommendedData.comboGuide.travelNote}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Danh sách ống kính khuyên dùng */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-4">
-                  {recommendedData.lenses.map((recLens) => {
-                    const isAdded = addedItems.has(recLens.id);
-                    return (
-                      <div
-                        key={recLens.id}
-                        className="p-3.5 rounded-2xl bg-[#f9fafb] border border-[#14171f]/8 hover:border-[#14171f]/20 transition-all flex flex-col justify-between group"
-                      >
-                        <div className="flex items-center gap-3 mb-2.5">
-                          <div className="w-14 h-14 rounded-xl bg-white border border-[#14171f]/6 flex items-center justify-center p-1.5 shrink-0 overflow-hidden">
-                            <img src={recLens.image} alt={recLens.name} className="max-h-full max-w-full object-contain product-stage-img group-hover:scale-105 transition-transform" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-[10px] font-mono text-[#62687a] block truncate uppercase">
-                              {recLens.focalLength} • {recLens.aperture}
-                            </span>
-                            <h5 className="text-xs font-semibold text-[#14171f] line-clamp-2">
-                              {recLens.name}
-                            </h5>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2 border-t border-[#14171f]/5">
-                          <div className="text-xs font-mono font-semibold text-[#14171f]">
-                            +{recLens.dailyRate.toLocaleString('vi-VN')}đ<span className="text-[10px] font-normal text-[#62687a]">/ngày</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleAddRecommend(recLens)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
-                              isAdded
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-[#14171f] text-white hover:bg-[#2c3242] active:scale-95'
-                            }`}
-                          >
-                            {isAdded ? (
-                              <>
-                                <Check size={12} />
-                                <span>Đã thêm</span>
-                              </>
-                            ) : (
-                              <>
-                                <Plus size={12} />
-                                <span>+ Combo</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Danh sách phụ kiện khuyên dùng */}
-                {recommendedData.accessories.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {recommendedData.accessories.map((recAcc) => {
-                      const isAdded = addedItems.has(recAcc.id);
-                      return (
-                        <div
-                          key={recAcc.id}
-                          className="p-3 rounded-xl bg-[#f9fafb] border border-[#14171f]/8 flex items-center justify-between gap-3"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <img src={recAcc.image} alt={recAcc.name} className="w-10 h-10 object-contain shrink-0" />
-                            <div className="min-w-0">
-                              <h5 className="text-xs font-semibold text-[#14171f] truncate">{recAcc.name}</h5>
-                              <span className="text-[11px] font-mono text-[#62687a]">
-                                +{recAcc.dailyRate.toLocaleString('vi-VN')}đ/ngày
-                              </span>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleAddRecommend(recAcc)}
-                            className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                              isAdded
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-[#14171f]/[0.06] hover:bg-[#14171f] text-[#14171f] hover:text-white'
-                            }`}
-                          >
-                            {isAdded ? '✓ Đã thêm' : '+ Thêm phụ kiện'}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
           </motion.div>
         ) : (
-          /* TRẠNG THÁI GIỮ MÁY THÀNH CÔNG (SUCCESS HOLD STATE) */
+          /* TRẠNG THÁI GIỮ MÁY & THANH TOÁN (PAYMENT & HOLD CONFIRMATION SCREEN) */
           <motion.div
-            key="booking-success-view"
-            initial={{ opacity: 0, scale: 0.96, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            key="booking-payment-view"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-            className="p-8 sm:p-12 text-center my-auto flex-1 flex flex-col items-center justify-center"
+            className="flex-1 flex flex-col h-full overflow-hidden"
           >
-            <div className="w-16 h-16 rounded-full bg-[#14171f]/[0.06] text-[#14171f] flex items-center justify-center mx-auto mb-5 border border-[#14171f]/15 shadow-sm">
-              <Check size={32} />
-            </div>
-            <h3 className="font-serif text-3xl sm:text-4xl font-medium mb-3 text-[#14171f]">
-              Đã Giữ Máy Thành Công!
-            </h3>
-            <p className="text-xs sm:text-sm text-[#525868] leading-relaxed mb-6 max-w-md mx-auto">
-              Thiết bị <strong>{item.name}</strong> đã được hệ thống REFUJI khóa giữ chỗ độc quyền cho bạn trong vòng 15 phút.
-            </p>
-            
-            <div className="crystal-liquid-glass inline-flex items-center gap-2 text-xs sm:text-sm text-[#14171f] px-5 py-2.5 rounded-full mb-8 border border-[#14171f]/15 shadow-sm">
-              <Clock size={16} className="text-[#3c4252]" />
-              <span>Thời hạn thanh toán cọc: <strong>14:59</strong> còn lại</span>
+            {/* Header thanh toán */}
+            <div className="px-6 sm:px-8 py-4 border-b border-[#14171f]/10 bg-white shrink-0 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-[#14171f]">
+                    {isPaidSuccess ? 'Xác Nhận Đơn Hàng Thành Công' : 'Thanh Toán &amp; Giữ Chỗ Thiết Bị'}
+                  </h3>
+                  {createdOrderCode && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                      #{createdOrderCode}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[#6e7587] mt-0.5">
+                  Thiết bị: <span className="font-semibold text-[#14171f]">{item.name}</span>
+                </p>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-sm mx-auto w-full">
-              <button
-                onClick={onClose}
-                className="w-full py-3 bg-[#14171f] text-white hover:bg-[#252a37] font-bold text-xs sm:text-sm rounded-full transition-all cursor-pointer shadow-md active:scale-95"
-              >
-                Hoàn tất &amp; Đóng
-              </button>
+            {/* THANH ĐẾM NGƯỢC THỜI HẠN GIỮ CHỖ 15 PHÚT */}
+            {!isPaidSuccess && (
+              <div className="px-6 sm:px-8 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between text-xs text-amber-900 shrink-0">
+                <div className="flex items-center gap-2 font-medium">
+                  <Clock size={16} className="text-amber-700 animate-pulse" />
+                  <span>Thời hạn giữ chỗ 15 phút chống đặt trùng:</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] uppercase tracking-wider text-amber-800">Còn lại:</span>
+                  <span className="font-mono font-bold text-sm bg-amber-200/80 px-2.5 py-0.5 rounded text-amber-950 shadow-inner">
+                    {timerDisplay}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Nội dung thanh toán cuộn */}
+            <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-5 space-y-4">
+              {isPaidSuccess ? (
+                /* THÀNH CÔNG HOÀN TẤT */
+                <div className="py-12 text-center flex flex-col items-center justify-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-sm">
+                    <CheckCircle2 size={36} />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-2xl font-bold text-[#14171f]">
+                      Đã Xác Nhận Đơn Thuê Thành Công!
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[#525868] mt-1.5 max-w-md mx-auto leading-relaxed">
+                      Đơn hàng <strong>#{createdOrderCode}</strong> cho thiết bị <strong>{item.name}</strong> đã được chuyển sang trạng thái <strong>ĐÃ XÁC NHẬN (CONFIRMED)</strong>. Thiết bị được giữ cố định theo lịch của bạn.
+                    </p>
+                  </div>
+
+                  <div className="w-full max-w-md bg-[#f7f8fa] border border-[#14171f]/10 rounded-2xl p-4 text-xs space-y-2 text-left">
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Mã đơn thuê:</span>
+                      <span className="font-mono font-bold text-[#14171f]">#{createdOrderCode}</span>
+                    </div>
+                    {assignedSerials.length > 0 && (
+                      <div className="flex justify-between items-center py-1 bg-emerald-50 px-2 rounded border border-emerald-200">
+                        <span className="text-emerald-800 font-medium">Serial máy đối chứng:</span>
+                        <span className="font-mono font-bold text-emerald-900">{assignedSerials.join(', ')}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Lịch nhận &amp; trả:</span>
+                      <span className="font-semibold text-[#14171f]">
+                        {formatDateDisplay(startDate)} — {formatDateDisplay(expectedReturnDate)} ({days} ngày)
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Tổng thanh toán:</span>
+                      <span className="font-mono font-bold text-emerald-700 text-sm">
+                        {totalDue.toLocaleString('vi-VN')} ₫
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-6 py-2.5 rounded-full bg-[#14171f] text-white text-xs sm:text-sm font-bold shadow-md hover:bg-[#252a37] transition-all cursor-pointer"
+                  >
+                    Hoàn tất &amp; Đóng
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Tóm tắt ngày và chi phí */}
+                  <div className="p-4 rounded-2xl bg-[#f7f8fa] border border-[#14171f]/10 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-[#14171f]">
+                      <span className="flex items-center gap-1.5 text-neutral-500">
+                        <CalendarIcon size={14} />
+                        <span>Lịch thuê ({days} ngày):</span>
+                      </span>
+                      <span className="font-semibold">
+                        {formatDateDisplay(startDate)} — {formatDateDisplay(expectedReturnDate)}
+                      </span>
+                    </div>
+                    {assignedSerials.length > 0 && (
+                      <div className="flex items-center justify-between py-1 px-2 rounded bg-emerald-50 border border-emerald-200 text-xs text-emerald-900">
+                        <span className="font-medium">Serial khóa giữ chỗ:</span>
+                        <span className="font-mono font-bold">{assignedSerials.join(', ')}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between border-t border-neutral-200/60 pt-2 text-[#14171f]">
+                      <span className="text-neutral-500">Tiền thuê ({days} ngày):</span>
+                      <span className="font-mono font-medium">{totalRent.toLocaleString('vi-VN')} ₫</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[#14171f]">
+                      <span className="text-neutral-500">Tiền cọc thiết bị (hoàn 100% khi trả):</span>
+                      <span className="font-mono font-medium">{discountedDeposit.toLocaleString('vi-VN')} ₫</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-neutral-200/60 pt-2 font-bold text-sm text-[#14171f]">
+                      <span>Tổng cần thanh toán:</span>
+                      <span className="font-mono text-base text-emerald-700">
+                        {totalDue.toLocaleString('vi-VN')} ₫
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 3 Phương thức thanh toán */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-[#14171f] uppercase tracking-wider">
+                      Chọn phương thức thanh toán
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('VIETQR')}
+                        className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                          paymentMethod === 'VIETQR'
+                            ? 'border-[#14171f] bg-[#14171f] text-white shadow-sm'
+                            : 'border-[#14171f]/15 bg-[#fbfcfd] text-[#14171f] hover:bg-neutral-50'
+                        }`}
+                      >
+                        <QrCode size={18} />
+                        <span className="text-xs font-semibold">Chuyển khoản VietQR</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('VNPAY')}
+                        className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                          paymentMethod === 'VNPAY'
+                            ? 'border-[#14171f] bg-[#14171f] text-white shadow-sm'
+                            : 'border-[#14171f]/15 bg-[#fbfcfd] text-[#14171f] hover:bg-neutral-50'
+                        }`}
+                      >
+                        <CreditCard size={18} />
+                        <span className="text-xs font-semibold">Cổng VNPAY</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('COUNTER')}
+                        className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                          paymentMethod === 'COUNTER'
+                            ? 'border-[#14171f] bg-[#14171f] text-white shadow-sm'
+                            : 'border-[#14171f]/15 bg-[#fbfcfd] text-[#14171f] hover:bg-neutral-50'
+                        }`}
+                      >
+                        <Store size={18} />
+                        <span className="text-xs font-semibold">Thanh toán tại quầy</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Chi tiết từng phương thức */}
+                  {paymentMethod === 'VIETQR' && (
+                    <div className="p-4 rounded-2xl border border-[#14171f]/10 bg-[#f9fafb] space-y-3.5">
+                      <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="bg-white p-2 rounded-2xl border border-neutral-200 shadow-sm shrink-0">
+                          <img
+                            src={vietQrUrl}
+                            alt="VietQR Mã thanh toán"
+                            className="w-36 h-36 object-contain"
+                          />
+                        </div>
+                        <div className="space-y-2 text-xs flex-1 w-full">
+                          <div className="flex items-center justify-between py-1 border-b border-neutral-200">
+                            <span className="text-neutral-500">Ngân hàng:</span>
+                            <span className="font-bold text-[#14171f]">MB Bank (Quân Đội)</span>
+                          </div>
+                          <div className="flex items-center justify-between py-1 border-b border-neutral-200">
+                            <span className="text-neutral-500">Số tài khoản:</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-[#14171f]">0901234567</span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard('0901234567', 'acc')}
+                                className="text-neutral-400 hover:text-[#14171f]"
+                                title="Sao chép số tài khoản"
+                              >
+                                {copiedField === 'acc' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between py-1 border-b border-neutral-200">
+                            <span className="text-neutral-500">Số tiền:</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-emerald-700">{totalDue.toLocaleString('vi-VN')} ₫</span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(String(totalDue), 'amt')}
+                                className="text-neutral-400 hover:text-[#14171f]"
+                                title="Sao chép số tiền"
+                              >
+                                {copiedField === 'amt' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-neutral-500">Nội dung CK:</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded">REFUJI {createdOrderCode}</span>
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(`REFUJI ${createdOrderCode}`, 'memo')}
+                                className="text-neutral-400 hover:text-[#14171f]"
+                                title="Sao chép nội dung chuyển khoản"
+                              >
+                                {copiedField === 'memo' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-neutral-500 italic">
+                        * Quét mã QR trên app ngân hàng để tự động điền đúng số tiền và cú pháp chuyển khoản.
+                      </p>
+                    </div>
+                  )}
+
+                  {paymentMethod === 'VNPAY' && (
+                    <div className="p-4 rounded-2xl border border-[#14171f]/10 bg-[#f9fafb] text-xs space-y-2">
+                      <div className="flex items-center gap-2 text-[#14171f] font-semibold">
+                        <CreditCard size={16} className="text-blue-600" />
+                        <span>Cổng thanh toán điện tử VNPAY Sandbox</span>
+                      </div>
+                      <p className="text-neutral-600 leading-relaxed">
+                        Hỗ trợ thẻ ATM nội địa hơn 30 ngân hàng, Thẻ quốc tế Visa/Mastercard/JCB và Ví VNPAY. Giao dịch được mã hóa an toàn đạt chuẩn bảo mật quốc tế PCI DSS.
+                      </p>
+                    </div>
+                  )}
+
+                  {paymentMethod === 'COUNTER' && (
+                    <div className="p-4 rounded-2xl border border-[#14171f]/10 bg-[#f9fafb] text-xs space-y-2">
+                      <div className="flex items-center gap-2 text-[#14171f] font-semibold">
+                        <Store size={16} className="text-amber-600" />
+                        <span>Thanh toán trực tiếp tại Cửa hàng ReFuji</span>
+                      </div>
+                      <p className="text-neutral-600 leading-relaxed">
+                        Bạn có thể thanh toán bằng tiền mặt hoặc quẹt thẻ POS khi đến nhận máy tại quầy. Hệ thống vẫn giữ chỗ độc quyền thiết bị cho bạn theo lịch hẹn.
+                      </p>
+                    </div>
+                  )}
+
+                  {paymentError && (
+                    <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                      {paymentError}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+
+            {/* Chân Modal thanh toán */}
+            {!isPaidSuccess && (
+              <div className="px-6 sm:px-8 py-4 border-t border-[#14171f]/10 bg-white shrink-0 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2.5 rounded-full border border-[#14171f]/20 hover:bg-neutral-50 text-xs font-semibold text-[#14171f] transition-all cursor-pointer"
+                >
+                  Để thanh toán sau
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePayOrder}
+                  disabled={isPaying || timeLeft <= 0}
+                  className="flex-1 py-3 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isPaying ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Đang xác nhận giao dịch...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={16} />
+                      <span>
+                        {paymentMethod === 'VIETQR'
+                          ? 'Tôi đã chuyển khoản xong'
+                          : paymentMethod === 'VNPAY'
+                          ? 'Thanh toán qua VNPAY'
+                          : 'Xác nhận cọc & thanh toán tại quầy'}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
         </AnimatePresence>

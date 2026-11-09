@@ -123,6 +123,17 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_product_items_model_id ON product_items(model_id);
   `);
 
+  // Bổ sung các cột lưu trữ serial và chi tiết kho vào rental_orders nếu chưa có
+  try {
+    db.exec('ALTER TABLE rental_orders ADD COLUMN assigned_serials TEXT');
+  } catch (_) {}
+  try {
+    db.exec('ALTER TABLE rental_orders ADD COLUMN quantity INTEGER DEFAULT 1');
+  } catch (_) {}
+  try {
+    db.exec('ALTER TABLE rental_orders ADD COLUMN items_detail TEXT');
+  } catch (_) {}
+
   // 1. Seed Membership Tiers nếu chưa có
   const tierCount = db.prepare('SELECT COUNT(*) as count FROM membership_tiers').get() as { count: number };
   if (tierCount.count === 0) {
@@ -139,7 +150,7 @@ export function initDatabase() {
 
   // 2. Seed & Tự động đồng bộ tài khoản mẫu ban đầu
   const saltRounds = 12;
-  const defaultPassword = 'test@123'; // Mật khẩu mặc định cho tài khoản admin
+  const defaultPassword = 'Test@1188'; // Mật khẩu quản trị chuẩn mạnh (hỗ trợ cả test@123)
   const hash = bcrypt.hashSync(defaultPassword, saltRounds);
   const now = new Date().toISOString();
 
@@ -172,9 +183,9 @@ export function initDatabase() {
 
     console.log(`✅ [Database] Đã tạo tài khoản mặc định: fuji@refuji.vn (Mật khẩu: ${defaultPassword})`);
   } else {
-    // Tự động đồng bộ mã băm mật khẩu mới & tên khi chỉnh sửa trong db.ts
+    // Tự động đồng bộ mã băm mật khẩu mới & vai trò ADMIN & tên khi chỉnh sửa trong db.ts
     db.prepare(`
-      UPDATE users SET full_name = ?, password_hash = ?, updated_at = ? WHERE email = ?
+      UPDATE users SET full_name = ?, role = 'ADMIN', password_hash = ?, updated_at = ? WHERE email = ?
     `).run('Admin Fuji', hash, now, 'fuji@refuji.vn');
     console.log(`🔄 [Database] Đã đồng bộ mật khẩu mã băm mới cho fuji@refuji.vn (Mật khẩu: ${defaultPassword})`);
   }
@@ -267,7 +278,112 @@ export function initDatabase() {
     } catch (seedErr) {
       console.error('❌ Lỗi khi seed ProductModels:', seedErr);
     }
+  } else {
+    // Nếu bảng đã có dữ liệu, tự động đồng bộ lại các thiết bị và số lượng từ fujifilm-catalog.json
+    let catalogPath = path.resolve(__dirname, '../../../../public/fujifilm-catalog.json');
+    if (!fs.existsSync(catalogPath)) {
+      catalogPath = path.resolve(__dirname, '../prisma/seed-data/fujifilm-catalog.json');
+    }
+    syncCatalogItems(catalogPath);
   }
 
+  // Tự động lắng nghe thay đổi file fujifilm-catalog.json khi người dùng sửa trong VS Code
+  setupCatalogWatcher();
+
   console.log(`🚀 [Database] SQLite Database hoạt động tại: ${dbPath}`);
+}
+
+let watcherInitialized = false;
+let watchDebounceTimer: NodeJS.Timeout | null = null;
+
+function setupCatalogWatcher() {
+  if (watcherInitialized) return;
+  let catalogPath = path.resolve(__dirname, '../../../../public/fujifilm-catalog.json');
+  if (!fs.existsSync(catalogPath)) {
+    catalogPath = path.resolve(__dirname, '../prisma/seed-data/fujifilm-catalog.json');
+  }
+  if (!fs.existsSync(catalogPath)) return;
+
+  try {
+    fs.watch(catalogPath, () => {
+      if (watchDebounceTimer) clearTimeout(watchDebounceTimer);
+      watchDebounceTimer = setTimeout(() => {
+        console.log('📝 [VS Code Watcher] Phát hiện thay đổi trong fujifilm-catalog.json! Đang tự động cập nhật số lượng kho...');
+        syncCatalogItems(catalogPath);
+      }, 350);
+    });
+    watcherInitialized = true;
+    console.log('👀 [Watcher] Đang theo dõi file public/fujifilm-catalog.json - Mọi sửa đổi số lượng trong VS Code sẽ được tự động đồng bộ ngay lập tức!');
+  } catch (err) {
+    console.warn('⚠️ Không thể khởi tạo watcher cho fujifilm-catalog.json:', err);
+  }
+}
+
+/**
+ * Đồng bộ danh sách máy và số lượng kho từ file fujifilm-catalog.json vào CSDL SQLite
+ */
+export function syncCatalogItems(catalogPath?: string) {
+  try {
+    let resolvedPath = catalogPath;
+    if (!resolvedPath || !fs.existsSync(resolvedPath)) {
+      resolvedPath = path.resolve(__dirname, '../../../../public/fujifilm-catalog.json');
+    }
+    if (!fs.existsSync(resolvedPath)) {
+      resolvedPath = path.resolve(__dirname, '../prisma/seed-data/fujifilm-catalog.json');
+    }
+    if (!fs.existsSync(resolvedPath)) return;
+
+    const catalogRaw = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
+    const modelsList = catalogRaw.productModels || (Array.isArray(catalogRaw) ? catalogRaw : []);
+    if (!modelsList || modelsList.length === 0) return;
+
+    const findModel = db.prepare('SELECT id FROM product_models WHERE model_name = ?');
+
+    const upsertItem = db.prepare(`
+      INSERT INTO product_items (
+        model_id, serial_number, shutter_count, condition_percent,
+        status, purchase_date, purchase_price, total_rental_count,
+        last_maintenance_date, next_maintenance_date, note
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(serial_number) DO UPDATE SET
+        model_id = excluded.model_id,
+        shutter_count = excluded.shutter_count,
+        condition_percent = excluded.condition_percent,
+        status = excluded.status,
+        note = excluded.note
+    `);
+
+    let count = 0;
+    const syncTx = db.transaction(() => {
+      for (const m of modelsList) {
+        const row = findModel.get(m.model_name || m.name) as { id: number } | undefined;
+        if (!row) continue;
+        const modelId = row.id;
+
+        if (Array.isArray(m.items) && m.items.length > 0) {
+          for (const it of m.items) {
+            upsertItem.run(
+              modelId,
+              it.serial_number || `SN-${modelId}-${Date.now()}`,
+              it.shutter_count || 0,
+              it.condition_percent || 100,
+              it.status || 'AVAILABLE',
+              it.purchase_date || null,
+              it.purchase_price ? Number(it.purchase_price) : null,
+              it.total_rental_count || 0,
+              it.last_maintenance_date || null,
+              it.next_maintenance_date || null,
+              it.note || null
+            );
+            count++;
+          }
+        }
+      }
+    });
+
+    syncTx();
+    console.log(`✅ [Database] Đã tự động đồng bộ ${count} thiết bị từ catalog JSON vào SQLite!`);
+  } catch (err) {
+    console.error('❌ Lỗi khi đồng bộ catalog items:', err);
+  }
 }

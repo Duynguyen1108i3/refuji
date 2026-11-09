@@ -7,35 +7,51 @@ interface CalendarModalProps {
   onClose: () => void;
   initialStartDate?: string; // Format 'YYYY-MM-DD'
   initialEndDate?: string;
-  onApplyDates: (rangeText: string, daysCount: number) => void;
+  onApplyDates: (rangeText: string, daysCount: number, startStr?: string, endStr?: string) => void;
 }
+
+const getTodayStr = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+const getDefaultEndStr = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 3);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 export const CalendarModal: React.FC<CalendarModalProps> = ({
   isOpen,
   onClose,
-  initialStartDate = '2026-10-29',
-  initialEndDate = '2026-10-31',
+  initialStartDate,
+  initialEndDate,
   onApplyDates,
 }) => {
-  // Quản lý tháng đang hiển thị (Mặc định: Tháng 10/2026)
-  const [currentYear, setCurrentYear] = useState(2026);
-  const [currentMonth, setCurrentMonth] = useState(9); // 0-indexed: 9 = Tháng 10
+  const defStart = initialStartDate || getTodayStr();
+  const defEnd = initialEndDate || getDefaultEndStr();
+
+  // Quản lý tháng đang hiển thị (Mặc định: Tháng hiện tại)
+  const [currentYear, setCurrentYear] = useState(() => new Date(defStart).getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(() => new Date(defStart).getMonth());
 
   // Ngày bắt đầu và ngày kết thúc (lưu dạng YYYY-MM-DD)
-  const [startDateStr, setStartDateStr] = useState<string>(initialStartDate);
-  const [endDateStr, setEndDateStr] = useState<string>(initialEndDate);
+  const [startDateStr, setStartDateStr] = useState<string>(defStart);
+  const [endDateStr, setEndDateStr] = useState<string>(defEnd);
 
   if (!isOpen) return null;
 
-  // Danh sách các tháng ở cột bên trái
-  const monthList = [
-    { name: 'Tháng 10', year: 2026, monthIndex: 9 },
-    { name: 'Tháng 11', year: 2026, monthIndex: 10 },
-    { name: 'Tháng 12', year: 2026, monthIndex: 11 },
-    { name: 'Tháng 01', year: 2027, monthIndex: 0 },
-    { name: 'Tháng 02', year: 2027, monthIndex: 1 },
-    { name: 'Tháng 03', year: 2027, monthIndex: 2 },
-  ];
+  // Danh sách 6 tháng liên tiếp từ tháng hiện tại
+  const monthList = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date(new Date().getFullYear(), new Date().getMonth() + i, 1);
+    const m = d.getMonth();
+    const y = d.getFullYear();
+    return {
+      name: `Tháng ${String(m + 1).padStart(2, '0')}`,
+      year: y,
+      monthIndex: m,
+    };
+  });
 
   const monthNamesVi = [
     'Tháng 01', 'Tháng 02', 'Tháng 03', 'Tháng 04', 'Tháng 05', 'Tháng 06',
@@ -127,7 +143,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   const handleApply = () => {
     if (!startDateStr) return;
     const rangeText = getRangeDisplayText();
-    onApplyDates(rangeText, totalDays);
+    onApplyDates(rangeText, totalDays, startDateStr, endDateStr || startDateStr);
     onClose();
   };
 
