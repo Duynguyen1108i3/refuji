@@ -5,8 +5,10 @@
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
     "jsx": "react-jsx",
-    "types": ["vite/client", "node"]
+    "types": ["vite/client"]
   },
   "include": ["src/**/*"]
 }

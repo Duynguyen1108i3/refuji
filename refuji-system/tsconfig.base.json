@@ -16,7 +16,6 @@
     "strict": true,
     "noImplicitOverride": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "@refuji/shared": ["./packages/shared/src/index.ts"],
       "@refuji/shared/*": ["./packages/shared/src/*"]
