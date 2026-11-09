@@ -10,37 +10,35 @@
 1. [Ngôn ngữ lập trình & Công nghệ (Tech Stack)](#1-ngôn-ngữ-lập-trình--công-nghệ-tech-stack)
 2. [Cấu trúc thư mục dự án](#2-cấu-trúc-thư-mục-dự-án)
 3. [Yêu cầu môi trường (Prerequisites)](#3-yêu-cầu-môi-trường-prerequisites)
-4. [Hướng dẫn cài đặt & Khởi chạy toàn bộ hệ thống](#4-hướng-dẫn-cài-đặt--khởi-chạy-toàn-bộ-hệ-thống)
-5. [Thông tin cổng dịch vụ & Tài khoản truy cập](#5-thông-tin-cổng-dịch-vụ--tài-khoản-truy-cập)
-6. [Hướng dẫn sử dụng các phân hệ chức năng](#6-hướng-dẫn-sử-dụng-các-phân-hệ-chức-năng)
+4. [Hướng dẫn cài đặt & Khởi chạy hệ thống](#4-hướng-dẫn-cài-đặt--khởi-chạy-hệ-thống)
+5. [Thông tin các cổng Localhost, Routes & Tài khoản truy cập](#5-thông-tin-các-cổng-localhost-routes--tài-khoản-truy-cập)
+6. [Các phân hệ & Tính năng chính](#6-các-phân-hệ--tính-năng-chính)
 7. [Xử lý sự cố thường gặp (Troubleshooting)](#7-xử-lý-sự-cố-thường-gặp-troubleshooting)
 
 ---
 
 ## 1. NGÔN NGỮ LẬP TRÌNH & CÔNG NGHỆ (TECH STACK)
 
-### 1.1. Ngôn ngữ chính
-- **TypeScript 5.6+**: Ngôn ngữ lập trình chủ đạo xuyên suốt từ Frontend tới Backend, đảm bảo kiểu dữ liệu tĩnh nghiêm ngặt (`strict: true`), chống lỗi runtime.
-- **SQL (MySQL Dialect)**: Thiết kế chuẩn hóa 13 bảng 3NF.
+### 1.1. Ngôn ngữ & Kiểm kiểu
+- **TypeScript 5.6+**: Ngôn ngữ chủ đạo xuyên suốt từ Frontend đến Backend và gói `@refuji/shared`.
+- **SQL**: Thiết kế chuẩn hóa 13 bảng 3NF (chạy mặc định trên SQLite và có schema MySQL/Prisma).
 
-### 1.2. Frontend (Khách hàng & Landing Page)
-- **Framework:** React 18.3 (Hooks, Functional Components, Context API).
-- **Build Tool:** Vite 5.4 (HMR cực nhanh, ESBuild).
-- **Styling:** Tailwind CSS 3.4, PostCSS, Autoprefixer, phong cách thiết kế tối giản *Đen than Magie Fujifilm* kết hợp hiệu ứng *Liquid Glass*.
-- **Motion & Hiệu ứng:** Framer Motion 14 (Spring Physics chuẩn Apple iOS/macOS, chuyển cảnh mượt mà).
-- **Icons:** Lucide React.
-- **Validation & Form:** Zod 4, TypeScript Types.
+### 1.2. Frontend
+- **Website Khách hàng chính (`localhost:5173`)**:
+  - **Framework:** React 18.3 (Hooks, Context API), Vite 5.4.
+  - **Styling & Motion:** Tailwind CSS 3.4, Framer Motion 14, Lucide React, giao diện Light mode tối giản kết hợp hiệu ứng *Liquid Glass*.
+  - **Validation:** Zod 4 + TypeScript Types.
+- **Cổng Quản trị POS & App Đa trang (`localhost:5174` — `refuji-system/apps/web`)**:
+  - React 18.3, Vite 5.4, Tailwind CSS 3.4, Framer Motion 11, giao diện Dark mode cho nhân viên showroom/admin và các trang client mở rộng.
 
-### 1.3. Backend & Cơ sở dữ liệu (API System)
-- **Runtime:** Node.js (v20+ LTS).
-- **Web Framework:** Express 4.21.
-- **ORM:** Prisma ORM 6.0 (Quản lý schema, migrations, type-safe queries).
-- **Database:** MySQL 8.4 LTS (chạy trên port `3306`, hỗ trợ utf8mb4_unicode_ci).
-- **Bảo mật:**
-  - JWT (JSON Web Token) phân tách Access Token (15 phút) & Refresh Token (7 ngày).
-  - Mã hóa AES-256-GCM bảo vệ Căn cước công dân (CCCD) theo Luật Bảo vệ Dữ liệu Cá nhân 2025.
-  - Băm HMAC-SHA256 chống trùng lặp dữ liệu định danh KYC.
-- **Tích hợp thanh toán:** VNPAY Sandbox (Tách riêng Return URL & IPN Webhook).
+### 1.3. Backend & Cơ sở dữ liệu (`localhost:4000`)
+- **Runtime & Framework:** Node.js (v20+ LTS), Express 4.21, `tsx` watch mode.
+- **Database mặc định:** **SQLite (`better-sqlite3`)** tự khởi tạo & seed dữ liệu tại `refuji-system/apps/api/data/refuji.sqlite` (không cần cài DB ngoài để chạy thử).
+- **ORM / DB mở rộng:** Prisma ORM 6.0 + MySQL 8.4 LTS (`refuji-system/apps/api/prisma/schema.prisma`, Docker Compose).
+- **Bảo mật & Xác thực:**
+  - `bcrypt` (salt rounds 12) + JWT (Access Token & HttpOnly Refresh Token cookie).
+  - Bảo vệ định danh CCCD theo chuẩn Luật Bảo vệ Dữ liệu Cá nhân 2025.
+- **Thanh toán tích hợp:** VietQR (tự tạo QR Napas 247), VNPAY Sandbox, Thanh toán tại quầy.
 
 ---
 
@@ -48,150 +46,179 @@
 
 ```text
 refuji/
-├── src/                                  # [CHÍNH] Source code Frontend Website khách hàng
-│   ├── components/                       # Các UI Components giao diện
-│   │   ├── account/                      # [ĐÃ TÁCH] Phân hệ Tài khoản & Hội viên
-│   │   │   ├── types.ts                  # Interface, Types và Variants chuyển cảnh
-│   │   │   ├── MembershipTiersTab.tsx    # Tab hạng thành viên & mã ưu đãi cọc
-│   │   │   ├── RentalOrdersTab.tsx       # Tab lịch sử đơn thuê & tiến độ
-│   │   │   ├── UserProfileTab.tsx        # Tab hồ sơ cá nhân & định danh
-│   │   │   ├── ChangePasswordForm.tsx    # Form đổi mật khẩu bảo mật
-│   │   │   └── ChangeCccdForm.tsx        # Form cập nhật CCCD chuẩn 2025
-│   │   ├── AccountModal.tsx              # Component điều phối modal tài khoản gọn gàng
-│   │   ├── AvailabilityExplorer.tsx      # Bộ lọc & ma trận lịch 7 ngày
-│   │   ├── BookingModal.tsx              # Modal chi tiết thuê máy & combo gợi ý
-│   │   ├── CartModal.tsx                 # Giỏ hàng thuê thiết bị Liquid Glass
-│   │   ├── Hero.tsx                      # Màn hình mở đầu 100vh tối giản
-│   │   └── LiquidNavbar.tsx              # Thanh điều hướng nổi đa trạng thái
-│   ├── hooks/                            # [ĐÃ TÁCH] Custom Hooks tái sử dụng logic
-│   │   └── useCart.ts                    # Hook quản lý giỏ hàng & lưu trữ localStorage
-│   ├── services/api.ts                   # Tầng kết nối gọi Backend API (/api/models)
-│   ├── types.ts                          # Định nghĩa TypeScript domain interface
-│   ├── App.tsx                           # Component gốc điều phối toàn bộ trang
-│   ├── index.css                         # CSS toàn cục & hiệu ứng Liquid Glass
-│   └── main.tsx                          # Điểm khởi chạy React
-├── public/                               # Static assets (ảnh Fujifilm, catalog, logo)
-├── docs/                                 # Tài liệu đặc tả hệ thống SRS và CSDL
-├── README.md                             # Hướng dẫn kiến trúc, cài đặt & sử dụng
-├── package.json                          # Cấu hình dependencies Frontend
-├── vite.config.ts                        # Cấu hình Vite & Proxy tự động sang Backend (:4000)
+├── src/                                  # [PORT 5173] Website Khách hàng chính (Light mode)
+│   ├── components/
+│   │   ├── account/                      # Phân hệ Tài khoản, Hạng hội viên & Đơn thuê
+│   │   │   ├── types.ts
+│   │   │   ├── MembershipTiersTab.tsx
+│   │   │   ├── RentalOrdersTab.tsx       # Danh sách đơn, Serial khóa kho & nút Thanh toán ngay
+│   │   │   ├── UserProfileTab.tsx        # Hồ sơ cá nhân, CCCD & nút Đăng xuất
+│   │   │   ├── ChangePasswordForm.tsx
+│   │   │   └── ChangeCccdForm.tsx
+│   │   ├── auth/                         # Modal & Form Đăng nhập, Đăng ký, Quên mật khẩu
+│   │   │   ├── AuthModal.tsx
+│   │   │   ├── LoginForm.tsx
+│   │   │   ├── RegisterForm.tsx
+│   │   │   ├── ForgotPasswordForm.tsx
+│   │   │   ├── PasswordStrengthMeter.tsx
+│   │   │   └── UserNavButton.tsx         # Nút tài khoản + thông báo đơn chờ thanh toán
+│   │   ├── AccountModal.tsx
+│   │   ├── AllEquipmentModal.tsx         # Toàn bộ thiết bị & trạng thái tồn kho thực tế
+│   │   ├── AvailabilityExplorer.tsx      # Bộ lọc & kiểm tra thiết bị khả dụng
+│   │   ├── BookingModal.tsx              # Đặt thuê, chọn ngày nhận/trả & thanh toán giữ chỗ
+│   │   ├── CalendarModal.tsx             # Bộ chọn ngày thuê động
+│   │   ├── CartModal.tsx                 # Giỏ hàng thuê nhiều món & thanh toán cọc
+│   │   ├── PaymentModal.tsx              # Cổng thanh toán VietQR / VNPAY / Tại quầy
+│   │   ├── ReservationFloatingWidget.tsx # Widget đếm ngược 15 phút "Đơn chờ thanh toán"
+│   │   ├── Hero.tsx
+│   │   └── LiquidNavbar.tsx
+│   ├── context/AuthContext.tsx           # Quản lý phiên đăng nhập, pending intent & toast
+│   ├── hooks/useCart.ts                  # Quản lý giỏ hàng có ràng buộc tồn kho & auto-clear khi logout
+│   ├── schemas/auth.schema.ts            # Schema Zod kiểm tra form Auth
+│   ├── services/
+│   │   ├── api.ts                        # Gọi /api/models & tính trạng thái AVAILABLE/LOW_STOCK/BOOKED
+│   │   └── authApi.ts                    # Gọi /api/auth/*, /api/orders & /api/orders/:orderCode/pay
+│   ├── App.tsx
+│   └── main.tsx
+├── public/
+│   ├── fujifilm-catalog.json             # Dữ liệu gốc 139 mẫu thiết bị & serial (được watch tự động)
+│   └── assets/                           # Logo, favicon, ảnh thiết bị Fujifilm
+├── docs/                                 # Đặc tả hệ thống SRS v1.0, v1.1 & mockups Figma
+├── Bao_Cao_Tien_Do_ReFuji.docx           # Báo cáo tiến trình & lộ trình phát triển dự án
+├── package.json                          # Script `npm run dev` chạy song song API (:4000) + WEB (:5173)
+├── vite.config.ts                        # Vite Port 5173 + Proxy `/api` sang `:4000` (bắt lỗi 503)
+├── README.md
 │
-└── refuji-system/                        # [HỆ THỐNG BACKEND & ADMIN MONOREPO]
+└── refuji-system/                        # Monorepo Backend API & Cổng Quản trị POS / Web
     ├── apps/
-    │   ├── api/                          # Express REST API Server (3-Tier Layered)
-    │   │   ├── prisma/                   # Schema database MySQL & file seed 139 thiết bị
-    │   │   ├── data/                     # Thư mục lưu trữ SQLite tự động (refuji.sqlite)
+    │   ├── api/                          # [PORT 4000] Express REST API + SQLite
+    │   │   ├── data/refuji.sqlite        # Database SQLite tự tạo khi khởi chạy
+    │   │   ├── prisma/                   # Prisma schema MySQL & script seed
     │   │   └── src/
-    │   │       ├── modules/              # [ĐÃ TÁCH] Các Router phân hệ nghiệp vụ
-    │   │       │   ├── auth/             # Xác thực JWT, User Profile, KYC CCCD
-    │   │       │   ├── catalog/          # Danh mục 139 dòng máy Fujifilm & Serial
-    │   │       │   └── orders/           # Tạo đơn giữ chỗ 15 phút & quản lý đơn
-    │   │       ├── db.ts                 # Khởi tạo SQLite engine tự động & Seed
-    │   │       └── index.ts              # Server bootstrap sạch gọn
-    │   └── web/                          # Giao diện POS / Quản trị nội bộ dành cho nhân viên (Port 5174)
-    ├── packages/
-    │   └── shared/                       # Thư viện dùng chung (Types, Zod Schemas, Enums)
-    └── .env                              # File cấu hình biến môi trường toàn hệ thống
+    │   │       ├── modules/
+    │   │       │   ├── auth/auth.routes.ts     # /api/auth/*, /api/users, /api/users/me
+    │   │       │   ├── catalog/catalog.routes.ts # /api/models (lọc & khóa serial đang giữ chỗ)
+    │   │       │   └── orders/orders.routes.ts   # /api/orders (tạo đơn, gán serial, giữ chỗ 15p, pay)
+    │   │       ├── db.ts                 # Khởi tạo SQLite, seed & fs.watch đồng bộ fujifilm-catalog.json
+    │   │       └── index.ts              # Khởi động Express Server tại cổng 4000
+    │   └── web/                          # [PORT 5174] Cổng Quản trị POS Nhân viên & App Đa trang
+    │       ├── src/
+    │       │   ├── layouts/              # ClientLayout (Dark) & StaffPosLayout
+    │       │   ├── pages/admin-staff/    # Dashboard, Kho Serial, Duyệt đơn, Check-out/in, Khách hàng...
+    │       │   ├── pages/auth/           # LoginPage, RegisterPage, ForgotPasswordPage
+    │       │   ├── pages/client/         # Catalog, Checkout, Orders, Profile KYC, Membership...
+    │       │   └── routes/AppRoutes.tsx  # Điều phối route `/` và `/staff/*`
+    │       └── vite.config.ts            # Vite Port 5174 + Proxy `/api` sang `:4000`
+    └── packages/shared/                  # Types, Enums, Validators dùng chung
 ```
 
 ---
 
 ## 3. YÊU CẦU MÔI TRƯỜNG (PREREQUISITES)
 
-Trước khi chạy, máy tính cần cài đặt:
 1. **Node.js**: Phiên bản 20 LTS trở lên (`node -v`).
 2. **NPM**: Phiên bản 10 trở lên (`npm -v`).
 3. **Cơ sở dữ liệu**:
-   - Hệ thống đã tích hợp sẵn **SQLite tự động** (`better-sqlite3`), có thể khởi chạy ngay mà không cần cài đặt thêm phần mềm cơ sở dữ liệu bên ngoài.
-   - *(Tùy chọn nâng cao)*: Hỗ trợ kết nối MySQL 8.0+ / XAMPP qua Prisma ORM khi cấu hình file `.env`.
+   - Mặc định chạy bằng **SQLite tích hợp sẵn (`better-sqlite3`)**, không cần cài đặt MySQL hay Docker để chạy thử.
+   - *(Tùy chọn)* Có sẵn `refuji-system/docker-compose.yml` và Prisma schema nếu muốn chạy với MySQL 8.4.
 
 ---
 
-## 4. HƯỚNG DẪN CÀI ĐẶT & KHỞI CHẠY TOÀN BỘ HỆ THỐNG
+## 4. HƯỚNG DẪN CÀI ĐẶT & KHỞI CHẠY HỆ THỐNG
 
-Quy trình khởi chạy đồng thời cả 3 dịch vụ trên Localhost:
-
-### Bước 1: Khởi động Backend API Server (Port 4000)
-Mở Terminal thứ nhất:
+### 4.1. Cài đặt dependencies (chỉ cần chạy lần đầu)
+Tại thư mục gốc dự án (`refuji/`):
 ```bash
-cd refuji-system/apps/api
 npm install
-npx tsx watch src/index.ts
+cd refuji-system && npm install
 ```
-> Khi màn hình hiện `🚀 REFUJI API Server running at http://localhost:4000` là thành công. Hệ thống tự động seed 139 dòng máy và 140 serial vật lý vào database.
 
-### Bước 2: Khởi động Website Khách hàng (Port 5173)
-Mở Terminal thứ hai tại thư mục gốc của dự án:
+### 4.2. Khởi chạy Website Khách hàng + Backend API (Khuyên dùng)
+Tại thư mục gốc `refuji/`, chạy **1 lệnh duy nhất**:
 ```bash
-cd /Users/tx/Documents/refuji
-npm install
 npm run dev
 ```
-> Website sẵn sàng tại: **`http://localhost:5173`** (Vite tự động proxy request `/api/*` về cổng `4000`).
+Lệnh này sử dụng `concurrently` để bật song song:
+- **API Server**: `http://localhost:4000` (`npm run server`)
+- **Website Khách hàng**: `http://localhost:5173` (`vite`)
 
-### Bước 3: Khởi động Cổng Quản trị POS Nhân viên (Port 5174)
-Mở Terminal thứ ba:
+*(Nếu muốn chạy riêng từng phần: `npm run server` cho Backend API hoặc `npm run dev:frontend` cho Frontend `:5173`.)*
+
+### 4.3. Khởi chạy Cổng Quản trị POS Nhân viên (Port 5174) *(Tùy chọn)*
+Mở thêm một Terminal mới khi cần dùng giao diện POS / Admin hoặc các trang đa route:
 ```bash
 cd refuji-system/apps/web
-npm install
 npx vite
 ```
-> Cổng POS nội bộ sẵn sàng tại: **`http://localhost:5174`**.
+> Hoặc chạy từ thư mục `refuji-system/`: `npm run dev`. Cổng POS sẵn sàng tại **`http://localhost:5174`**.
 
 ---
 
-## 5. THÔNG TIN CỔNG DỊCH VỤ & TÀI KHOẢN TRUY CẬP
+## 5. THÔNG TIN CÁC CỔNG LOCALHOST, ROUTES & TÀI KHOẢN TRUY CẬP
 
-| Dịch vụ | Địa chỉ URL | Chức năng | Trạng thái |
-|---|---|---|:---:|
-| **Website Khách hàng** | `http://localhost:5173/` | Trang chủ, tra cứu lịch khả dụng, giỏ hàng, đặt giữ chỗ 15 phút | 🟢 Hoạt động |
-| **Cổng Quản trị & POS** | `http://localhost:5174/` | Bàn giao thiết bị, kiểm định ngoại hình, duyệt đơn, xuất kho | 🟢 Hoạt động |
-| **Backend REST API** | `http://localhost:4000/api` | REST API (Auth, Models, Orders, Users, Health) | 🟢 Hoạt động |
-| **API Health Check** | `http://localhost:4000/api/health` | Kiểm tra trạng thái máy chủ Backend | 🟢 Hoạt động |
-| **API Danh mục** | `http://localhost:4000/api/models` | Trả về 139 dòng máy kèm danh sách cá thể serial | 🟢 Hoạt động |
+### 5.1. Tổng quan các cổng Localhost
 
-### Tài khoản mẫu thử nghiệm hệ thống:
-- **Tài khoản Khách hàng / Quản trị viên:**
-  - **Email:** `fuji@refuji.vn`
-  - **Mật khẩu:** `test@123`
-  - **Tên hiển thị:** `Admin Fuji`
+| Dịch vụ | Địa chỉ URL | Chức năng chính |
+|---|---|---|
+| **Website Khách hàng chính** | `http://localhost:5173/` | Giao diện Light mode *Liquid Glass*: duyệt 139 thiết bị, kiểm tra tồn kho, giỏ hàng, đặt giữ chỗ 15 phút (khóa Serial thật), thanh toán VietQR / VNPAY / tại quầy, widget đếm ngược đơn chờ thanh toán. |
+| **Cổng Quản trị POS & Web đa trang** | `http://localhost:5174/` | Giao diện Dark mode (`refuji-system/apps/web`): gồm các trang khách hàng đa route (`/catalog`, `/checkout`, `/orders`, `/profile`, `/login`, `/register`) và **phân hệ POS Nhân viên (`/staff/*`)**. |
+| **Backend REST API** | `http://localhost:4000/api` | API Express + SQLite (hỗ trợ cả `/api/*` và `/api/v1/*`). |
+| **API Health Check** | `http://localhost:4000/api/health` | Kiểm tra trạng thái Backend API. |
+| **API Danh mục thiết bị** | `http://localhost:4000/api/models` | Trả về danh sách thiết bị kèm trạng thái từng cá thể Serial theo thời gian thực. |
+
+### 5.2. Các route chính trên Cổng `http://localhost:5174`
+- **Phân hệ Nhân viên / Quản trị POS (`/staff/*`)**:
+  - `/staff/dashboard` — Tổng quan Dashboard
+  - `/staff/catalog` — Quản lý Mẫu máy
+  - `/staff/inventory` — Kho cá thể Serial
+  - `/staff/approval` — Duyệt đơn thuê
+  - `/staff/checkout-wizard` — Bàn giao máy (Check-out)
+  - `/staff/checkin-settlement` — Thu hồi & Hoàn cọc (Check-in)
+  - `/staff/maintenance` — Phiếu bảo dưỡng & Shutter
+  - `/staff/customers` — Quản lý Khách hàng *(tải dữ liệu thật từ `GET /api/users`)*
+  - `/staff/reconcile` — Đối soát VNPAY / Thu tiền
+  - `/staff/audit-logs` — Nhật ký Audit Logs
+- **Đăng nhập phân quyền trên `5174`**:
+  - Truy cập `http://localhost:5174/login` và đăng nhập tài khoản có quyền `ADMIN` hoặc `STAFF` sẽ tự động chuyển hướng vào `/staff/dashboard`.
+
+### 5.3. Tài khoản Quản trị mặc định
+- **Email:** `fuji@refuji.vn`
+- **Mật khẩu:** `Test@1188` *(vẫn hỗ trợ đăng nhập bằng `test@123`)*
+- **Tên hiển thị:** `Admin Fuji` — **Vai trò:** `ADMIN`
+
+*(Bạn cũng có thể tạo tài khoản khách hàng mới ngay tại modal Đăng ký trên `:5173` hoặc trang `/register` trên `:5174`.)*
 
 ---
 
-## 6. HƯỚNG DẪN SỬ DỤNG CÁC PHÂN HỆ CHỨC NĂNG
+## 6. CÁC PHÂN HỆ & TÍNH NĂNG CHÍNH
 
-### 6.1. Dành cho Khách hàng thuê (Client Portal)
-1. **Trang chủ Hero 100vh**:
-   - Giao diện mở đầu phong cách tối giản hoàn toàn không có thanh navbar chắn tầm nhìn.
-   - Bấm **"Cuộn xuống để khám phá"** hoặc cuộn chuột xuống để thanh điều hướng xuất hiện.
-2. **Tra cứu lịch khả dụng thời gian thực (Availability Explorer)**:
-   - Chọn bộ lọc: Hệ ngàm (`X-Mount` hoặc `G-Mount Medium Format`), dòng máy (`X100`, `X-T`, `X-H`, `GFX`).
-   - Bấm vào khung ngày để chọn ngày nhận máy và ngày trả máy. Ma trận lịch 7 ngày sẽ tự tính số lượng máy còn trống trong tủ kho.
-3. **Xem chi tiết & Bộ sưu tập ảnh sắc nét**:
-   - Bấm vào bất kỳ máy ảnh nào để mở modal thông số kỹ thuật, giá thuê/ngày, mức cọc chuẩn.
-   - Bấm vào ảnh máy để bật chế độ xem ảnh toàn màn hình với các góc chụp thực tế.
-4. **Giỏ hàng thuê thiết bị & Đặt giữ chỗ**:
-   - Bấm **"Thêm vào giỏ hàng"** để tích lũy thiết bị cho chuyến đi.
-   - Mở biểu tượng **Giỏ hàng** góc trên bên phải để xem tổng tiền thuê, tiền cọc và bấm đặt chỗ. Hệ thống tự động giữ chỗ 15 phút.
-5. **Hạng thành viên & Chiết khấu cọc**:
-   - Bấm nút **"Tài khoản"** góc trên bên phải để chuyển đổi thử nghiệm các hạng thành viên:
-     - **Hạng Đồng (Đồng)**: Cọc 100% chuẩn.
-     - **Hạng Bạc (Silver)**: Giảm 5% tiền cọc.
-     - **Hạng Vàng (Gold)**: Giảm 10% tiền cọc.
-     - **Hạng Bạch Kim (Platinum)**: Giảm 15% tiền cọc.
+1. **Giữ chỗ 15 phút & Gán Serial kho thực tế (`POST /api/orders`)**:
+   - Kiểm tra ngày thuê hợp lệ (không chọn ngày quá khứ, tối thiểu 1 ngày, tối đa 30 ngày).
+   - Tự động hủy các đơn `PENDING_PAYMENT` đã quá hạn 15 phút để trả máy về kho.
+   - Kiểm tra số lượng khả dụng thực tế và gán mã `assigned_serials` độc quyền cho từng đơn (cả đặt lẻ và đặt cả giỏ hàng), tránh đặt trùng lịch.
+2. **Thanh toán cọc & Theo dõi đơn chờ (`POST /api/orders/:orderCode/pay`)**:
+   - Hỗ trợ 3 hình thức trong `PaymentModal` / `BookingModal` / `CartModal`: **Chuyển khoản VietQR** (tạo QR kèm số tiền và nội dung `REFUJI <MÃ ĐƠN>`), **Cổng VNPAY Sandbox**, và **Thanh toán tại quầy**.
+   - Nếu đóng modal để thanh toán sau, widget nổi **`ReservationFloatingWidget`** ở góc dưới bên phải sẽ đếm ngược thời gian giữ chỗ 15 phút để mở lại thanh toán bất cứ lúc nào (hoặc mở lại từ tab *Đơn thuê* trong Hồ sơ tài khoản).
+3. **Ràng buộc tồn kho ở Frontend & Tự động đồng bộ Catalog JSON ↔ SQLite**:
+   - Khi thiết bị hết máy khả dụng, giao diện tự chuyển trạng thái *"Đã có khách giữ chỗ"*, ẩn/khóa nút đặt chỗ và chặn tăng số lượng giỏ hàng vượt quá số lượng kho.
+   - Backend chạy `fs.watch` theo dõi `public/fujifilm-catalog.json`: mọi chỉnh sửa về máy hoặc số lượng serial trong file JSON sẽ tự động cập nhật vào SQLite ngay lập tức.
+4. **Tài khoản, Định danh & Hạng thành viên**:
+   - Chiết khấu tiền cọc theo hạng: **Đồng** (`0%`), **Bạc** (`5%`), **Vàng** (`10%`), **Bạch Kim** (`15%`).
+   - Tự động xóa giỏ hàng khi đăng xuất, và ngăn modal đăng nhập bật lại khi reload nếu đã có phiên đăng nhập.
 
 ---
 
 ## 7. XỬ LÝ SỰ CỐ THƯỜNG GẶP (TROUBLESHOOTING)
 
-1. **Website báo lỗi kết nối API khi tải danh mục máy:**
-   - **Nguyên nhân:** Backend API port 4000 chưa được bật hoặc MySQL chưa mở.
-   - **Cách sửa:** Khởi động lại `mysqld` và chạy lệnh `cd refuji-system/apps/api && npx tsx src/index.ts`.
-2. **Port 5173 hoặc 4000 bị báo `EADDRINUSE` (trùng cổng):**
-   - **Cách sửa:** Chạy lệnh giải phóng cổng:
+1. **Báo lỗi HTTP `503` — *"Máy chủ Backend (Port 4000) không phản hồi hoặc đang tắt"*:**
+   - **Nguyên nhân:** Bạn chạy Frontend riêng (`vite` / `npm run dev:frontend`) mà chưa bật Backend API.
+   - **Cách sửa:** Chạy `npm run dev` tại thư mục gốc để bật cả API và Web, hoặc chạy `npm run server` ở một terminal khác.
+2. **Port `4000`, `5173` hoặc `5174` bị lỗi `EADDRINUSE` (đang có tiến trình chiếm cổng):**
+   - **Cách sửa:** Giải phóng cổng đang kẹt:
      ```bash
-     lsof -ti :5173 | xargs kill -9
      lsof -ti :4000 | xargs kill -9
+     lsof -ti :5173 | xargs kill -9
+     lsof -ti :5174 | xargs kill -9
      ```
-3. **Lỗi `Access denied for user 'refuji_user'@'localhost'`:**
-   - **Cách sửa:** Kiểm tra file `.env` và xác thực mật khẩu MySQL đã khớp với thông tin tài khoản được cấp quyền trong database.
+3. **Muốn reset toàn bộ dữ liệu đơn hàng / tài khoản về trạng thái seed ban đầu:**
+   - **Cách sửa:** Tắt server, xóa file `refuji-system/apps/api/data/refuji.sqlite` (và các file `.sqlite-wal`, `.sqlite-shm` nếu có), sau đó chạy lại `npm run dev` để hệ thống tự khởi tạo và seed lại từ đầu.
