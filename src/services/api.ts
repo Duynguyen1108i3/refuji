@@ -59,7 +59,7 @@ function getHighlightBadge(name: string, category: string, index: number): strin
 function transformRawModelToCamera(raw: RawProductModel, index: number): CameraModel {
   const specs = raw.specs_json || {};
   const availableItems = (raw.items || []).filter((i) => i.status === 'AVAILABLE');
-  const availableCount = availableItems.length > 0 ? availableItems.length : 1;
+  const availableCount = raw.items && raw.items.length > 0 ? availableItems.length : 0;
   const status = availableCount > 1 ? 'AVAILABLE' : availableCount === 1 ? 'LOW_STOCK' : 'BOOKED';
 
   const specsList: string[] = [];
@@ -105,7 +105,7 @@ function transformRawModelToCamera(raw: RawProductModel, index: number): CameraM
 function transformRawModelToLens(raw: RawProductModel, index: number): LensModel {
   const specs = raw.specs_json || {};
   const availableItems = (raw.items || []).filter((i) => i.status === 'AVAILABLE');
-  const availableCount = availableItems.length > 0 ? availableItems.length : 1;
+  const availableCount = raw.items && raw.items.length > 0 ? availableItems.length : 0;
   const status = availableCount > 1 ? 'AVAILABLE' : availableCount === 1 ? 'LOW_STOCK' : 'BOOKED';
 
   const features: string[] = [];
@@ -150,7 +150,7 @@ function transformRawModelToLens(raw: RawProductModel, index: number): LensModel
 function transformRawModelToAccessory(raw: RawProductModel, index: number): AccessoryModel {
   const specs = raw.specs_json || {};
   const availableItems = (raw.items || []).filter((i) => i.status === 'AVAILABLE');
-  const availableCount = availableItems.length > 0 ? availableItems.length : 1;
+  const availableCount = raw.items && raw.items.length > 0 ? availableItems.length : 0;
   const status = availableCount > 1 ? 'AVAILABLE' : availableCount === 1 ? 'LOW_STOCK' : 'BOOKED';
 
   const specsList: string[] = [];

@@ -13,7 +13,9 @@ export const RegisterPage: React.FC = () => {
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!privacyConsent) {
       setError('Bạn bắt buộc phải đồng ý với Điều khoản xử lý dữ liệu cá nhân theo Nghị định BVDLCN 2025');
@@ -24,7 +26,36 @@ export const RegisterPage: React.FC = () => {
       return;
     }
     setError(null);
-    window.location.href = '/login';
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          full_name: fullName,
+          email,
+          phone,
+          password,
+          confirm_password: confirmPassword,
+          privacy_consent: privacyConsent,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Đăng ký tài khoản không thành công');
+      }
+
+      window.location.href = '/login';
+    } catch (err: any) {
+      setError(err.message || 'Đăng ký tài khoản không thành công');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

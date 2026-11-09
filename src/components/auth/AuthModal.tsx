@@ -36,7 +36,7 @@ const appleTabVariants: Variants = {
 };
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, closeAuthModal, modalMode, setModalMode, pendingIntent } = useAuth();
+  const { isAuthModalOpen, closeAuthModal, modalMode, setModalMode, pendingIntent, user, isAuthenticated } = useAuth();
 
   // State nhận email chuyển tiếp từ Form Đăng ký sang Form Đăng nhập
   const [registeredEmail, setRegisteredEmail] = useState('');
@@ -88,7 +88,7 @@ export const AuthModal: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isAuthModalOpen, closeAuthModal]);
 
-  if (!isAuthModalOpen) return null;
+  if (!isAuthModalOpen || isAuthenticated || !!user) return null;
 
   // Xử lý sau khi Đăng ký thành công: Tự động chuyển qua tab Đăng nhập và điền email
   const handleRegisterSuccess = (email: string) => {

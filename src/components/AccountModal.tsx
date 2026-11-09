@@ -88,15 +88,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const completedRentals = user?.total_completed_rentals || 0;
   const effectiveTier: MembershipTierType = user?.membership_tier || currentTier || 'BRONZE';
 
-  const displayName = user?.full_name || 'Trần Txi';
-  const displayEmail = user?.email || 'trantxi@refuji.stu.edu.vn';
+  const displayName = user?.full_name || 'Khách hàng';
+  const displayEmail = user?.email || '';
   const initials = displayName
     .split(' ')
     .filter(Boolean)
     .slice(-2)
     .map((n) => n[0])
     .join('')
-    .toUpperCase();
+    .toUpperCase() || 'KH';
 
   return (
     <motion.div
@@ -238,6 +238,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   displayName={displayName}
                   displayEmail={displayEmail}
                   isAdmin={isAdmin}
+                  onClose={onClose}
                 />
               )}
             </motion.div>
@@ -255,7 +256,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             onClick={onClose}
             className="px-6 py-2.5 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer ml-auto"
           >
-            Hoàn tất &amp; Lưu hồ sơ
+            {activeTab === 'profile' ? 'Hoàn tất & Đóng' : 'Đóng'}
           </button>
         </div>
       </motion.div>

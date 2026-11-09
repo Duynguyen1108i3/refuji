@@ -1,14 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, Trash2, CheckCircle2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button.tsx';
 import { Input } from '../../components/ui/Input.tsx';
 
 export const UserProfileKycPage: React.FC = () => {
-  const [fullName, setFullName] = useState('Trần Văn An');
-  const [phone, setPhone] = useState('0901234567');
-  const [email, setEmail] = useState('an.tran@example.com');
-  const [idCardLast4, setIdCardLast4] = useState('8832');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [idCardLast4, setIdCardLast4] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedUserStr = localStorage.getItem('refuji_auth_user');
+      if (savedUserStr) {
+        const u = JSON.parse(savedUserStr);
+        setFullName(u.full_name || '');
+        setPhone(u.phone || '');
+        setEmail(u.email || '');
+        setIdCardLast4(u.id_card_last4 || '');
+      }
+    } catch (_) {}
+
+    const token = localStorage.getItem('refuji_token');
+    if (token) {
+      fetch('/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((u) => {
+          if (u) {
+            setFullName(u.full_name || '');
+            setPhone(u.phone || '');
+            setEmail(u.email || '');
+            setIdCardLast4(u.id_card_last4 || '');
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();

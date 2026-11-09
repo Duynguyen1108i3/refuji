@@ -137,7 +137,8 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayItems.map((item, idx) => {
             const discountedDeposit = Math.round(item.depositRate * (1 - currentTier.discount));
-            const isLowStock = item.availableCount === 1;
+            const isOutOfStock = item.availableCount <= 0 || item.status === 'BOOKED';
+            const isLowStock = !isOutOfStock && item.availableCount === 1;
             const isFav = favorites.has(item.id);
 
             return (
@@ -203,14 +204,20 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                     {/* Stock Status Indicator */}
                     <div className="flex items-center gap-1.5 text-xs mb-4">
                       <span className={`w-1.5 h-1.5 rounded-full ${
-                        isLowStock 
+                        isOutOfStock
+                          ? 'bg-amber-500 ring-2 ring-amber-500/20'
+                          : isLowStock 
                           ? 'bg-[#14171f]/70 ring-2 ring-[#14171f]/15' 
                           : 'bg-emerald-500 ring-2 ring-emerald-500/20'
                       }`} />
                       <span className={`text-[11.5px] font-medium tracking-tight ${
-                        isLowStock ? 'text-[#3c4252]' : 'text-emerald-700'
+                        isOutOfStock
+                          ? 'text-amber-800 font-semibold'
+                          : isLowStock
+                          ? 'text-[#3c4252]'
+                          : 'text-emerald-700'
                       }`}>
-                        {isLowStock ? 'Chỉ còn 1 thiết bị' : 'Sẵn sàng giao ngay'}
+                        {isOutOfStock ? 'Đã có khách giữ chỗ' : isLowStock ? 'Chỉ còn 1 thiết bị' : 'Sẵn sàng giao ngay'}
                       </span>
                       <span className="text-[#14171f]/20 mx-1">•</span>
                       <span className="text-[11px] text-[#6e7587]">Giao hỏa tốc</span>
@@ -248,29 +255,38 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        title="Thêm vào giỏ hàng"
-                        aria-label="Thêm vào giỏ hàng"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onAddToCart) onAddToCart(item as any);
-                        }}
-                        className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] hover:bg-[#14171f] text-[#14171f] hover:text-white border border-[#14171f]/10 hover:border-transparent flex items-center justify-center transition-all cursor-pointer active:scale-90"
-                      >
-                        <ShoppingBag size={14} />
-                      </button>
+                      {!isOutOfStock && (
+                        <button
+                          type="button"
+                          title="Thêm vào giỏ hàng"
+                          aria-label="Thêm vào giỏ hàng"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onAddToCart) onAddToCart(item as any);
+                          }}
+                          className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] hover:bg-[#14171f] text-[#14171f] hover:text-white border border-[#14171f]/10 hover:border-transparent flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                        >
+                          <ShoppingBag size={14} />
+                        </button>
+                      )}
 
                       <button
                         type="button"
+                        disabled={isOutOfStock}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onSelectItem(item as any);
+                          if (!isOutOfStock) onSelectItem(item as any);
                         }}
-                        className="h-9 px-4 sm:px-5 rounded-full bg-[#14171f] hover:bg-[#252a37] active:scale-95 text-white font-semibold text-xs tracking-wide flex items-center gap-1.5 shadow-[0_4px_14px_rgba(20,24,32,0.18)] hover:shadow-[0_6px_20px_rgba(20,24,32,0.26)] transition-all duration-200 cursor-pointer"
+                        className={`h-9 px-4 sm:px-5 rounded-full font-semibold text-xs tracking-wide flex items-center gap-1.5 transition-all duration-200 ${
+                          isOutOfStock
+                            ? 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
+                            : 'bg-[#14171f] hover:bg-[#252a37] active:scale-95 text-white shadow-[0_4px_14px_rgba(20,24,32,0.18)] hover:shadow-[0_6px_20px_rgba(20,24,32,0.26)] cursor-pointer'
+                        }`}
                       >
-                        <span>Đặt chỗ</span>
-                        <ArrowUpRight size={14} className="stroke-[2.2] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        <span>{isOutOfStock ? 'Đã giữ chỗ' : 'Đặt chỗ'}</span>
+                        {!isOutOfStock && (
+                          <ArrowUpRight size={14} className="stroke-[2.2] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        )}
                       </button>
                     </div>
                   </div>

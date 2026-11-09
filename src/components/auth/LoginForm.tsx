@@ -237,22 +237,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               Tạo tài khoản mới
             </button>
           </p>
-          <p className="text-[11px] text-[var(--refuji-text-muted)]">
-            Tài khoản thử nghiệm nhanh:{' '}
-            <button
-              type="button"
-              onClick={() =>
-                setFormData({
-                  email: 'fuji@refuji.vn',
-                  password: 'test@123',
-                  remember_me: true,
-                })
-              }
-              className="underline font-mono text-[var(--refuji-text-secondary)] hover:text-[var(--refuji-text-primary)] cursor-pointer"
-            >
-              fuji@refuji.vn
-            </button>
-          </p>
         </div>
       </form>
     </div>

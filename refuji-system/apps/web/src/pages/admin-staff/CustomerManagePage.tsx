@@ -1,35 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StaffPosLayout } from '../../layouts/StaffPosLayout.tsx';
-import { Button } from '../../components/ui/Button.tsx';
 import { MembershipTierBadge } from '../../components/badges/MembershipTierBadge.tsx';
 import { MembershipTier } from '@refuji/shared';
-import { Search, Lock, Unlock, AlertTriangle } from 'lucide-react';
+import { Search, Lock, Unlock, AlertTriangle, Loader2 } from 'lucide-react';
+
+interface CustomerRecord {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  tier: MembershipTier;
+  reputationScore: number;
+  idCardLast4: string;
+  isActive: boolean;
+}
 
 export const CustomerManagePage: React.FC = () => {
-  const [customers, setCustomers] = useState([
-    {
-      id: 1,
-      fullName: 'Nguyễn Hoàng Long',
-      email: 'long.nh@gmail.com',
-      phone: '0912345678',
-      tier: MembershipTier.GOLD,
-      reputationScore: 94,
-      idCardLast4: '8832',
-      isActive: true,
-      violations: 0
-    },
-    {
-      id: 2,
-      fullName: 'Trần Minh Quang',
-      email: 'quang.tm@gmail.com',
-      phone: '0988776655',
-      tier: MembershipTier.BRONZE,
-      reputationScore: 62,
-      idCardLast4: '1092',
-      isActive: false,
-      violations: 2 // Trả trễ 2 lần
-    }
-  ]);
+  const [customers, setCustomers] = useState<CustomerRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/users')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: any[]) => {
+        if (Array.isArray(data)) {
+          setCustomers(
+            data.map((u) => ({
+              id: u.id,
+              fullName: u.full_name,
+              email: u.email,
+              phone: u.phone,
+              tier: (u.membership_tier as MembershipTier) || MembershipTier.BRONZE,
+              reputationScore: u.reputation_score ?? 100,
+              idCardLast4: u.id_card_last4 || '----',
+              isActive: u.is_active === 1 || u.is_active === true,
+            }))
+          );
+        }
+      })
+      .catch(() => setCustomers([]))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const toggleStatus = (id: number) => {
     setCustomers(customers.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)));
@@ -55,41 +66,58 @@ export const CustomerManagePage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {customers.map((c) => (
-                <tr key={c.id} className="hover:bg-white/[0.02]">
-                  <td className="p-4 font-bold text-white">{c.fullName}</td>
-                  <td className="p-4">
-                    <span className="text-zinc-200 block">{c.phone}</span>
-                    <span className="text-zinc-500 text-[11px]">{c.email}</span>
-                  </td>
-                  <td className="p-4 font-mono text-zinc-300">**** **** {c.idCardLast4}</td>
-                  <td className="p-4"><MembershipTierBadge tier={c.tier} /></td>
-                  <td className="p-4 text-center">
-                    <span className={`font-bold num ${c.reputationScore >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {c.reputationScore}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    {c.isActive ? (
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Hoạt động</span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400">Đã khóa</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => toggleStatus(c.id)}
-                      className={`text-xs font-semibold px-3 py-1 rounded-lg border transition-colors ${
-                        c.isActive
-                          ? 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10'
-                          : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
-                      }`}
-                    >
-                      {c.isActive ? 'Khóa' : 'Mở khóa'}
-                    </button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-zinc-400">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Đang tải danh sách khách hàng từ cơ sở dữ liệu...</span>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : customers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-zinc-400">
+                    Chưa có khách hàng nào trong hệ thống
+                  </td>
+                </tr>
+              ) : (
+                customers.map((c) => (
+                  <tr key={c.id} className="hover:bg-white/[0.02]">
+                    <td className="p-4 font-bold text-white">{c.fullName}</td>
+                    <td className="p-4">
+                      <span className="text-zinc-200 block">{c.phone}</span>
+                      <span className="text-zinc-500 text-[11px]">{c.email}</span>
+                    </td>
+                    <td className="p-4 font-mono text-zinc-300">**** **** {c.idCardLast4}</td>
+                    <td className="p-4"><MembershipTierBadge tier={c.tier} /></td>
+                    <td className="p-4 text-center">
+                      <span className={`font-bold num ${c.reputationScore >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {c.reputationScore}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      {c.isActive ? (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Hoạt động</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400">Đã khóa</span>
+                      )}
+                    </td>
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => toggleStatus(c.id)}
+                        className={`text-xs font-semibold px-3 py-1 rounded-lg border transition-colors ${
+                          c.isActive
+                            ? 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10'
+                            : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
+                        }`}
+                      >
+                        {c.isActive ? 'Khóa' : 'Mở khóa'}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

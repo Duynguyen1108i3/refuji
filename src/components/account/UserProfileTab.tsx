@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User as UserIcon, KeyRound, CreditCard, ChevronDown, ShieldCheck } from 'lucide-react';
+import { User as UserIcon, KeyRound, CreditCard, ChevronDown, ShieldCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { ChangeCccdForm } from './ChangeCccdForm';
@@ -9,14 +9,16 @@ interface UserProfileTabProps {
   displayName: string;
   displayEmail: string;
   isAdmin: boolean;
+  onClose?: () => void;
 }
 
 export const UserProfileTab: React.FC<UserProfileTabProps> = ({
   displayName,
   displayEmail,
   isAdmin,
+  onClose,
 }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showCccdForm, setShowCccdForm] = useState(false);
 
@@ -45,7 +47,7 @@ export const UserProfileTab: React.FC<UserProfileTabProps> = ({
           </div>
           <div className="flex items-center justify-between py-1.5 border-b border-neutral-200/60">
             <span className="text-neutral-500">Số điện thoại:</span>
-            <span className="font-mono text-[#14171f]">{user?.phone || '0926302984'}</span>
+            <span className="font-mono text-[#14171f]">{user?.phone || 'Chưa cập nhật'}</span>
           </div>
           <div className="flex items-center justify-between py-1.5 border-b border-neutral-200/60">
             <span className="text-neutral-500">Vai trò tài khoản:</span>
@@ -57,7 +59,7 @@ export const UserProfileTab: React.FC<UserProfileTabProps> = ({
             <span className="text-neutral-500">Số Căn cước (CCCD):</span>
             <div className="flex items-center gap-2">
               <span className="font-mono text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                {user?.id_card_last4 ? `********${user.id_card_last4}` : '********0000'}
+                {user?.id_card_last4 ? `********${user.id_card_last4}` : 'Chưa định danh'}
               </span>
             </div>
           </div>
@@ -205,6 +207,21 @@ export const UserProfileTab: React.FC<UserProfileTabProps> = ({
         <p className="text-[11px] leading-relaxed text-emerald-900/80">
           Dữ liệu Căn cước công dân của bạn được mã hóa an toàn theo quy định của Luật Bảo vệ Dữ liệu Cá nhân 2025 và Luật Căn cước 2023. Bạn có toàn quyền yêu cầu trích xuất bản sao hoặc ẩn danh hóa dữ liệu sau khi kết thúc hợp đồng thuê thiết bị.
         </p>
+      </div>
+
+      {/* Nút Đăng xuất tài khoản an toàn & dọn sạch giỏ hàng */}
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={async () => {
+            await logout();
+            if (onClose) onClose();
+          }}
+          className="w-full py-2.5 px-4 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
+        >
+          <LogOut size={15} />
+          <span>Đăng xuất tài khoản &amp; Xóa giỏ hàng</span>
+        </button>
       </div>
     </div>
   );

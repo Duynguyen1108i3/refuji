@@ -6,11 +6,40 @@ import { Button } from '../../components/ui/Button.tsx';
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login and redirect
-    window.location.href = '/';
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Email hoặc mật khẩu không chính xác');
+      }
+
+      if (data.accessToken) {
+        localStorage.setItem('refuji_token', data.accessToken);
+        localStorage.setItem('refuji_auth_user', JSON.stringify(data.user));
+      }
+
+      window.location.href = data.user?.role === 'STAFF' || data.user?.role === 'ADMIN' ? '/staff/dashboard' : '/';
+    } catch (err: any) {
+      setError(err.message || 'Đăng nhập không thành công');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,8 +72,10 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        <Button type="submit" variant="primary" size="lg" className="w-full mt-2 font-bold">
-          Đăng nhập ngay
+        {error && <p className="text-xs text-rose-400">{error}</p>}
+
+        <Button type="submit" variant="primary" size="lg" className="w-full mt-2 font-bold" disabled={isSubmitting}>
+          {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập ngay'}
         </Button>
 
         <p className="text-xs text-center text-zinc-400 mt-4">

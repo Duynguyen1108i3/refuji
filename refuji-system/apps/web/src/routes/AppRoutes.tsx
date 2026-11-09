@@ -31,9 +31,36 @@ import { MembershipTier } from '@refuji/shared';
 export const AppRoutes: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
-  // Example demo user state: Set to MembershipTier.GOLD (or null to test guest state)
-  const [userTier, setUserTier] = useState<MembershipTier | null>(MembershipTier.GOLD);
-  const [userName, setUserName] = useState<string | null>('Trần Văn An');
+  // Lấy thông tin tài khoản thật từ localStorage nếu đã đăng nhập
+  const [userTier, setUserTier] = useState<MembershipTier | null>(() => {
+    try {
+      const raw = localStorage.getItem('refuji_auth_user');
+      return raw ? (JSON.parse(raw).membership_tier as MembershipTier) : null;
+    } catch (_) {
+      return null;
+    }
+  });
+  const [userName, setUserName] = useState<string | null>(() => {
+    try {
+      const raw = localStorage.getItem('refuji_auth_user');
+      return raw ? JSON.parse(raw).full_name : null;
+    } catch (_) {
+      return null;
+    }
+  });
+
+  const [cartCount, setCartCount] = useState<number>(() => {
+    try {
+      const rawUser = localStorage.getItem('refuji_auth_user');
+      if (!rawUser) return 0;
+      const rawCart = localStorage.getItem('refuji_cart_items');
+      if (!rawCart) return 0;
+      const items = JSON.parse(rawCart);
+      return Array.isArray(items) ? items.reduce((acc: number, c: any) => acc + (c.quantity || 1), 0) : 0;
+    } catch (_) {
+      return 0;
+    }
+  });
 
   useEffect(() => {
     const handlePopState = () => setCurrentPath(window.location.pathname);
@@ -79,7 +106,7 @@ export const AppRoutes: React.FC = () => {
     <ClientLayout
       userTier={userTier}
       userName={userName}
-      cartCount={2}
+      cartCount={userName ? cartCount : 0}
       onOpenAuth={() => (window.location.href = '/login')}
     >
       {renderClientPage()}

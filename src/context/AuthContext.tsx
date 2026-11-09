@@ -51,6 +51,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Khởi tạo trạng thái Modal Xác thực từ URL hash hoặc sessionStorage để khi F5 / Reload không bị văng ra trang chủ
 const getInitialAuthModalState = (): { isOpen: boolean; mode: AuthModalMode } => {
   if (typeof window === 'undefined') return { isOpen: false, mode: 'login' };
+
+  // NẾU ĐÃ ĐĂNG NHẬP: TUYỆT ĐỐI KHÔNG TỰ ĐỘNG BẬT MODAL LOGIN/REGISTER KHI RELOAD TRANG
+  const savedUser = localStorage.getItem('refuji_auth_user');
+  if (savedUser) {
+    try {
+      sessionStorage.removeItem('refuji_auth_modal_open');
+      sessionStorage.removeItem('refuji_auth_modal_mode');
+    } catch (_) {}
+    return { isOpen: false, mode: 'login' };
+  }
+
   const hash = window.location.hash.replace('#', '');
   const savedOpen = sessionStorage.getItem('refuji_auth_modal_open') === 'true';
   const savedMode = (sessionStorage.getItem('refuji_auth_modal_mode') as AuthModalMode) || 'login';
@@ -133,7 +144,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [isAuthModalOpen]);
 
+  // Khi có user đăng nhập: Tự động đóng modal xác thực và xóa sạch cờ sessionStorage
+  useEffect(() => {
+    if (user) {
+      setIsAuthModalOpen(false);
+      try {
+        sessionStorage.removeItem('refuji_auth_modal_open');
+        sessionStorage.removeItem('refuji_auth_modal_mode');
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'login' || hash === 'register' || hash === 'forgot-password' || hash === 'auth') {
+          const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+          window.history.replaceState(null, '', `#${returnSec}`);
+        }
+      } catch (_) {}
+    }
+  }, [user]);
+
   const openAuthModal = useCallback((mode: AuthModalMode = 'login', intent: PendingRentalIntent | null = null) => {
+    if (user) return; // Nếu đã có tài khoản đăng nhập thì không mở modal đăng nhập
     setModalMode(mode);
     if (intent) {
       setPendingIntent(intent);
@@ -144,7 +172,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       sessionStorage.setItem('refuji_auth_modal_mode', mode);
       window.history.replaceState(null, '', `#${mode}`);
     } catch (_) {}
-  }, []);
+  }, [user]);
 
   const closeAuthModal = useCallback(() => {
     setIsAuthModalOpen(false);
@@ -161,6 +189,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
       if (hash === 'login' || hash === 'register' || hash === 'forgot-password') {
+        if (user) return; // Đã đăng nhập thì bỏ qua
         setModalMode(hash as AuthModalMode);
         setIsAuthModalOpen(true);
         sessionStorage.setItem('refuji_auth_modal_open', 'true');
@@ -169,7 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [user]);
 
   const clearPendingIntent = useCallback(() => {
     setPendingIntent(null);
@@ -214,6 +243,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const result = await loginUser(data);
         setUser(result.user);
         setIsAuthModalOpen(false);
+        try {
+          sessionStorage.removeItem('refuji_auth_modal_open');
+          sessionStorage.removeItem('refuji_auth_modal_mode');
+          const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+          window.history.replaceState(null, '', `#${returnSec}`);
+        } catch (_) {}
 
         showToast(
           `Chào mừng bạn trở lại, ${result.user.full_name}! (Hạng thành viên: ${result.user.membership_tier})`,
@@ -274,6 +309,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await logoutUser();
     setUser(null);
     setPendingIntent(null);
+    try {
+      localStorage.removeItem('refuji_cart_items');
+      localStorage.removeItem('refuji_cart_user_id');
+      window.dispatchEvent(new CustomEvent('refuji_cart_clear'));
+    } catch (_) {}
     showToast('Bạn đã đăng xuất tài khoản an toàn.', 'info');
   }, [showToast]);
 
