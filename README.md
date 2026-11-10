@@ -132,25 +132,92 @@ Tại thư mục gốc dự án (`refuji/`):
 npm install
 cd refuji-system && npm install
 ```
+*(Nếu chạy riêng trong từng app con và thiếu gói cục bộ, có thể chạy thêm `npm install` trong `refuji-system/apps/api` và `refuji-system/apps/web`.)*
 
-### 4.2. Khởi chạy Website Khách hàng + Backend API (Khuyên dùng)
+---
+
+### 4.2. Cách 1 — Khởi chạy nhanh Website Khách hàng + Backend API (Khuyên dùng)
 Tại thư mục gốc `refuji/`, chạy **1 lệnh duy nhất**:
 ```bash
 npm run dev
 ```
 Lệnh này sử dụng `concurrently` để bật song song:
-- **API Server**: `http://localhost:4000` (`npm run server`)
+- **Backend API Server**: `http://localhost:4000` (tự động chạy `npm run server`)
 - **Website Khách hàng**: `http://localhost:5173` (`vite`)
 
-*(Nếu muốn chạy riêng từng phần: `npm run server` cho Backend API hoặc `npm run dev:frontend` cho Frontend `:5173`.)*
+---
 
-### 4.3. Khởi chạy Cổng Quản trị POS Nhân viên (Port 5174) *(Tùy chọn)*
-Mở thêm một Terminal mới khi cần dùng giao diện POS / Admin hoặc các trang đa route:
+### 4.3. Cách 2 — Chạy riêng từng Server (3 Terminal độc lập)
+
+#### Terminal 1: Chạy riêng Backend API Server (Port 4000)
+Từ thư mục gốc:
+```bash
+npm run server
+```
+Hoặc chạy trực tiếp trong thư mục `refuji-system/apps/api`:
+```bash
+cd refuji-system/apps/api
+npm run dev                  # Chế độ watch tự reload khi sửa code (tsx watch src/index.ts)
+# hoặc:
+npx tsx src/index.ts         # Chạy một lần không watch
+```
+
+#### Terminal 2: Chạy riêng Website Khách hàng chính (Port 5173)
+Từ thư mục gốc:
+```bash
+npm run dev:frontend
+```
+
+#### Terminal 3: Chạy Cổng Quản trị POS Nhân viên & App Đa trang (Port 5174)
+Từ thư mục `refuji-system/`:
+```bash
+cd refuji-system
+npm run dev                  # Chạy workspace @refuji/web (Port 5174)
+```
+Hoặc chạy trực tiếp trong `refuji-system/apps/web`:
 ```bash
 cd refuji-system/apps/web
-npx vite
+npm run dev                  # hoặc: npx vite
 ```
-> Hoặc chạy từ thư mục `refuji-system/`: `npm run dev`. Cổng POS sẵn sàng tại **`http://localhost:5174`**.
+
+---
+
+### 4.4. Build & Preview bản Production
+- **Website Khách hàng chính (thư mục gốc):**
+  ```bash
+  npm run build              # Kiểm tra TypeScript (tsc) & build Vite ra dist/
+  npm run preview            # Xem thử bản build production
+  ```
+- **Monorepo Backend & POS Web (`refuji-system/`):**
+  ```bash
+  cd refuji-system
+  npm run build              # Build toàn bộ workspaces (shared, api, web)
+
+  # Hoặc build từng phần:
+  cd refuji-system/apps/api && npm run build
+  cd refuji-system/apps/web && npm run build && npm run preview
+  ```
+
+---
+
+### 4.5. Chạy kèm Docker (MySQL 8.4 + Mailpit) & Prisma *(Tùy chọn)*
+Mặc định hệ thống dùng **SQLite** nên không cần Docker. Khi cần chạy với **MySQL 8.4** và **Mailpit** (test email):
+```bash
+cd refuji-system
+docker compose up -d         # Bật MySQL (:3306) và Mailpit (:8025 Web UI / :1025 SMTP)
+```
+Khởi tạo schema & dữ liệu mẫu với Prisma (trong `refuji-system/apps/api`):
+```bash
+cd refuji-system/apps/api
+npm run prisma:generate      # Sinh Prisma Client
+npm run prisma:migrate       # Chạy migration tạo bảng trên MySQL
+npm run prisma:seed          # Nạp dữ liệu mẫu ban đầu
+```
+Dựng toàn bộ stack production bằng Docker:
+```bash
+cd refuji-system
+docker compose -f docker-compose.prod.yml up -d --build
+```
 
 ---
 
@@ -165,6 +232,7 @@ npx vite
 | **Backend REST API** | `http://localhost:4000/api` | API Express + SQLite (hỗ trợ cả `/api/*` và `/api/v1/*`). |
 | **API Health Check** | `http://localhost:4000/api/health` | Kiểm tra trạng thái Backend API. |
 | **API Danh mục thiết bị** | `http://localhost:4000/api/models` | Trả về danh sách thiết bị kèm trạng thái từng cá thể Serial theo thời gian thực. |
+| **Mailpit (khi bật Docker)** | `http://localhost:8025/` | Giao diện xem email test cục bộ (SMTP chạy tại cổng `1025`). |
 
 ### 5.2. Các route chính trên Cổng `http://localhost:5174`
 - **Phân hệ Nhân viên / Quản trị POS (`/staff/*`)**:
