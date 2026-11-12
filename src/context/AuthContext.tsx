@@ -11,12 +11,12 @@ import {
   getCurrentUserProfile,
   logoutUser,
   createRentalOrder,
-  getAccessTokenInMemory,
   refreshAuthSession,
   getSavedUserFromStorage,
 } from '../services/authApi';
+import { clearGuestCartStorage } from '../services/cartApi';
 
-export type AuthModalMode = 'login' | 'register' | 'forgot-password';
+export type AuthModalMode = 'login' | 'register' | 'forgot-password' | 'guest-lookup';
 
 export interface ToastNotification {
   id: string;
@@ -29,6 +29,9 @@ interface AuthContextType {
   user: UserAccount | null;
   isAuthenticated: boolean;
   isLoadingUser: boolean;
+  isAuthReady: boolean;
+  isResolvingCartIntent: boolean;
+  loginRevision: number;
   isAuthModalOpen: boolean;
   modalMode: AuthModalMode;
   pendingIntent: PendingRentalIntent | null;
@@ -47,6 +50,20 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const isDashboardUrlActive = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.replace('#', '').toLowerCase();
+  return (
+    path === '/dashboard' ||
+    path === '/admin' ||
+    hash === 'dashboard' ||
+    hash === 'admin' ||
+    hash === 'quan-tri' ||
+    hash === 'pos'
+  );
+};
 
 // Khởi tạo trạng thái Modal Xác thực từ URL hash hoặc sessionStorage để khi F5 / Reload không bị văng ra trang chủ
 const getInitialAuthModalState = (): { isOpen: boolean; mode: AuthModalMode } => {
@@ -75,6 +92,9 @@ const getInitialAuthModalState = (): { isOpen: boolean; mode: AuthModalMode } =>
   if (hash === 'forgot-password' || hash === 'quen-mat-khau') {
     return { isOpen: true, mode: 'forgot-password' };
   }
+  if (hash === 'lookup' || hash === 'tra-cuu-don') {
+    return { isOpen: true, mode: 'guest-lookup' };
+  }
   if (hash === 'auth') {
     return { isOpen: true, mode: savedMode };
   }
@@ -87,19 +107,29 @@ const getInitialAuthModalState = (): { isOpen: boolean; mode: AuthModalMode } =>
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserAccount | null>(() => getSavedUserFromStorage());
   const [isLoadingUser, setIsLoadingUser] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isResolvingCartIntent, setIsResolvingCartIntent] = useState(false);
+  const [loginRevision, setLoginRevision] = useState(0);
   const initialAuthState = getInitialAuthModalState();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(initialAuthState.isOpen);
   const [modalMode, setModalMode] = useState<AuthModalMode>(initialAuthState.mode);
   const [pendingIntent, setPendingIntent] = useState<PendingRentalIntent | null>(null);
   const [toast, setToast] = useState<ToastNotification | null>(null);
 
-  // Helper to show toast with auto-dismiss
+  // Tính năng: Tự động ẩn toàn bộ thông báo Toast (kể cả qua setToast hoặc showToast) sau đúng 5 giây
+  useEffect(() => {
+    if (!toast) return;
+    const toastId = toast.id;
+    const timer = setTimeout(() => {
+      setToast((current) => (current?.id === toastId ? null : current));
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  // Helper to show toast (auto-dismiss handled globally in 5s)
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success', tierBadge?: MembershipTierType) => {
     const id = Date.now().toString();
     setToast({ id, message, type, tierBadge });
-    setTimeout(() => {
-      setToast((current) => (current?.id === id ? null : current));
-    }, 4500);
   }, []);
 
   // Tự động khôi phục phiên làm việc (Silent Refresh) từ HttpOnly Cookie khi tải lại trang (F5/Reload)
@@ -125,6 +155,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .finally(() => {
         if (isMounted) {
           setIsLoadingUser(false);
+          setIsAuthReady(true);
         }
       });
 
@@ -151,10 +182,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         sessionStorage.removeItem('refuji_auth_modal_open');
         sessionStorage.removeItem('refuji_auth_modal_mode');
-        const hash = window.location.hash.replace('#', '');
-        if (hash === 'login' || hash === 'register' || hash === 'forgot-password' || hash === 'auth') {
-          const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
-          window.history.replaceState(null, '', `#${returnSec}`);
+        if (!isDashboardUrlActive()) {
+          const hash = window.location.hash.replace('#', '');
+          if (hash === 'login' || hash === 'register' || hash === 'forgot-password' || hash === 'auth' || hash === 'lookup' || hash === 'tra-cuu-don') {
+            const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+            window.history.replaceState(null, '', `#${returnSec}`);
+          }
         }
       } catch (_) {}
     }
@@ -163,24 +196,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const openAuthModal = useCallback((mode: AuthModalMode = 'login', intent: PendingRentalIntent | null = null) => {
     if (user) return; // Nếu đã có tài khoản đăng nhập thì không mở modal đăng nhập
     setModalMode(mode);
-    if (intent) {
-      setPendingIntent(intent);
-    }
+    setPendingIntent(intent ?? null);
     setIsAuthModalOpen(true);
     try {
       sessionStorage.setItem('refuji_auth_modal_open', 'true');
       sessionStorage.setItem('refuji_auth_modal_mode', mode);
-      window.history.replaceState(null, '', `#${mode}`);
+      if (!isDashboardUrlActive()) {
+        window.history.replaceState(null, '', `#${mode === 'guest-lookup' ? 'lookup' : mode}`);
+      }
     } catch (_) {}
   }, [user]);
 
   const closeAuthModal = useCallback(() => {
     setIsAuthModalOpen(false);
+    setPendingIntent(null);
     try {
       sessionStorage.removeItem('refuji_auth_modal_open');
       sessionStorage.removeItem('refuji_auth_modal_mode');
-      const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
-      window.history.replaceState(null, '', `#${returnSec}`);
+      if (!isDashboardUrlActive()) {
+        const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+        window.history.replaceState(null, '', `#${returnSec}`);
+      }
     } catch (_) {}
   }, []);
 
@@ -188,12 +224,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'login' || hash === 'register' || hash === 'forgot-password') {
+      if (hash === 'login' || hash === 'register' || hash === 'forgot-password' || hash === 'lookup' || hash === 'tra-cuu-don') {
         if (user) return; // Đã đăng nhập thì bỏ qua
-        setModalMode(hash as AuthModalMode);
+        const nextMode: AuthModalMode = (hash === 'lookup' || hash === 'tra-cuu-don') ? 'guest-lookup' : (hash as AuthModalMode);
+        setModalMode(nextMode);
         setIsAuthModalOpen(true);
         sessionStorage.setItem('refuji_auth_modal_open', 'true');
-        sessionStorage.setItem('refuji_auth_modal_mode', hash);
+        sessionStorage.setItem('refuji_auth_modal_mode', nextMode);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -212,6 +249,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const intent = pendingIntent;
       const currentUserId = user?.id || Date.now();
       const orderResult = await createRentalOrder(intent, currentUserId);
+
+      if (intent.source === 'CART') {
+        clearGuestCartStorage();
+      }
 
       showToast(
         `Giữ chỗ 15 phút thành công cho ${intent.modelName}! Mã đơn: ${orderResult.orderId} (Hết hạn: ${orderResult.holdDeadline})`,
@@ -239,15 +280,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = useCallback(
     async (data: LoginFormData) => {
       setIsLoadingUser(true);
+      const intentAtLogin = pendingIntent;
+      const isCartIntent = intentAtLogin?.source === 'CART';
+
       try {
         const result = await loginUser(data);
+        if (isCartIntent) {
+          // Chặn useCart gộp giỏ vãng lai trong lúc đang tự động chốt đơn từ giỏ hàng
+          setIsResolvingCartIntent(true);
+        }
+        setLoginRevision((prev) => prev + 1);
+        setIsAuthReady(true);
         setUser(result.user);
         setIsAuthModalOpen(false);
         try {
           sessionStorage.removeItem('refuji_auth_modal_open');
           sessionStorage.removeItem('refuji_auth_modal_mode');
-          const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
-          window.history.replaceState(null, '', `#${returnSec}`);
+          const curHash = window.location.hash.replace('#', '').toLowerCase();
+          if (
+            !isDashboardUrlActive() &&
+            ['login', 'register', 'forgot-password', 'auth', 'lookup', 'tra-cuu-don', 'dang-nhap', 'dang-ky'].includes(curHash)
+          ) {
+            const returnSec = sessionStorage.getItem('refuji_active_section') || 'explore';
+            window.history.replaceState(null, '', `#${returnSec}`);
+          }
         } catch (_) {}
 
         showToast(
@@ -256,24 +312,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           result.user.membership_tier
         );
 
-        // Intent Continuation: Tiếp tục hành động thuê máy dở dang
-        if (pendingIntent) {
+        // Tính năng: Tiếp tục đặt giữ chỗ 15p (áp dụng hạng thành viên & cập nhật widget đếm ngược) sau khi đăng nhập
+        if (intentAtLogin) {
           setTimeout(async () => {
-            const currentIntent = pendingIntent;
             try {
-              const orderResult = await createRentalOrder(currentIntent, result.user.id);
+              const orderResult = await createRentalOrder(intentAtLogin, result.user.id);
+              if (intentAtLogin.source === 'CART') {
+                // Giỏ vãng lai đã tạo đơn thành công -> xóa giỏ vãng lai để không lặp lại vào DB cart
+                clearGuestCartStorage();
+              }
+              const deadlineTime = orderResult.payment_deadline
+                ? new Date(orderResult.payment_deadline).getTime()
+                : Date.now() + 15 * 60 * 1000;
+              const serverRent = orderResult.totalRent ?? intentAtLogin.totalRent;
+              const serverDeposit = orderResult.depositAmount ?? intentAtLogin.depositRate;
+              const reservationData = {
+                orderCode: orderResult.orderId,
+                modelName: intentAtLogin.modelName,
+                items: intentAtLogin.items || [],
+                assignedSerials: orderResult.assignedSerials || [],
+                startDate: intentAtLogin.startDate,
+                expectedReturnDate: intentAtLogin.expectedReturnDate,
+                days: intentAtLogin.days,
+                totalRent: serverRent,
+                depositAmount: serverDeposit,
+                totalDue: serverRent + serverDeposit,
+                createdAt: Date.now(),
+                paymentDeadline: orderResult.payment_deadline || new Date(deadlineTime).toISOString(),
+                expiresAt: deadlineTime,
+              };
+              try {
+                localStorage.setItem('refuji_active_reservation', JSON.stringify(reservationData));
+                window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: reservationData }));
+                window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+              } catch (_) {}
               showToast(
-                `Đã tự động đặt giữ chỗ 15 phút cho ${currentIntent.modelName}! Mã đơn: ${orderResult.orderId}`,
+                `Đã tự động đặt giữ chỗ 15 phút cho ${intentAtLogin.modelName}! Mã đơn: ${orderResult.orderId}`,
                 'success',
                 result.user.membership_tier
               );
             } catch (e: any) {
-              showToast('Lỗi khi tiếp tục luồng đặt thuê', 'error');
+              showToast(e?.message || 'Lỗi khi tiếp tục luồng đặt thuê', 'error');
             } finally {
               setPendingIntent(null);
+              if (isCartIntent) {
+                setIsResolvingCartIntent(false);
+              }
             }
           }, 400);
         }
+      } catch (err) {
+        if (isCartIntent) {
+          setIsResolvingCartIntent(false);
+        }
+        throw err;
       } finally {
         setIsLoadingUser(false);
       }
@@ -309,9 +401,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await logoutUser();
     setUser(null);
     setPendingIntent(null);
+    setIsResolvingCartIntent(false);
     try {
-      localStorage.removeItem('refuji_cart_items');
-      localStorage.removeItem('refuji_cart_user_id');
+      // Chỉ xóa giỏ local khi chủ động đăng xuất, KHÔNG xóa giỏ hàng đã lưu trên DB của tài khoản
+      clearGuestCartStorage();
+
+      // Tránh rò rỉ widget giữ chỗ 15 phút của tài khoản vừa đăng xuất sang khách vãng lai / tài khoản khác
+      const rawRes = localStorage.getItem('refuji_active_reservation');
+      if (rawRes) {
+        try {
+          const parsedRes = JSON.parse(rawRes);
+          if (!parsedRes?.isGuest) {
+            localStorage.removeItem('refuji_active_reservation');
+            window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+          }
+        } catch (_) {
+          localStorage.removeItem('refuji_active_reservation');
+          window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+        }
+      }
+
       window.dispatchEvent(new CustomEvent('refuji_cart_clear'));
     } catch (_) {}
     showToast('Bạn đã đăng xuất tài khoản an toàn.', 'info');
@@ -321,6 +430,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     isAuthenticated: !!user,
     isLoadingUser,
+    isAuthReady,
+    isResolvingCartIntent,
+    loginRevision,
     isAuthModalOpen,
     modalMode,
     pendingIntent,

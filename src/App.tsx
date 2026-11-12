@@ -14,12 +14,35 @@ import { PaymentModal } from './components/PaymentModal';
 import { ReservationFloatingWidget } from './components/ReservationFloatingWidget';
 import { ScrollFadeSection } from './components/ScrollFadeSection';
 import { Footer } from './components/Footer';
-import { CameraModel, LensModel, AccessoryModel, EquipmentItem, CartItem, ActiveReservation } from './types';
+import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { CameraModel, LensModel, AccessoryModel, EquipmentItem, ActiveReservation } from './types';
 import { fetchCatalog } from './services/api';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthModal } from './components/auth/AuthModal';
 import { useCart } from './hooks/useCart';
-import { getAccessTokenInMemory } from './services/authApi';
+import {
+  getAccessTokenInMemory,
+  cancelGuestOrder,
+  cancelMyOrder,
+  lookupGuestOrder,
+  GuestLookupOrderResponse,
+  updateRecentGuestOrderStatus,
+} from './services/authApi';
+
+// Kiểm tra đường dẫn hoặc hash thuộc phân hệ Quản trị Studio / POS tách biệt
+const isDashboardLocation = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.replace('#', '').toLowerCase();
+  return (
+    path === '/dashboard' ||
+    path === '/admin' ||
+    hash === 'dashboard' ||
+    hash === 'admin' ||
+    hash === 'quan-tri' ||
+    hash === 'pos'
+  );
+};
 
 // Helper tính toán ngày thuê mặc định động từ hôm nay
 const getInitialDates = () => {
@@ -38,15 +61,17 @@ const getInitialDates = () => {
 };
 
 const MainApp: React.FC = () => {
-  const { user, toast } = useAuth();
+  const { user, isAuthReady, toast, setToast, openAuthModal } = useAuth();
+  const [isDashboardRoute, setIsDashboardRoute] = useState<boolean>(isDashboardLocation);
   const [cameras, setCameras] = useState<CameraModel[]>([]);
   const [lenses, setLenses] = useState<LensModel[]>([]);
   const [accessories, setAccessories] = useState<AccessoryModel[]>([]);
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
+  const [rentalDates, setRentalDates] = useState(getInitialDates);
 
-  // Fetch real data from backend API (GET /api/models)
+  // Tính năng: Tải danh mục theo khoảng ngày thuê đang chọn để lọc máy trùng lịch theo thời gian thực
   const loadCatalog = useCallback(() => {
-    fetchCatalog()
+    fetchCatalog(rentalDates.startDate, rentalDates.endDate)
       .then((data) => {
         setCameras(data.cameras);
         setLenses(data.lenses);
@@ -58,7 +83,7 @@ const MainApp: React.FC = () => {
       .finally(() => {
         setIsLoadingCatalog(false);
       });
-  }, []);
+  }, [rentalDates.startDate, rentalDates.endDate]);
 
   useEffect(() => {
     loadCatalog();
@@ -76,8 +101,6 @@ const MainApp: React.FC = () => {
       window.removeEventListener('refuji_reservation_updated', handleRefresh);
     };
   }, [loadCatalog]);
-
-  const [isScrolled, setIsScrolled] = useState(false);
 
   // Khởi tạo section và modal từ URL hash hoặc sessionStorage để reload không bị nhảy về trang chủ
   const getInitialSection = () => {
@@ -104,7 +127,6 @@ const MainApp: React.FC = () => {
     const hash = window.location.hash.replace('#', '');
     return (
       hash === 'account' ||
-      hash === 'dashboard' ||
       hash === 'ho-so' ||
       sessionStorage.getItem('refuji_account_modal_open') === 'true'
     );
@@ -135,17 +157,27 @@ const MainApp: React.FC = () => {
   const [searchNotification, setSearchNotification] = useState<string | null>(null);
   const [membershipTier, setMembershipTier] = useState<MembershipTierType>('BRONZE');
 
-  // Đồng bộ Hạng thành viên từ tài khoản người dùng khi đăng nhập
+  // Đồng bộ Hạng thành viên từ tài khoản người dùng (Khách chưa đăng nhập luôn về BRONZE)
   useEffect(() => {
     if (user?.membership_tier) {
       setMembershipTier(user.membership_tier);
+    } else {
+      setMembershipTier('BRONZE');
     }
   }, [user]);
 
-  const effectiveTier = user?.membership_tier || membershipTier;
+  const effectiveTier = user ? (user.membership_tier || membershipTier) : 'BRONZE';
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(getInitialAccountModalState);
+  const [accountInitialTab, setAccountInitialTab] = useState<'tiers' | 'orders' | 'profile'>('tiers');
   const [isCartModalOpen, setIsCartModalOpen] = useState(getInitialCartModalState);
   const [isPhotoViewOnly, setIsPhotoViewOnly] = useState(false);
+
+  // Tính năng: Tự động ẩn toàn bộ thông báo searchNotification đúng 5 giây
+  useEffect(() => {
+    if (!searchNotification) return;
+    const timer = window.setTimeout(() => setSearchNotification(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [searchNotification]);
 
   // Quản lý đơn giữ chỗ 15 phút chống đặt trùng (Persistent 15-Minute Reservation Hold)
   const [activeReservation, setActiveReservation] = useState<ActiveReservation | null>(() => {
@@ -164,7 +196,7 @@ const MainApp: React.FC = () => {
   });
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
 
-  // Đồng bộ đơn giữ chỗ 15 phút với máy chủ và các sự kiện đặt thuê
+  // Tính năng: Đồng bộ giữ chỗ 15p (Thành viên gọi /my-orders có JWT; Khách vãng lai đối soát qua /guest-lookup)
   useEffect(() => {
     const handleReservationUpdate = (e: any) => {
       if (e.detail) {
@@ -187,76 +219,116 @@ const MainApp: React.FC = () => {
     };
     window.addEventListener('refuji_reservation_updated', handleReservationUpdate);
 
-    // Kiểm tra đơn giữ chỗ 15 phút từ Backend nếu local chưa có
     const token = getAccessTokenInMemory();
-    fetch('/api/orders/my-orders', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      credentials: 'include',
-    })
-      .then((res) => (res.ok ? res.json() : []))
-      .then((orders: any[]) => {
-        if (!Array.isArray(orders)) return;
-        const pending = orders.find((o) => o.order_status === 'PENDING_PAYMENT');
-        if (pending) {
-          const assignedSerials = pending.assigned_serials
-            ? pending.assigned_serials.split(',').map((s: string) => s.trim())
-            : [];
-          const deadlineTime = pending.payment_deadline
-            ? new Date(pending.payment_deadline).getTime()
-            : 0;
+    if (user && isAuthReady && token) {
+      fetch('/api/orders/my-orders', {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      })
+        .then((res) => (res.ok ? res.json() : []))
+        .then((orders: any[]) => {
+          if (!Array.isArray(orders)) return;
+          const pending = orders.find((o) => o.order_status === 'PENDING_PAYMENT');
+          if (pending) {
+            const assignedSerials = pending.assigned_serials
+              ? pending.assigned_serials.split(',').map((s: string) => s.trim())
+              : [];
+            const deadlineTime = pending.payment_deadline
+              ? new Date(pending.payment_deadline).getTime()
+              : 0;
 
-          // Chỉ nhận đơn nếu THỜI GIAN GIỮ CHỖ THỰC TẾ TRÊN MÁY CHỦ CHƯA HẾT HẠN
-          if (deadlineTime > Date.now()) {
-            let itemsDetail: any[] = [];
-            if (pending.items_detail) {
+            if (deadlineTime > Date.now()) {
+              let itemsDetail: any[] = [];
+              if (pending.items_detail) {
+                try {
+                  itemsDetail = JSON.parse(pending.items_detail);
+                } catch (_) {}
+              }
+
+              const createdTime = new Date(pending.created_at || Date.now()).getTime();
+              const resData: ActiveReservation = {
+                orderCode: pending.order_code,
+                modelName: pending.model_name || 'Thiết bị Fujifilm',
+                items: itemsDetail,
+                assignedSerials,
+                startDate: pending.start_date,
+                expectedReturnDate: pending.expected_return_date,
+                days: Math.max(
+                  1,
+                  Math.round(
+                    (new Date(pending.expected_return_date).getTime() - new Date(pending.start_date).getTime()) /
+                      (1000 * 3600 * 24)
+                  )
+                ),
+                totalRent: pending.total_rent,
+                depositAmount: pending.deposit_amount,
+                totalDue: (pending.total_rent || 0) + (pending.deposit_amount || 0),
+                createdAt: createdTime,
+                paymentDeadline: pending.payment_deadline,
+                expiresAt: deadlineTime,
+              };
+              setActiveReservation(resData);
               try {
-                itemsDetail = JSON.parse(pending.items_detail);
+                localStorage.setItem('refuji_active_reservation', JSON.stringify(resData));
+              } catch (_) {}
+            } else {
+              setActiveReservation(null);
+              try {
+                localStorage.removeItem('refuji_active_reservation');
               } catch (_) {}
             }
-
-            const createdTime = new Date(pending.created_at || Date.now()).getTime();
-            const resData: ActiveReservation = {
-              orderCode: pending.order_code,
-              modelName: pending.model_name || 'Thiết bị Fujifilm',
-              items: itemsDetail,
-              assignedSerials,
-              startDate: pending.start_date,
-              expectedReturnDate: pending.expected_return_date,
-              days: Math.max(
-                1,
-                Math.round(
-                  (new Date(pending.expected_return_date).getTime() - new Date(pending.start_date).getTime()) /
-                    (1000 * 3600 * 24)
-                )
-              ),
-              totalRent: pending.total_rent,
-              depositAmount: pending.deposit_amount,
-              totalDue: (pending.total_rent || 0) + (pending.deposit_amount || 0),
-              createdAt: createdTime,
-              paymentDeadline: pending.payment_deadline,
-              expiresAt: deadlineTime, // Sử dụng chính xác thời gian thực từ database
-            };
-            setActiveReservation(resData);
-            try {
-              localStorage.setItem('refuji_active_reservation', JSON.stringify(resData));
-            } catch (_) {}
           } else {
-            // Đã hết hạn -> xóa khỏi local để không hiện nút cũ
-            setActiveReservation(null);
+            // Tài khoản hiện tại không có đơn PENDING_PAYMENT -> dọn cache giữ chỗ của tài khoản khác nếu còn sót
             try {
-              localStorage.removeItem('refuji_active_reservation');
+              const saved = localStorage.getItem('refuji_active_reservation');
+              if (saved) {
+                const parsed = JSON.parse(saved);
+                if (!parsed?.isGuest) {
+                  localStorage.removeItem('refuji_active_reservation');
+                  setActiveReservation(null);
+                }
+              }
             } catch (_) {}
           }
+        })
+        .catch(() => {});
+    } else if (!user && isAuthReady) {
+      try {
+        const saved = localStorage.getItem('refuji_active_reservation');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed?.isGuest && parsed?.orderCode && parsed?.guestPhone) {
+            lookupGuestOrder(parsed.orderCode, parsed.guestPhone)
+              .then((serverOrder) => {
+                const deadlineTime = serverOrder.payment_deadline
+                  ? new Date(serverOrder.payment_deadline).getTime()
+                  : 0;
+                if (serverOrder.order_status !== 'PENDING_PAYMENT' || deadlineTime <= Date.now()) {
+                  localStorage.removeItem('refuji_active_reservation');
+                  setActiveReservation(null);
+                  updateRecentGuestOrderStatus(serverOrder.order_code, serverOrder.order_status);
+                }
+              })
+              .catch(() => {});
+          } else if (!parsed?.isGuest) {
+            localStorage.removeItem('refuji_active_reservation');
+            setActiveReservation(null);
+          }
         }
-      })
-      .catch(() => {});
+      } catch (_) {}
+    }
 
     return () => {
       window.removeEventListener('refuji_reservation_updated', handleReservationUpdate);
     };
-  }, []);
+  }, [user, isAuthReady]);
 
-  // Quản lý giỏ hàng qua Custom Hook (đồng bộ trạng thái tài khoản & tự động xóa khi đăng xuất)
+  const allCatalogItems = React.useMemo<EquipmentItem[]>(
+    () => [...cameras, ...lenses, ...accessories],
+    [cameras, lenses, accessories]
+  );
+
+  // Quản lý giỏ hàng qua Custom Hook (2 tầng: vãng lai lưu localStorage, thành viên lưu DB & tự động gộp giỏ khi đăng nhập)
   const {
     cartItems,
     cartCount,
@@ -264,15 +336,19 @@ const MainApp: React.FC = () => {
     handleUpdateCartQuantity,
     handleRemoveFromCart,
     handleClearCart,
-  } = useCart((msg) => {
-    setSearchNotification(msg);
-    setTimeout(() => setSearchNotification(null), 3000);
-  }, user?.id);
+  } = useCart({
+    onNotification: (msg) => {
+      setSearchNotification(msg);
+    },
+    startDate: rentalDates.startDate,
+    endDate: rentalDates.endDate,
+    catalogItems: allCatalogItems,
+  });
 
-  // 4 dòng máy ảnh Hot nhất theo yêu cầu: FUJIFILM X100VI, X-T50, X-T5, X-S20
+  // 4 dòng máy ảnh Hot nhất sắp xếp theo thứ tự Series: X100 -> X-S -> X-T
   const featuredHotCameras = React.useMemo(() => {
     if (!cameras.length) return [];
-    const targetKeys = ['X100VI', 'X-T50', 'X-T5', 'X-S20'];
+    const targetKeys = ['X100VI', 'X-S20', 'X-T5', 'X-T50'];
     const result: CameraModel[] = [];
 
     for (const key of targetKeys) {
@@ -307,20 +383,27 @@ const MainApp: React.FC = () => {
   // Trạng thái mở popup toàn bộ máy & phụ kiện kèm chế độ tìm kiếm thay thế thanh navbar
   const [isAllEquipmentModalOpen, setIsAllEquipmentModalOpen] = useState(getInitialModalState);
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(getInitialCalendarModalState);
-  const [rentalDates, setRentalDates] = useState(getInitialDates);
-  const [filterParams, setFilterParams] = useState(() => {
+  const [filterParams, setFilterParams] = useState<{
+    category: string;
+    mount: string;
+    series: string;
+    dates: string;
+    priceRange?: string;
+  }>(() => {
     const init = getInitialDates();
     return {
       category: 'Tất cả thiết bị',
-      mount: 'Hệ ngàm X (APS-C)',
+      mount: 'Tất cả hệ ngàm',
       series: 'Tất cả dòng máy',
       dates: init.datesText,
+      priceRange: 'Tất cả mức giá',
     };
   });
 
   const isManualScrolling = useRef(false);
   const scrollTimeout = useRef<number | null>(null);
   const initialRestored = useRef(false);
+  const isDashboardRouteRef = useRef<boolean>(isDashboardLocation());
 
   const scrollToTargetSection = (targetId: string, smooth = true) => {
     if (targetId === 'hero') {
@@ -364,12 +447,23 @@ const MainApp: React.FC = () => {
     });
   };
 
-  // Quản lý mở/đóng modal Hồ sơ / Hạng thành viên (AccountModal)
-  const openAccountModal = () => {
+  // Quản lý mở/đóng modal Hồ sơ / Hạng thành viên (AccountModal) theo tab chỉ định
+  const openAccountModal = useCallback((tab: 'tiers' | 'orders' | 'profile' = 'tiers') => {
+    setAccountInitialTab(tab);
     setIsAccountModalOpen(true);
     sessionStorage.setItem('refuji_account_modal_open', 'true');
+    sessionStorage.setItem('refuji_account_active_tab', tab);
     window.history.replaceState(null, '', '#account');
-  };
+  }, []);
+
+  // Tính năng: Mở tra cứu đơn thống nhất (thành viên -> Dashboard tab Đơn thuê; khách -> Popup Tài khoản tab Tra cứu)
+  const openOrderLookup = useCallback(() => {
+    if (user) {
+      openAccountModal('orders');
+    } else {
+      openAuthModal('guest-lookup');
+    }
+  }, [user, openAccountModal, openAuthModal]);
 
   const closeAccountModal = () => {
     setIsAccountModalOpen(false);
@@ -452,9 +546,31 @@ const MainApp: React.FC = () => {
     }
   }, []);
 
+  // Mở/đóng Phân hệ Quản trị Studio độc lập (#dashboard / /dashboard)
+  const openDashboard = useCallback(() => {
+    isDashboardRouteRef.current = true;
+    setIsDashboardRoute(true);
+    if (window.location.hash !== '#dashboard') {
+      window.history.pushState(null, '', '#dashboard');
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
+  const closeDashboard = useCallback(() => {
+    isDashboardRouteRef.current = false;
+    setIsDashboardRoute(false);
+    const returnSec = sessionStorage.getItem('refuji_active_section') || 'hero';
+    const targetUrl = returnSec === 'hero' ? '/' : `/#${returnSec}`;
+    window.history.replaceState(null, '', targetUrl);
+    loadCatalog();
+    requestAnimationFrame(() => {
+      scrollToTargetSection(returnSec, false);
+    });
+  }, [loadCatalog]);
+
   // Khôi phục vị trí trang sau khi danh mục thiết bị đã load xong từ MySQL API
   useEffect(() => {
-    if (initialRestored.current || isLoadingCatalog) return;
+    if (isDashboardRoute || initialRestored.current || isLoadingCatalog) return;
 
     const initialSec = getInitialSection();
     if (initialSec && initialSec !== 'hero') {
@@ -474,15 +590,24 @@ const MainApp: React.FC = () => {
         initialRestored.current = true;
       }
     }
-  }, [isLoadingCatalog]);
+  }, [isDashboardRoute, isLoadingCatalog]);
 
-  // Hỗ trợ nút Back / Forward trên trình duyệt
+  // Hỗ trợ nút Back / Forward và chuyển route #dashboard trên trình duyệt
   useEffect(() => {
     const handlePopState = () => {
+      if (isDashboardLocation()) {
+        isDashboardRouteRef.current = true;
+        setIsDashboardRoute(true);
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        return;
+      }
+      isDashboardRouteRef.current = false;
+      setIsDashboardRoute(false);
+
       const hash = window.location.hash.replace('#', '');
       if (hash === 'thiet-bi' || hash === 'all-equipment') {
         setIsAllEquipmentModalOpen(true);
-      } else if (hash === 'account' || hash === 'dashboard' || hash === 'ho-so') {
+      } else if (hash === 'account' || hash === 'ho-so') {
         setIsAccountModalOpen(true);
       } else if (hash === 'cart' || hash === 'gio-hang') {
         setIsCartModalOpen(true);
@@ -515,14 +640,18 @@ const MainApp: React.FC = () => {
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, [cameras, lenses, accessories]);
 
   // Scroll Trigger theo dõi vị trí cuộn và cập nhật active section trên thanh navbar
   useEffect(() => {
     const handleScroll = () => {
+      if (isDashboardRoute || isDashboardRouteRef.current || isDashboardLocation()) return;
       const scrollY = window.scrollY;
-      setIsScrolled(scrollY > 40);
       sessionStorage.setItem('refuji_scroll_y', scrollY.toString());
 
       if (isManualScrolling.current) return;
@@ -572,7 +701,93 @@ const MainApp: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isAllEquipmentModalOpen, isAccountModalOpen, isCartModalOpen, isCalendarModalOpen, selectedItem]);
+  }, [isDashboardRoute, isAllEquipmentModalOpen, isAccountModalOpen, isCartModalOpen, isCalendarModalOpen, selectedItem]);
+
+  // Tính năng: Hủy giữ chỗ 15p đang chờ (hỗ trợ cả Thành viên qua /cancel và Khách vãng lai qua /guest-cancel)
+  const handleCancelActiveReservation = useCallback(async () => {
+    if (!activeReservation) return;
+    try {
+      if (activeReservation.isGuest && activeReservation.guestPhone) {
+        await cancelGuestOrder(activeReservation.orderCode, activeReservation.guestPhone);
+        updateRecentGuestOrderStatus(activeReservation.orderCode, 'CANCELLED');
+      } else {
+        await cancelMyOrder(activeReservation.orderCode);
+      }
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      const alreadyFinalized =
+        msg.includes('đã được hủy') || msg.includes('Không tìm thấy') || msg.includes('hết hạn');
+      if (!alreadyFinalized) {
+        if (setToast) {
+          setToast({
+            id: Date.now().toString(),
+            message: msg || 'Không thể hủy giữ chỗ đơn hàng. Vui lòng thử lại.',
+            type: 'error',
+          });
+        }
+        throw err;
+      }
+    }
+
+    setActiveReservation(null);
+    setIsReservationModalOpen(false);
+    try {
+      localStorage.removeItem('refuji_active_reservation');
+      window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+    } catch (_) {}
+    window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+    setSearchNotification(`Đã hủy giữ chỗ đơn #${activeReservation.orderCode} và trả máy về kho`);
+  }, [activeReservation, setToast]);
+
+  // Tính năng: Lắng nghe sự kiện thanh toán tiếp từ tab Tra cứu đơn (AuthModal / Dashboard AccountModal)
+  useEffect(() => {
+    const handleResumeGuestPayment = (evt: Event) => {
+      const customEvt = evt as CustomEvent<GuestLookupOrderResponse>;
+      const order = customEvt.detail;
+      if (!order) return;
+      let itemsDetail: any[] = [];
+      try {
+        itemsDetail = order.items_detail ? JSON.parse(order.items_detail) : [];
+      } catch (_) {}
+      const deadlineMs = order.payment_deadline
+        ? new Date(order.payment_deadline).getTime()
+        : Date.now() + 15 * 60 * 1000;
+      const days = Math.max(
+        1,
+        Math.round(
+          (new Date(order.expected_return_date).getTime() - new Date(order.start_date).getTime()) /
+            86400000
+        )
+      );
+      const resData: ActiveReservation = {
+        orderCode: order.order_code,
+        modelName: order.model_name || 'Thiết bị Fujifilm',
+        items: itemsDetail,
+        assignedSerials: order.assigned_serials
+          ? order.assigned_serials.split(',').map((s) => s.trim()).filter(Boolean)
+          : [],
+        startDate: order.start_date,
+        expectedReturnDate: order.expected_return_date,
+        days,
+        totalRent: Number(order.total_rent || 0),
+        depositAmount: Number(order.deposit_amount || 0),
+        totalDue: Number(order.total_rent || 0) + Number(order.deposit_amount || 0),
+        createdAt: new Date(order.created_at || Date.now()).getTime(),
+        paymentDeadline: order.payment_deadline || new Date(deadlineMs).toISOString(),
+        expiresAt: deadlineMs,
+        isGuest: true,
+        guestPhone: order.guest_phone,
+      };
+      setActiveReservation(resData);
+      try {
+        localStorage.setItem('refuji_active_reservation', JSON.stringify(resData));
+        window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: resData }));
+      } catch (_) {}
+      setIsReservationModalOpen(true);
+    };
+    window.addEventListener('refuji_resume_guest_payment', handleResumeGuestPayment);
+    return () => window.removeEventListener('refuji_resume_guest_payment', handleResumeGuestPayment);
+  }, []);
 
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
@@ -597,15 +812,18 @@ const MainApp: React.FC = () => {
     }, 850);
   };
 
-  const handleSearch = (params: { category: string; mount: string; series: string; dates: string }) => {
-    // Không hiện toast nếu chỉ đang lướt xem danh mục
-    if (params.series !== 'Tất cả dòng máy' || params.mount !== 'Hệ ngàm X (APS-C)') {
-      setSearchNotification(
-        `Đã lọc: ${params.mount} • ${params.series}`
-      );
-      setTimeout(() => setSearchNotification(null), 3000);
+  // Tính năng: Thông báo bộ lọc hiện hành (bao gồm bộ lọc mức giá mới)
+  const handleSearch = (params: { category: string; mount: string; series: string; dates: string; priceRange?: string }) => {
+    const hasPriceFilter = Boolean(params.priceRange && params.priceRange !== 'Tất cả mức giá');
+    if (params.series !== 'Tất cả dòng máy' || params.mount !== 'Tất cả hệ ngàm' || hasPriceFilter) {
+      const parts = [params.mount, params.series, ...(hasPriceFilter ? [params.priceRange!] : [])];
+      setSearchNotification(`Đã lọc: ${parts.join(' • ')}`);
     }
   };
+
+  if (isDashboardRoute) {
+    return <DashboardPage onExitToStorefront={closeDashboard} />;
+  }
 
   return (
     <div className="relative min-h-screen bg-white text-[#14171f] overflow-x-hidden selection:bg-[#14171f]/10">
@@ -616,9 +834,10 @@ const MainApp: React.FC = () => {
         - Khi mở Xem Thêm Popup: Tự động chuyển thành Thanh Tìm Kiếm GlassSearchBar (Ảnh 3)
       */}
       <LiquidNavbar 
-        isVisible={isScrolled} 
         activeSection={activeSection}
-        onOpenAuth={openAccountModal}
+        onOpenAuth={() => openAccountModal('tiers')}
+        onOpenOrdersTab={() => openAccountModal('orders')}
+        onOpenDashboard={openDashboard}
         onOpenCart={openCartModal}
         cartCount={cartCount}
         onNavigate={handleScrollTo}
@@ -635,7 +854,7 @@ const MainApp: React.FC = () => {
         hasActiveReservation={!!activeReservation}
       />
 
-      {/* Search Feedback Toast with Rytox Spring Physics */}
+      {/* Search Feedback Toast with Spring Physics */}
       <AnimatePresence>
         {searchNotification && (
           <motion.div 
@@ -643,10 +862,16 @@ const MainApp: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed bottom-20 md:bottom-6 right-6 z-[70] crystal-liquid-glass border border-[#14171f]/15 bg-white/95 px-5 py-3 rounded-2xl text-xs sm:text-sm text-[#14171f] shadow-[0_12px_36px_rgba(20,24,32,0.12)] flex items-center gap-2.5 font-medium"
+            className={`fixed ${
+              activeReservation && toast
+                ? 'bottom-52 md:bottom-36'
+                : activeReservation || toast
+                ? 'bottom-36 md:bottom-20'
+                : 'bottom-20 md:bottom-6'
+            } right-4 sm:right-6 z-[135] crystal-liquid-glass border border-[#14171f]/10 bg-white/95 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-[13px] text-[#14171f] shadow-[0_8px_30px_rgba(20,24,32,0.08)] flex items-center gap-2.5 font-medium w-fit max-w-[calc(100vw-2rem)] sm:max-w-[92vw] num`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#14171f]/80 radar-pulse-white" />
-            <span>{searchNotification}</span>
+            <span className="w-2 h-2 rounded-full shrink-0 bg-[#14171f]/80 radar-pulse-white" />
+            <span className="leading-snug sm:whitespace-nowrap truncate">{searchNotification}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -696,7 +921,11 @@ const MainApp: React.FC = () => {
 
         {/* 5. Chính sách cọc & Cam kết pháp lý */}
         <ScrollFadeSection>
-          <Footer isStandalonePage={true} />
+          <Footer
+            isStandalonePage={true}
+            onOpenOrderLookup={openOrderLookup}
+            onOpenDashboard={openDashboard}
+          />
         </ScrollFadeSection>
       </main>
 
@@ -737,7 +966,7 @@ const MainApp: React.FC = () => {
             onClose={closeCalendarModal}
             initialStartDate={rentalDates.startDate}
             initialEndDate={rentalDates.endDate}
-            onApplyDates={(rangeText, totalDays, startStr, endStr) => {
+            onApplyDates={(rangeText, _totalDays, startStr, endStr) => {
               const newParams = { ...filterParams, dates: rangeText };
               setFilterParams(newParams);
               if (startStr && endStr) {
@@ -760,13 +989,11 @@ const MainApp: React.FC = () => {
             item={selectedItem} 
             onClose={handleCloseItemModal} 
             membershipTier={effectiveTier}
-            allLenses={lenses}
-            allAccessories={accessories}
             onAddToCart={handleAddToCart}
-            onOpenCart={openCartModal}
             initialStartDate={rentalDates.startDate}
             initialEndDate={rentalDates.endDate}
             onOpenCalendar={openCalendarModal}
+            onOpenGuestLookup={openOrderLookup}
           />
         )}
       </AnimatePresence>
@@ -786,12 +1013,9 @@ const MainApp: React.FC = () => {
             startDate={rentalDates.startDate}
             expectedReturnDate={rentalDates.endDate}
             membershipTier={effectiveTier}
-            allLenses={lenses}
-            allAccessories={accessories}
-            onAddToCart={handleAddToCart}
+            onOpenGuestLookup={openOrderLookup}
             onCheckoutSuccess={() => {
               setSearchNotification('Đã xác nhận giữ chỗ giỏ hàng 15 phút thành công!');
-              setTimeout(() => setSearchNotification(null), 4000);
             }}
           />
         )}
@@ -804,19 +1028,19 @@ const MainApp: React.FC = () => {
             isOpen={isAccountModalOpen}
             onClose={closeAccountModal}
             currentTier={effectiveTier}
+            initialTab={accountInitialTab}
             onChangeTier={(tier) => {
               setMembershipTier(tier);
               setSearchNotification(`Đã cập nhật tài khoản: ${tier === 'PLATINUM' ? 'Bạch Kim (-15% cọc)' : tier === 'GOLD' ? 'Hạng Vàng (-10% cọc)' : tier === 'SILVER' ? 'Hạng Bạc (-5% cọc)' : 'Hạng Đồng'}`);
-              setTimeout(() => setSearchNotification(null), 4000);
             }}
           />
         )}
       </AnimatePresence>
 
-      {/* REFUJI AUTHENTICATION MODAL POPUP (Login ⇋ Register ⇋ Forgot Password) */}
+      {/* REFUJI AUTHENTICATION & ORDER LOOKUP MODAL POPUP (Đăng nhập ⇋ Tạo tài khoản ⇋ Tra cứu đơn) */}
       <AuthModal />
 
-      {/* Auth Success/Notification Toast */}
+      {/* Tính năng: Thanh Toast bo tròn 1 dòng giống thanh Home NavigationBar & tự động ẩn sau đúng 5 giây */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -832,15 +1056,15 @@ const MainApp: React.FC = () => {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             className={`fixed ${
-              activeReservation ? 'bottom-36 md:bottom-32' : 'bottom-20 md:bottom-6'
-            } right-6 z-[140] crystal-liquid-glass border border-[#14171f]/15 bg-white/95 px-5 py-3.5 rounded-2xl text-xs sm:text-sm text-[#14171f] shadow-[0_16px_40px_rgba(20,24,32,0.16)] flex items-center gap-3 font-medium max-w-md ${
+              activeReservation ? 'bottom-36 md:bottom-20' : 'bottom-20 md:bottom-6'
+            } right-4 sm:right-6 z-[140] crystal-liquid-glass border border-[#14171f]/10 bg-white/95 px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-[13px] text-[#14171f] shadow-[0_8px_30px_rgba(20,24,32,0.08)] flex items-center gap-2.5 font-medium w-fit max-w-[calc(100vw-2rem)] sm:max-w-[92vw] num ${
               activeReservation && (toast.message.includes('giữ chỗ') || toast.message.includes('Serial'))
-                ? 'cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-50/50'
+                ? 'cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-50/50'
                 : ''
             }`}
           >
             <span
-              className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+              className={`w-2 h-2 rounded-full shrink-0 ${
                 toast.type === 'error'
                   ? 'bg-rose-500'
                   : toast.type === 'info'
@@ -848,9 +1072,9 @@ const MainApp: React.FC = () => {
                   : 'bg-emerald-500'
               } radar-pulse-white`}
             />
-            <span className="leading-relaxed flex-1">{toast.message}</span>
+            <span className="leading-snug sm:whitespace-nowrap truncate">{toast.message}</span>
             {activeReservation && (toast.message.includes('giữ chỗ') || toast.message.includes('Serial')) && (
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full underline shrink-0">
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0">
                 Mở xem
               </span>
             )}
@@ -863,15 +1087,7 @@ const MainApp: React.FC = () => {
         <ReservationFloatingWidget
           reservation={activeReservation}
           onOpenModal={() => setIsReservationModalOpen(true)}
-          onCancelHold={() => {
-            setActiveReservation(null);
-            try {
-              localStorage.removeItem('refuji_active_reservation');
-              window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
-            } catch (_) {}
-            setSearchNotification('Đã hủy giữ chỗ thiết bị');
-            setTimeout(() => setSearchNotification(null), 3000);
-          }}
+          onCancelHold={handleCancelActiveReservation}
         />
       )}
 
@@ -891,6 +1107,9 @@ const MainApp: React.FC = () => {
           assignedSerials={activeReservation.assignedSerials}
           itemsDetail={activeReservation.items as any}
           initialTimeLeft={Math.max(0, Math.floor((activeReservation.expiresAt - Date.now()) / 1000))}
+          isGuest={activeReservation.isGuest}
+          guestPhone={activeReservation.guestPhone}
+          onCancelHold={handleCancelActiveReservation}
           onPaymentSuccess={() => {
             setActiveReservation(null);
             try {
@@ -898,8 +1117,7 @@ const MainApp: React.FC = () => {
               window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
             } catch (_) {}
             setIsReservationModalOpen(false);
-            setSearchNotification(`Thanh toán thành công đơn hàng #${activeReservation.orderCode}!`);
-            setTimeout(() => setSearchNotification(null), 4000);
+            setSearchNotification(`Đã cập nhật thanh toán cho đơn #${activeReservation.orderCode}!`);
           }}
         />
       )}

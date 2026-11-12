@@ -104,13 +104,13 @@ export const RegisterPage: React.FC = () => {
         />
 
         {/* Mandatory Privacy Consent Checkbox (Law on Protection of Personal Data 2025) */}
-        <div className="p-3 rounded-xl bg-white/5 border border-white/10 mt-1">
+        <div className="p-4 rounded-3xl bg-white/5 border border-white/10 mt-1">
           <label className="flex items-start gap-2.5 cursor-pointer text-xs text-zinc-300">
             <input
               type="checkbox"
               checked={privacyConsent}
               onChange={(e) => setPrivacyConsent(e.target.checked)}
-              className="mt-0.5 rounded border-white/30 text-emerald-500 focus:ring-emerald-500 h-4 w-4 bg-zinc-900"
+              className="mt-0.5 rounded-md border-white/30 text-emerald-500 focus:ring-emerald-500 h-4 w-4 bg-zinc-900"
               required
             />
             <span className="leading-relaxed">

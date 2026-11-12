@@ -34,7 +34,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
       id="hero"
       className="relative w-full h-screen min-h-[720px] flex flex-col justify-between items-center text-center px-6 overflow-hidden select-none"
     >
-      {/* Background with clean mist forest & bamboo charcoal gradient & Rytox Ken Burns Motion */}
+      {/* Background with clean mist forest & bamboo charcoal gradient & Ken Burns Motion */}
       <motion.div 
         className="absolute inset-0 bg-cover bg-top bg-no-repeat z-0 hero-ken-burns"
         style={{ 
@@ -49,7 +49,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
       {/* Top spacing - 100vh Ultra Minimalist, Absolutely NO navbar at top */}
       <div className="h-20 w-full relative z-10" />
 
-      {/* Exact Typography from Figma with Grand Editorial Scale & Scroll Fade & Smooth Rytox Entrance */}
+      {/* Typography with Grand Editorial Scale & Scroll Fade & Smooth Entrance */}
       <motion.div 
         initial={{ opacity: 0, y: 35, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}

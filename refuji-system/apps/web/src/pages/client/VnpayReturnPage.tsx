@@ -21,10 +21,10 @@ export const VnpayReturnPage: React.FC = () => {
               Giao dịch cọc giữ máy của bạn đã được ghi nhận an toàn qua cổng VNPAY. Showroom đã tiến hành chuẩn bị thiết bị.
             </p>
 
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-xs text-left flex flex-col gap-2 mb-8">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 text-xs text-left flex flex-col gap-2 mb-8">
               <div className="flex justify-between">
                 <span className="text-zinc-400">Mã đơn đặt thuê:</span>
-                <span className="font-mono font-bold text-white">{orderCode}</span>
+                <span className="font-sans tracking-wide font-bold text-white num">{orderCode}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Số tiền thanh toán:</span>

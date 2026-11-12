@@ -1,4 +1,9 @@
-import { CameraModel, LensModel, AccessoryModel } from '../types';
+import { CameraModel, LensModel, AccessoryModel, EquipmentItem } from '../types';
+import {
+  CAMERA_SERIES_META,
+  compareCamerasBySeries,
+  detectCameraSeries,
+} from '../utils/cameraSeries';
 
 export interface RawProductItem {
   id: number;
@@ -36,15 +41,11 @@ export interface CatalogData {
   accessories: AccessoryModel[];
 }
 
-function getSeriesFromName(name: string): 'X100' | 'X-T' | 'X-H' | 'GFX' {
-  if (name.includes('X100') || name.includes('X half')) return 'X100';
-  if (name.includes('X-H')) return 'X-H';
-  if (name.includes('GFX')) return 'GFX';
-  return 'X-T';
-}
-
+// Tính năng: Nhận diện series máy ảnh chuẩn theo thứ tự 1. X100 -> 2. X-S -> 3. X-T -> 4. X-M -> 5. X-E -> 6. X-Pro -> 7. GFX
 function getHighlightBadge(name: string, category: string, index: number): string | undefined {
-  if (name.includes('X-T5 Body Silver') || name.includes('X-T5')) return 'Được thuê nhiều nhất';
+  if (name.includes('X-T5 Body Silver') || (name.includes('X-T5') && !name.includes('X-T50'))) {
+    return 'Được thuê nhiều nhất';
+  }
   if (name.includes('X100VI')) return 'Xu hướng 2026';
   if (name.includes('X-H2S')) return 'Tốc độ cao 40fps';
   if (name.includes('56mm')) return 'Vua chân dung';
@@ -62,6 +63,9 @@ function transformRawModelToCamera(raw: RawProductModel, index: number): CameraM
   const availableCount = raw.items && raw.items.length > 0 ? availableItems.length : 0;
   const status = availableCount > 1 ? 'AVAILABLE' : availableCount === 1 ? 'LOW_STOCK' : 'BOOKED';
 
+  const detectedSeries = detectCameraSeries(raw.model_name);
+  const seriesMeta = CAMERA_SERIES_META.find((m) => m.series === detectedSeries);
+
   const specsList: string[] = [];
   if (specs.sensor) specsList.push(specs.sensor);
   if (specs.megapixels) specsList.push(`${specs.megapixels} MP`);
@@ -75,10 +79,10 @@ function transformRawModelToCamera(raw: RawProductModel, index: number): CameraM
     id: `fuji-cam-${raw.id ?? index + 1}`,
     name: raw.model_name,
     category: 'BODY',
-    series: getSeriesFromName(raw.model_name),
+    series: detectedSeries,
     brand: raw.brand || 'Fujifilm',
     mountType: raw.mount_type || 'X_MOUNT',
-    tagline: specs.tagline || (raw.model_name.includes('X100') ? 'Biểu tượng đường phố' : 'Nhiếp ảnh thuần khiết'),
+    tagline: specs.tagline || seriesMeta?.featureSummary || 'Nhiếp ảnh thuần khiết',
     sensor: specs.sensor || 'X-Trans CMOS 5 HR (APS-C)',
     resolution: specs.megapixels ? `${specs.megapixels} MP` : '40.2 MP',
     image: raw.image_url,
@@ -158,49 +162,39 @@ function transformRawModelToAccessory(raw: RawProductModel, index: number): Acce
   if (specs.capacity) specsList.push(`Dung lượng ${specs.capacity}`);
   if (specs.voltage) specsList.push(`Điện áp ${specs.voltage}`);
   if (specs.compatibility) specsList.push(`Tương thích: ${specs.compatibility}`);
-  if (specs.read_speed) specsList.push(`Đọc: ${specs.read_speed}`);
+  if (specs.read_speed) specsList.push(`Tốc độ: ${specs.read_speed}`);
 
-  // Thêm từ khóa tiếng Việt & tiếng Anh phong phú cho bộ lọc tìm kiếm
+  // Thêm từ khóa tìm kiếm tiếng Việt & tiếng Anh cho 6 nhóm phụ kiện chuẩn
   const lowerName = raw.model_name.toLowerCase();
-  if (lowerName.includes('battery') || lowerName.includes('np-')) {
-    specsList.push('Pin máy ảnh', 'Pin sạc Li-ion', 'Battery', 'pin');
+  const lowerType = String(specs.type || '').toLowerCase();
+  if (lowerType.includes('pin') || lowerName.includes('pin') || lowerName.includes('np-') || lowerName.includes('sạc') || lowerName.includes('bc-')) {
+    specsList.push('Pin & Sạc', 'Pin máy ảnh', 'Pin dự phòng', 'Bộ sạc đơn đôi', 'Battery', 'Charger', 'pin', 'sac');
   }
-  if (lowerName.includes('charger') || lowerName.includes('bc-')) {
-    specsList.push('Sạc pin', 'Bộ sạc đôi', 'Charger', 'sạc', 'sac');
+  if (lowerType.includes('thẻ') || lowerName.includes('thẻ nhớ') || lowerName.includes('sd ') || lowerName.includes('đầu đọc')) {
+    specsList.push('Thẻ nhớ SD', 'Đầu đọc thẻ nhớ', 'SD Card', 'Card Reader', 'the nho', 'sd', '32gb', '64gb', '128gb');
   }
-  if (lowerName.includes('flash') || lowerName.includes('ef-')) {
-    specsList.push('Đèn Flash', 'Flash', 'chớp');
+  if (lowerType.includes('flash') || lowerName.includes('flash') || lowerName.includes('godox') || lowerName.includes('tt350') || lowerName.includes('v350')) {
+    specsList.push('Đèn Flash', 'Flash rời Fujifilm', 'Godox', 'TTL', 'HSS', 'flash', 'den flash');
   }
-  if (lowerName.includes('grip') || lowerName.includes('vg-') || lowerName.includes('mhg') || lowerName.includes('tg-')) {
-    specsList.push('Báng cầm tay', 'Grip pin', 'Handgrip', 'grip');
+  if (lowerType.includes('tripod') || lowerName.includes('tripod') || lowerName.includes('chân máy')) {
+    specsList.push('Tripod', 'Chân máy mini', 'Tripod du lịch', 'Tripod chuyên nghiệp', 'chan may', 'tripod');
   }
-  if (lowerName.includes('case') || lowerName.includes('blc-') || lowerName.includes('lc-')) {
-    specsList.push('Bao da máy ảnh', 'Leather Case', 'bao da');
+  if (lowerType.includes('micro') || lowerName.includes('micro') || lowerName.includes('lark') || lowerName.includes('rode') || lowerName.includes('shotgun')) {
+    specsList.push('Microphone', 'Micro không dây', 'Micro shotgun', 'Thu âm', 'Hollyland', 'Rode', 'mic', 'micro');
   }
-  if (lowerName.includes('adapter') || lowerName.includes('mount')) {
-    specsList.push('Ngàm chuyển đổi', 'Mount Adapter', 'ngàm');
+  if (lowerType.includes('gimbal') || lowerName.includes('gimbal') || lowerName.includes('dji rs')) {
+    specsList.push('Gimbal', 'Chống rung 3 trục', 'DJI RS Series', 'Mirrorless', 'gimbal', 'chong rung');
   }
-  if (lowerName.includes('tube') || lowerName.includes('mcex')) {
-    specsList.push('Ống nối Macro', 'Macro Tube', 'mcex');
-  }
-  if (lowerName.includes('conversion') || lowerName.includes('tcl') || lowerName.includes('wcl')) {
-    specsList.push('Thấu kính chuyển đổi', 'Teleconverter', 'tcl', 'wcl');
-  }
-  if (lowerName.includes('hood') || lowerName.includes('lh-')) {
-    specsList.push('Loa che nắng', 'Lens Hood', 'hood');
-  }
-  if (lowerName.includes('cap') || lowerName.includes('flcp') || lowerName.includes('rlcp') || lowerName.includes('bcp')) {
-    specsList.push('Nắp đậy ống kính', 'Nắp thân máy', 'Cap', 'nắp');
-  }
-  if (lowerName.includes('filter') || lowerName.includes('prf-')) {
-    specsList.push('Kính lọc bảo vệ', 'Filter PRF', 'kính lọc', 'filter');
-  }
-  if (specsList.length === 0) specsList.push('Phụ kiện chính hãng Fujifilm');
+  if (specsList.length === 0) specsList.push('Phụ kiện Studio ReFuji');
 
   return {
     id: `fuji-acc-${raw.id ?? index + 1}`,
     name: raw.model_name,
     category: 'ACCESSORY',
+    subCategory: specs.type || 'Phụ kiện',
+    compatibility: specs.compatibility,
+    capacity: specs.capacity,
+    readSpeed: specs.read_speed,
     brand: raw.brand || 'Fujifilm',
     mountType: 'NONE',
     image: raw.image_url,
@@ -224,15 +218,26 @@ function transformRawModelToAccessory(raw: RawProductModel, index: number): Acce
   };
 }
 
-/**
- * Gọi API GET /api/models và phân loại theo 3 danh mục
- * Tự động chuyển đổi mượt mà sang local catalog nếu MySQL API chưa khởi động
- */
-export async function fetchCatalog(): Promise<CatalogData> {
+export function transformRawModelToEquipment(raw: RawProductModel, index = 0): EquipmentItem {
+  if (raw.category === 'BODY') {
+    return transformRawModelToCamera(raw, index);
+  }
+  if (raw.category === 'LENS') {
+    return transformRawModelToLens(raw, index);
+  }
+  return transformRawModelToAccessory(raw, index);
+}
+
+// Tính năng: Tải danh mục thiết bị từ API kèm bộ lọc khoảng ngày & truy vấn khả dụng từng mẫu máy
+export async function fetchCatalog(startDate?: string, endDate?: string): Promise<CatalogData> {
   let rawModels: RawProductModel[] = [];
 
   try {
-    const response = await fetch('/api/models');
+    const params = new URLSearchParams();
+    if (startDate) params.set('start_date', startDate);
+    if (endDate) params.set('end_date', endDate);
+    const qs = params.toString();
+    const response = await fetch(`/api/models${qs ? `?${qs}` : ''}`);
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data)) {
@@ -264,7 +269,7 @@ export async function fetchCatalog(): Promise<CatalogData> {
   const lenses: LensModel[] = [];
   const accessories: AccessoryModel[] = [];
 
-  rawModels.forEach((model, index) => {
+  rawModels.forEach((model) => {
     if (model.category === 'BODY') {
       cameras.push(transformRawModelToCamera(model, cameras.length));
     } else if (model.category === 'LENS') {
@@ -274,7 +279,41 @@ export async function fetchCatalog(): Promise<CatalogData> {
     }
   });
 
+  cameras.sort(compareCamerasBySeries);
+
   return { cameras, lenses, accessories };
+}
+
+export interface ModelAvailabilityResponse {
+  modelId: number;
+  modelName: string;
+  startDate: string;
+  endDate: string;
+  activePool: number;
+  bookedUnits: number;
+  availableCount: number;
+  availableSerials: string[];
+}
+
+// Tính năng: Kiểm tra số lượng máy trống theo ngày nhận - trả cho BookingModal
+export async function fetchModelAvailability(
+  modelId: string | number,
+  startDate: string,
+  endDate: string
+): Promise<ModelAvailabilityResponse | null> {
+  const str = String(modelId);
+  const match = str.match(/(\d+)$/);
+  const numericId = match ? parseInt(match[1], 10) : parseInt(str, 10);
+  if (isNaN(numericId)) return null;
+
+  try {
+    const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
+    const response = await fetch(`/api/models/${numericId}/availability?${params.toString()}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (_) {
+    return null;
+  }
 }
 
 /**

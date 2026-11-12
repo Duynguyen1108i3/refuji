@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UserNavButton } from './auth/UserNavButton';
 
 interface LiquidNavbarProps {
-  isVisible: boolean;
   activeSection: string;
   onOpenAuth?: () => void;
+  onOpenOrdersTab?: () => void;
+  onOpenDashboard?: () => void;
   onOpenCart: () => void;
   cartCount?: number;
   onNavigate: (sectionId: string) => void;
@@ -24,9 +25,10 @@ interface LiquidNavbarProps {
 }
 
 export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
-  isVisible,
   activeSection,
   onOpenAuth,
+  onOpenOrdersTab,
+  onOpenDashboard,
   onOpenCart,
   cartCount = 0,
   onNavigate,
@@ -53,15 +55,14 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
 
   return (
     <>
-      {/* 1. DESKTOP / TABLET HEADER (Cao 84px, chuẩn phong cách RytoxGroup & iOS/macOS) */}
+      {/* Chức năng: Dùng Grid đối xứng 1fr-auto-1fr căn giữa tuyệt đối thanh trang chủ & thanh dock mobile */}
       <header
-        className={`fixed inset-x-0 top-0 z-50 flex h-[84px] items-center justify-between px-6 sm:px-10 lg:px-14 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`fixed inset-x-0 top-0 z-50 flex justify-between md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] h-[84px] items-center gap-2 md:gap-3 lg:gap-4 px-4 sm:px-6 lg:px-10 xl:px-14 pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           showNavbar && !isPhotoViewOnly ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'
         }`}
       >
-        {/* Chỉ hiện thanh taskbar ở chính giữa, không có lớp nền trải dài từ Refuji tới tài khoản */}
-        {/* LOGO BÊN TRÁI: Độc lập, cỡ chữ lớn sang trọng */}
-        <div className="flex items-center z-10 pointer-events-auto">
+        {/* LOGO BÊN TRÁI */}
+        <div className="justify-self-start flex items-center z-10 shrink-0 pointer-events-auto">
           <button
             onClick={() => {
               if (isSearchMode && onCloseSearchMode) {
@@ -76,12 +77,9 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
         </div>
 
         {/* 
-          THANH TASKBAR Ở CHÍNH GIỮA: 
-          - Bình thường: NavigationScrubber (Thanh home ảnh 2)
-          - Khi mở toàn bộ thiết bị: Thay thế mượt mà bằng GlassSearchBar (Thanh ảnh 3)
-          - Sử dụng animation chuyển cảnh Apple iOS / macOS spring physics
+          THANH TASKBAR Ở CHÍNH GIỮA TUYỆT ĐỐI (Cân đối 2 track minmax(0,1fr) trái-phải)
         */}
-        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 z-20 items-center justify-center pointer-events-auto w-full max-w-4xl px-4">
+        <div className="hidden md:flex justify-self-center min-w-0 z-20 items-center justify-center pointer-events-auto">
           <AnimatePresence mode="wait">
             {!isSearchMode ? (
               <motion.div
@@ -95,7 +93,7 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
                   damping: 32,
                   mass: 0.8,
                 }}
-                className="flex items-center justify-center"
+                className="flex items-center justify-center max-w-full"
               >
                 <NavigationScrubber
                   activeId={activeSection}
@@ -116,7 +114,7 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
                   damping: 32,
                   mass: 0.8,
                 }}
-                className="w-full flex items-center justify-center"
+                className="w-[min(780px,calc(100vw-340px))] xl:w-[780px] flex items-center justify-center"
               >
                 <GlassSearchBar
                   variant="compact-header"
@@ -128,34 +126,36 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
                   initialCategory={searchFilterParams?.category}
                   initialMount={searchFilterParams?.mount}
                   initialSeries={searchFilterParams?.series}
+                  initialPriceRange={searchFilterParams?.priceRange}
                 />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* BÊN PHẢI: Nút Đóng (khi ở chế độ tìm kiếm), Nút Giỏ Hàng Thuê và Nút Tài Khoản */}
-        <div className="flex items-center gap-2 sm:gap-2.5 z-10 pointer-events-auto">
+        {/* Tính năng: Gỡ nút Tra cứu đơn rời khỏi navbar (chuyển vào Dashboard/Popup Tài khoản) để thanh điều hướng gọn cân đối */}
+        {/* BÊN PHẢI: Nút Đóng, Giỏ Hàng & Tài Khoản */}
+        <div className="justify-self-end flex items-center justify-end gap-2 shrink-0 z-10 pointer-events-auto">
           {isSearchMode && onCloseSearchMode && (
             <button
               onClick={onCloseSearchMode}
-              className="bg-white hover:bg-neutral-50 rytox-hover-lift h-11 px-5 rounded-full flex items-center gap-2 font-semibold text-xs sm:text-sm text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all"
+              className="bg-white hover:bg-neutral-50 refuji-hover-lift h-11 px-4 lg:px-5 rounded-full flex items-center gap-2 font-semibold text-xs sm:text-sm text-[#14171f] hover:text-[#0a0c10] whitespace-nowrap cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all"
             >
               <X size={15} />
               <span>Đóng</span>
             </button>
           )}
 
-          {/* Nút Giỏ hàng (chỉ giữ lại logo, bỏ văn bản theo yêu cầu) */}
+          {/* Nút Giỏ hàng */}
           <button
             onClick={onOpenCart}
-            className="bg-white hover:bg-neutral-50 rytox-hover-lift w-11 h-11 rounded-full flex items-center justify-center text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all relative group"
+            className="bg-white hover:bg-neutral-50 refuji-hover-lift w-11 h-11 shrink-0 rounded-full flex items-center justify-center text-[#14171f] hover:text-[#0a0c10] cursor-pointer shadow-[0_4px_16px_rgba(20,24,32,0.06)] border border-[#14171f]/10 hover:border-[#14171f]/25 active:scale-95 transition-all relative group"
             aria-label="Giỏ hàng"
             title="Giỏ hàng"
           >
             <ShoppingBag size={18} className="text-[#14171f] group-hover:scale-110 transition-transform" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#14171f] text-white text-[10px] font-mono min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-bold shadow-sm animate-in fade-in zoom-in duration-200">
+              <span className="absolute -top-1 -right-1 bg-[#14171f] text-white text-[10px] num min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-bold shadow-sm animate-in fade-in zoom-in duration-200">
                 {cartCount}
               </span>
             )}
@@ -165,7 +165,9 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
           {!isSearchMode && (
             <UserNavButton
               onOpenAccountModal={onOpenAuth}
+              onOpenOrdersTab={onOpenOrdersTab}
               onOpenReservationModal={onOpenReservation}
+              onOpenDashboard={onOpenDashboard}
               hasActiveReservation={hasActiveReservation}
             />
           )}
@@ -174,7 +176,7 @@ export const LiquidNavbar: React.FC<LiquidNavbarProps> = ({
 
       {/* 2. MOBILE BOTTOM FLOATING DOCK (Tự ẩn khi mở Popup Tìm kiếm Toàn Bộ hoặc Xem ảnh) */}
       <div
-        className={`md:hidden fixed bottom-5 inset-x-0 z-50 mx-auto w-[94%] max-w-[440px] transition-all duration-300 pointer-events-auto ${
+        className={`md:hidden fixed bottom-5 inset-x-0 z-50 mx-auto w-[94%] max-w-[440px] flex justify-center transition-all duration-300 pointer-events-auto ${
           showNavbar && !isSearchMode && !isPhotoViewOnly
             ? 'translate-y-0 opacity-100'
             : 'translate-y-24 opacity-0 pointer-events-none'

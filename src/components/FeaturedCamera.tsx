@@ -14,7 +14,8 @@ import {
   Pause 
 } from 'lucide-react';
 import { findRecommendedComboForCamera } from '../data/travelCombos';
-import { getCameraGallery, CameraGalleryImage } from '../data/cameraGalleries';
+import { getCameraGallery } from '../data/cameraGalleries';
+import { isSmallThumbnailImage } from '../utils/cn';
 
 interface FeaturedCameraProps {
   cameras: CameraModel[];
@@ -135,14 +136,6 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
   // Nút Chạy tiếp (tiếp tục cuộn tự động)
   const handleResumeSlide = () => {
     setIsPaused(false);
-  };
-
-  const handlePrevCamera = () => {
-    setCurrentIndex((prev) => (prev === 0 ? hotCameras.length - 1 : prev - 1));
-  };
-
-  const handleNextCamera = () => {
-    setCurrentIndex((prev) => (prev === hotCameras.length - 1 ? 0 : prev + 1));
   };
 
   if (!cameras || cameras.length === 0 || !activeCam) return null;
@@ -288,12 +281,12 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
           
           {/* Cột trái: Thân máy ảnh trên bục kính */}
           <div className="lg:col-span-5 flex flex-col items-center">
-            <div className="relative w-full max-w-[340px] sm:max-w-[380px]">
-              {/* Khung viền lệch 1px than tre */}
-              <div className="absolute -top-3.5 -left-3.5 w-full h-full border border-[#14171f]/20 pointer-events-none z-0 transition-transform duration-500 hover:translate-x-1 hover:translate-y-1 rounded-2xl" />
+            <div className="relative w-full max-w-[330px] sm:max-w-[360px]">
+              {/* Khung viền lệch 1px than tre — Chức năng: Đồng bộ khung show ảnh cỡ vuông & scale đều ảnh GFX */}
+              <div className="absolute -top-3.5 -left-3.5 w-full h-full border border-[#14171f]/20 pointer-events-none z-0 transition-transform duration-500 hover:translate-x-1 hover:translate-y-1 rounded-3xl" />
 
               {/* Bục chụp ảnh sản phẩm nền trắng tinh khôi */}
-              <div className="relative z-10 rounded-2xl overflow-hidden shadow-[0_16px_40px_rgba(20,24,32,0.1)] bg-white border border-[#14171f]/10 aspect-[4/3] flex items-center justify-center">
+              <div className="relative z-10 rounded-3xl overflow-hidden shadow-[0_16px_40px_rgba(20,24,32,0.1)] bg-white border border-[#14171f]/10 aspect-square flex items-center justify-center p-4">
                 <div className="absolute top-3 left-3 z-20 liquid-glass px-3 py-1.5 rounded-full text-[10px] font-semibold text-[#14171f] tracking-wide shadow-sm flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#14171f]/80 radar-pulse-white" />
                   <span>{activeCam.highlightBadge || 'Được thuê nhiều nhất'}</span>
@@ -306,7 +299,11 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                  className="max-h-full max-w-full object-contain p-4 product-stage-img hover:scale-105 transition-transform duration-500"
+                  className={`max-h-full max-w-full object-contain product-stage-img transition-transform duration-500 ${
+                    isSmallThumbnailImage(activeCam)
+                      ? 'scale-[1.48] hover:scale-[1.54]'
+                      : 'hover:scale-105'
+                  }`}
                 />
               </div>
 
@@ -323,7 +320,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                       <button
                         key={gImg.id}
                         onClick={() => handleSelectPhoto(gIdx)}
-                        className={`relative w-11 h-11 rounded-lg overflow-hidden border transition-all cursor-pointer flex-shrink-0 ${
+                        className={`relative w-11 h-11 rounded-2xl overflow-hidden border transition-all cursor-pointer flex-shrink-0 ${
                           isSelected 
                             ? 'border-[#14171f] ring-2 ring-[#14171f] scale-105 shadow-md' 
                             : 'border-transparent opacity-75 hover:opacity-100 hover:scale-102'
@@ -419,7 +416,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                 </p>
 
                 {/* Giá thuê & Tình trạng thiết bị */}
-                <div className="w-full bg-[#14171f]/[0.025] border-l-3 border-l-[#14171f] p-3.5 sm:p-4 rounded-r-xl mb-4 text-xs sm:text-sm text-[#383e4e]">
+                <div className="w-full bg-[#14171f]/[0.025] border border-[#14171f]/10 border-l-4 border-l-[#14171f] p-3.5 sm:p-4 rounded-2xl mb-4 text-xs sm:text-sm text-[#383e4e] num">
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-1.5">
                     <span><strong>Giá thuê:</strong> {activeCam.dailyRate.toLocaleString('vi-VN')}₫ / ngày</span>
                     <span className="text-[#14171f]/20">•</span>
@@ -437,7 +434,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
 
                 {/* Gợi ý combo lens du lịch đi kèm cho dòng máy này */}
                 {comboGuide.recommendedLensNames.length > 0 && (
-                  <div className="mb-5 p-3 rounded-xl bg-white border border-[#14171f]/10">
+                  <div className="mb-5 p-3.5 rounded-2xl bg-white border border-[#14171f]/10">
                     <div className="flex items-center gap-1.5 mb-1.5 text-xs font-semibold text-[#14171f]">
                       <Sparkles size={13} className="text-amber-600" />
                       <span>Combo Lens Du Lịch Khuyên Dùng Cho Dòng Máy Này:</span>
@@ -529,7 +526,7 @@ export const FeaturedCamera: React.FC<FeaturedCameraProps> = ({
                   <button
                     key={gImg.id}
                     onClick={() => handleSelectPhoto(gIdx)}
-                    className={`relative w-10 h-10 rounded-lg overflow-hidden transition-all cursor-pointer flex-shrink-0 shadow-md ${
+                    className={`relative w-10 h-10 rounded-2xl overflow-hidden transition-all cursor-pointer flex-shrink-0 shadow-md ${
                       isSelected 
                         ? 'border-2 border-white ring-2 ring-[#14171f] scale-105 shadow-lg' 
                         : 'border border-white/60 opacity-85 hover:opacity-100 hover:scale-105'

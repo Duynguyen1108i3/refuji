@@ -13,6 +13,7 @@ export interface NavigationScrubberProps {
   onChange: (id: string) => void;
   items: NavScrubberItem[];
   variant?: 'mobile-dock' | 'header' | 'compact';
+  layoutId?: string;
   className?: string;
 }
 
@@ -21,6 +22,7 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
   onChange,
   items,
   variant = 'header',
+  layoutId,
   className = '',
 }) => {
   const isMobileDock = variant === 'mobile-dock';
@@ -45,7 +47,7 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
     }
   }, [safeActiveIndex, isDragging]);
 
-  // Exact pointer scrubbing logic from RytoxGroup
+  // Pointer scrubbing logic for smooth tab indicator
   const handlePointerDown = (index: number, e: React.PointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return;
     const target = e.currentTarget;
@@ -130,48 +132,49 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
     ? hoveredIndex 
     : safeActiveIndex;
 
+  // Chức năng: Tối ưu padding & cỡ chữ từng breakpoint để thanh trang chủ nằm chính giữa cân đối không tràn
   return (
-    <nav
-      role="navigation"
-      aria-label="Navigation Scrubber"
-      onMouseLeave={() => setHoveredIndex(null)}
-      className={`relative isolate select-none touch-none transition-all flex items-center bg-white border border-[#14171f]/10 shadow-[0_8px_30px_rgba(20,24,32,0.06)] ${
-        isMobileDock
-          ? 'rounded-full p-2 gap-1.5'
-          : isCompact
-          ? 'rounded-full p-1 sm:p-1.5 gap-1 flex-nowrap overflow-x-auto scrollbar-none'
-          : 'rounded-full p-2 px-3 gap-2'
-      } ${className}`}
-    >
-      {items.map((item, idx) => {
-        const isActive = idx === displayIndex;
-        return (
-          <button
-            key={item.id}
-            ref={(el) => { buttonRefs.current[idx] = el; }}
-            onPointerDown={(e) => handlePointerDown(idx, e)}
-            onMouseEnter={() => setHoveredIndex(idx)}
-            onClick={() => {
-              onChange(item.id);
-            }}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            aria-label={item.label}
-            className={`relative z-10 flex items-center justify-center transition-all duration-200 cursor-pointer select-none active:scale-95 focus:outline-none ${
-              isMobileDock
-                ? 'flex-col gap-1 px-4 py-2 min-w-[62px] rounded-full'
-                : isCompact
-                ? 'flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-full whitespace-nowrap'
-                : 'px-6 sm:px-7 py-2.5 sm:py-3 text-sm font-semibold rounded-full whitespace-nowrap'
-            } ${
-              isActive ? 'text-[#14171f]' : 'text-[#5a6070] hover:text-[#14171f]'
-            }`}
-          >
+      <nav
+        role="navigation"
+        aria-label="Navigation Scrubber"
+        onMouseLeave={() => setHoveredIndex(null)}
+        className={`relative isolate select-none touch-none transition-all flex items-center max-w-full bg-white border border-[#14171f]/10 shadow-[0_8px_30px_rgba(20,24,32,0.06)] ${
+          isMobileDock
+            ? 'rounded-full p-2 gap-1.5'
+            : isCompact
+            ? 'rounded-full p-1 sm:p-1.5 gap-1 flex-nowrap overflow-x-auto scrollbar-none'
+            : 'rounded-full p-1.5 px-2 lg:px-2.5 gap-1 lg:gap-1.5 flex-nowrap overflow-x-auto scrollbar-none'
+        } ${className}`}
+      >
+        {items.map((item, idx) => {
+          const isActive = idx === displayIndex;
+          return (
+            <button
+              key={item.id}
+              ref={(el) => { buttonRefs.current[idx] = el; }}
+              onPointerDown={(e) => handlePointerDown(idx, e)}
+              onMouseEnter={() => setHoveredIndex(idx)}
+              onClick={() => {
+                onChange(item.id);
+              }}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={item.label}
+              className={`relative z-10 flex items-center justify-center transition-all duration-200 cursor-pointer select-none active:scale-95 focus:outline-none ${
+                isMobileDock
+                  ? 'flex-col gap-1 px-4 py-2 min-w-[62px] rounded-full'
+                  : isCompact
+                  ? 'flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold rounded-full whitespace-nowrap'
+                  : 'px-2.5 lg:px-3.5 xl:px-5 py-2 lg:py-2.5 font-semibold rounded-full whitespace-nowrap'
+              } ${
+                isActive ? 'text-[#14171f]' : 'text-[#5a6070] hover:text-[#14171f]'
+              }`}
+            >
             {/* Active Fluid Slider Lens (Framer Motion Spring Physics) */}
             {isActive && (
               <motion.div
-                layoutId={`active-nav-pill-${variant}`}
+                layoutId={layoutId || `active-nav-pill-${variant}`}
                 transition={{
                   type: 'spring',
                   stiffness: 450,
@@ -200,7 +203,7 @@ export const NavigationScrubber: React.FC<NavigationScrubberProps> = ({
                   ? 'text-[10px] font-medium leading-tight'
                   : isCompact
                   ? 'text-xs font-semibold'
-                  : 'text-sm font-semibold'
+                  : 'text-xs lg:text-[13px] xl:text-sm font-semibold'
               } ${isActive ? 'font-bold text-[#14171f]' : 'text-[#5a6070]'}`}
             >
               {isMobileDock && item.shortLabel ? item.shortLabel : item.label}

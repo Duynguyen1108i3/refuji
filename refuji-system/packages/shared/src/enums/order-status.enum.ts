@@ -1,4 +1,6 @@
+// Tính năng: Bổ sung trạng thái GUEST_INQUIRY cho yêu cầu đặt tại quầy của khách vãng lai (chưa khóa kho)
 export const OrderStatus = {
+  GUEST_INQUIRY: 'GUEST_INQUIRY',
   PENDING_PAYMENT: 'PENDING_PAYMENT',
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
@@ -12,6 +14,7 @@ export const OrderStatus = {
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, { label: string; color: string; bg: string }> = {
+  [OrderStatus.GUEST_INQUIRY]: { label: 'Khách vãng lai (Chờ gọi)', color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20' },
   [OrderStatus.PENDING_PAYMENT]: { label: 'Chờ thanh toán', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
   [OrderStatus.PENDING]: { label: 'Chờ duyệt', color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20' },
   [OrderStatus.CONFIRMED]: { label: 'Đã xác nhận', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },

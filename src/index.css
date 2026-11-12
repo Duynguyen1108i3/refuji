@@ -74,10 +74,11 @@
   --refuji-badge-platinum-text: #4f46e5;
   --refuji-badge-platinum-border: rgba(99, 102, 241, 0.3);
 
+  /* Chức năng: Token bo tròn đồng bộ & khôi phục font gốc Poppins / Plus Jakarta Sans */
   --refuji-radius-modal: 28px;
-  --refuji-radius-input: 16px;
+  --refuji-radius-input: 9999px;
   --refuji-radius-button: 9999px;
-  --refuji-radius-card: 20px;
+  --refuji-radius-card: 24px;
 }
 
 @layer base {
@@ -94,12 +95,21 @@
     font-family: 'Poppins', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 
+  h1, h2, h3, .font-serif {
+    text-wrap: balance;
+  }
+
   /* Ẩn hoàn toàn thanh cuộn trên toàn bộ trình duyệt (Chrome, Safari, Opera, Edge) */
   *::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
   }
+}
+
+.num {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "tnum", "lnum";
 }
 
 /* AUTHENTIC LIQUID GLASS SYSTEM - MÀU TRẮNG KHỚP HÌNH MÁY ẢNH & PHA NHẸ THAN TRE */
@@ -178,7 +188,7 @@ input.crystal-liquid-lens:focus {
   box-shadow: 0 12px 28px -4px rgba(20, 24, 32, 0.08);
 }
 
-/* AUTHENTIC RYTOXGROUP ANIMATION ENGINE */
+/* AUTHENTIC REFUJI LIQUID GLASS ANIMATION ENGINE */
 
 /* 1. Ambient Glass Drifts (Organic Morphed Background Lights) */
 @keyframes ambient-glass-drift-1 {
@@ -245,17 +255,17 @@ input.crystal-liquid-lens:focus {
   animation: radar-pulse-white 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* 5. Rytox Interactive Micro-Interactions */
-.rytox-hover-lift {
+/* 5. ReFuji Interactive Micro-Interactions */
+.refuji-hover-lift {
   transition: transform 0.25s var(--ios-spring), box-shadow 0.25s ease, border-color 0.25s ease !important;
 }
 
-.rytox-hover-lift:hover {
+.refuji-hover-lift:hover {
   transform: translateY(-3px) scale(1.015) !important;
   box-shadow: 0 12px 30px rgba(20, 24, 32, 0.08) !important;
 }
 
-.rytox-hover-lift:active {
+.refuji-hover-lift:active {
   transform: scale(0.97) !important;
 }
 
@@ -320,6 +330,46 @@ input.crystal-liquid-lens:focus {
   display: block;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+
+  .print-dossier-backdrop {
+    position: static !important;
+    inset: auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    display: block !important;
+  }
+
+  .print-dossier-frame {
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  .print-dossier-inner,
+  .print-dossier-scroll {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
 
 

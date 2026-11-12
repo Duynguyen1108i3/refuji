@@ -32,6 +32,32 @@ export const LoginPage: React.FC = () => {
       if (data.accessToken) {
         localStorage.setItem('refuji_token', data.accessToken);
         localStorage.setItem('refuji_auth_user', JSON.stringify(data.user));
+
+        // Gộp giỏ hàng khách vãng lai (nếu có) vào giỏ hàng DB của tài khoản khi đăng nhập
+        try {
+          const rawGuestCart = localStorage.getItem('refuji_guest_cart_items');
+          const guestItems = rawGuestCart ? JSON.parse(rawGuestCart) : [];
+          if (Array.isArray(guestItems) && guestItems.length > 0) {
+            const mergeRes = await fetch('/api/cart/merge', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${data.accessToken}`,
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                items: guestItems.map((ci: any) => ({
+                  modelId: ci.item?.id ?? ci.id,
+                  modelName: ci.item?.name,
+                  quantity: Math.max(1, Number(ci.quantity) || 1),
+                })),
+              }),
+            });
+            if (mergeRes.ok) {
+              localStorage.removeItem('refuji_guest_cart_items');
+            }
+          }
+        } catch (_) {}
       }
 
       window.location.href = data.user?.role === 'STAFF' || data.user?.role === 'ADMIN' ? '/staff/dashboard' : '/';
@@ -78,12 +104,19 @@ export const LoginPage: React.FC = () => {
           {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập ngay'}
         </Button>
 
+        {/* Tính năng: Lối tắt tra cứu đơn khách vãng lai (Mã đơn + SĐT) ngay trên màn hình đăng nhập */}
         <p className="text-xs text-center text-zinc-400 mt-4">
           Chưa có tài khoản?{' '}
           <a href="/register" className="text-emerald-400 hover:underline font-semibold">
             Đăng ký tài khoản mới
           </a>
         </p>
+
+        <div className="pt-3 border-t border-white/10 text-center">
+          <a href="/orders#guest-lookup" className="text-xs text-zinc-400 hover:text-emerald-400 transition-colors">
+            Đặt không cần tài khoản? <span className="underline">Tra cứu đơn bằng Mã đơn &amp; SĐT</span>
+          </a>
+        </div>
       </form>
     </AuthLayout>
   );

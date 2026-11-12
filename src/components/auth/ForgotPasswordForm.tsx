@@ -78,7 +78,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackTo
 
       {submitted ? (
         <div
-          className="p-5 rounded-2xl border space-y-3 text-center"
+          className="p-5 rounded-3xl border space-y-3 text-center"
           style={{
             backgroundColor: 'var(--refuji-input-bg)',
             borderColor: 'var(--refuji-modal-border-light)',
@@ -108,7 +108,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackTo
               type="button"
               disabled={resendCooldown > 0 || isSubmitting}
               onClick={handleSubmit}
-              className="w-full py-2.5 rounded-full border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 rounded-full border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed num"
               style={{
                 borderColor: 'var(--refuji-modal-border)',
                 color: 'var(--refuji-text-primary)',
@@ -138,7 +138,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackTo
               Địa chỉ Email đã đăng ký <span className="text-[var(--refuji-accent-rose)]">*</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
+              <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
                 <Mail size={16} />
               </span>
               <input
@@ -150,7 +150,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onBackTo
                   setEmail(e.target.value);
                   if (error) setError(null);
                 }}
-                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
+                className="w-full pl-11 pr-4 py-2.5 text-xs sm:text-sm rounded-full outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
                 style={{
                   backgroundColor: 'var(--refuji-input-bg)',
                   color: 'var(--refuji-text-primary)',

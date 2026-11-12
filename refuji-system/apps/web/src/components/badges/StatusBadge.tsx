@@ -66,6 +66,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   const getOrderIcon = () => {
     switch (orderKey) {
+      case OrderStatus.GUEST_INQUIRY:
+        return <Clock className="w-3.5 h-3.5 text-violet-400" aria-hidden="true" />;
       case OrderStatus.PENDING_PAYMENT:
         return <Clock className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />;
       case OrderStatus.PENDING:

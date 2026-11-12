@@ -16,7 +16,9 @@ enum UserRole {
   ADMIN
 }
 
+// Tính năng: Bổ sung trạng thái GUEST_INQUIRY trong vòng đời đơn thuê Prisma
 enum OrderStatus {
+  GUEST_INQUIRY
   PENDING_PAYMENT
   PENDING
   CONFIRMED
@@ -70,6 +72,7 @@ model User {
 
   kyc              UserKyc?
   membership       UserMembership?
+  cart_items       CartItem[]
   orders           RentalOrder[]
   payments         Payment[]
   audit_logs       AuditLog[]
@@ -144,6 +147,7 @@ model ProductModel {
   created_at                DateTime          @default(now())
 
   items                     ProductItem[]
+  cart_items                CartItem[]
   order_details             RentalOrderDetail[]
 
   @@map("product_models")
@@ -169,11 +173,18 @@ model ProductItem {
   @@map("product_items")
 }
 
-// 7. RentalOrders
+// 7. RentalOrders (Hỗ trợ cả Thành viên và Khách vãng lai với user_id nullable)
 model RentalOrder {
   id                      Int                 @id @default(autoincrement())
   order_code              String              @unique @db.VarChar(50)
-  user_id                 Int
+  user_id                 Int?
+  is_guest                Boolean             @default(false)
+  guest_name              String?             @db.VarChar(150)
+  guest_phone             String?             @db.VarChar(20)
+  guest_email             String?             @db.VarChar(191)
+  guest_note              String?             @db.Text
+  payment_method          String?             @db.VarChar(30)
+  privacy_consent_at      DateTime?
   status                  OrderStatus         @default(PENDING_PAYMENT)
   rental_start_date       DateTime
   rental_end_date         DateTime
@@ -184,12 +195,14 @@ model RentalOrder {
   created_at              DateTime            @default(now())
   updated_at              DateTime            @updatedAt
 
-  user                    User                @relation(fields: [user_id], references: [id])
+  user                    User?               @relation(fields: [user_id], references: [id])
   details                 RentalOrderDetail[]
   payments                Payment[]
   checkout_records        CheckoutRecord[]
   return_records          ReturnRecord[]
 
+  @@index([order_code, guest_phone])
+  @@index([status, rental_start_date, rental_end_date])
   @@map("rental_orders")
 }
 
@@ -297,4 +310,20 @@ model AuditLog {
   user       User?    @relation(fields: [user_id], references: [id])
 
   @@map("audit_logs")
+}
+
+// 14. CartItems (Giỏ hàng lưu trữ bền vững theo tài khoản thành viên)
+model CartItem {
+  id         Int          @id @default(autoincrement())
+  user_id    Int
+  model_id   Int
+  quantity   Int          @default(1)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+
+  user       User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  model      ProductModel @relation(fields: [model_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, model_id])
+  @@map("cart_items")
 }

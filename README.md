@@ -64,52 +64,59 @@ refuji/
 │   │   │   └── UserNavButton.tsx         # Nút tài khoản + thông báo đơn chờ thanh toán
 │   │   ├── AccountModal.tsx
 │   │   ├── AllEquipmentModal.tsx         # Toàn bộ thiết bị & trạng thái tồn kho thực tế
-│   │   ├── AvailabilityExplorer.tsx      # Bộ lọc & kiểm tra thiết bị khả dụng
-│   │   ├── BookingModal.tsx              # Đặt thuê, chọn ngày nhận/trả & thanh toán giữ chỗ
+│   │   ├── AvailabilityExplorer.tsx      # Bộ lọc ngày thuê, kiểm tra thiết bị khả dụng & nút Tra cứu đơn
+│   │   ├── BookingModal.tsx              # Đặt thuê nhanh 3 bước (hỗ trợ Thành viên & Vãng lai) + live availability
 │   │   ├── CalendarModal.tsx             # Bộ chọn ngày thuê động
-│   │   ├── CartModal.tsx                 # Giỏ hàng thuê nhiều món & thanh toán cọc
-│   │   ├── PaymentModal.tsx              # Cổng thanh toán VietQR / VNPAY / Tại quầy
+│   │   ├── CartModal.tsx                 # Giỏ hàng 3 bước, snapshot đơn & thanh toán cọc
+│   │   ├── PaymentModal.tsx              # Cổng thanh toán VietQR / VNPAY / Tại quầy & nút tự hủy giữ chỗ
 │   │   ├── ReservationFloatingWidget.tsx # Widget đếm ngược 15 phút "Đơn chờ thanh toán"
+│   │   ├── booking/                      # Thành phần đặt lịch nhanh Khách vãng lai 3 bước
+│   │   │   ├── GuestCustomerStep.tsx     # Bước 2: Nhập thông tin liên hệ (không OTP) hoặc Đăng nhập nhận ưu đãi
+│   │   │   └── GuestOrderLookupPanel.tsx # Tra cứu đơn vãng lai (Mã đơn + SĐT), thanh toán tiếp & tự hủy
 │   │   ├── Hero.tsx
-│   │   └── LiquidNavbar.tsx
+│   │   └── LiquidNavbar.tsx              # Thanh điều hướng + nút "Tra cứu đơn" cho Khách vãng lai
 │   ├── context/AuthContext.tsx           # Quản lý phiên đăng nhập, pending intent & toast
-│   ├── hooks/useCart.ts                  # Quản lý giỏ hàng có ràng buộc tồn kho & auto-clear khi logout
-│   ├── schemas/auth.schema.ts            # Schema Zod kiểm tra form Auth
+│   ├── hooks/useCart.ts                  # Quản lý giỏ hàng bền vững cho Guest, tự xóa khi Member logout
+│   ├── schemas/
+│   │   ├── auth.schema.ts                # Schema Zod kiểm tra form Auth
+│   │   └── guest.schema.ts               # Schema Zod v4 kiểm tra thông tin Khách vãng lai & Tra cứu đơn
 │   ├── services/
-│   │   ├── api.ts                        # Gọi /api/models & tính trạng thái AVAILABLE/LOW_STOCK/BOOKED
-│   │   └── authApi.ts                    # Gọi /api/auth/*, /api/orders & /api/orders/:orderCode/pay
+│   │   ├── api.ts                        # Gọi /api/models?start_date=&end_date= & /:id/availability
+│   │   └── authApi.ts                    # Gọi /api/auth/*, /api/orders/*, guest-lookup, guest-cancel & localStorage vãng lai
 │   ├── App.tsx
 │   └── main.tsx
 ├── public/
 │   ├── fujifilm-catalog.json             # Dữ liệu gốc 139 mẫu thiết bị & serial (được watch tự động)
 │   └── assets/                           # Logo, favicon, ảnh thiết bị Fujifilm
-├── docs/                                 # Đặc tả hệ thống SRS v1.0, v1.1 & mockups Figma
+├── docs/                                 # Đặc tả hệ thống SRS v1.0, v1.1 (đã cập nhật luồng Khách vãng lai) & mockups Figma
 ├── Bao_Cao_Tien_Do_ReFuji.docx           # Báo cáo tiến trình & lộ trình phát triển dự án
-├── package.json                          # Script `npm run dev` chạy song song API (:4000) + WEB (:5173)
+├── package.json                          # Script `npm run dev` (API+WEB) & `npm run dev:all` (API+WEB+POS)
 ├── vite.config.ts                        # Vite Port 5173 + Proxy `/api` sang `:4000` (bắt lỗi 503)
 ├── README.md
 │
 └── refuji-system/                        # Monorepo Backend API & Cổng Quản trị POS / Web
     ├── apps/
     │   ├── api/                          # [PORT 4000] Express REST API + SQLite
-    │   │   ├── data/refuji.sqlite        # Database SQLite tự tạo khi khởi chạy
+    │   │   ├── data/refuji.sqlite        # Database SQLite tự tạo khi khởi chạy (migration user_id NULL cho Guest)
     │   │   ├── prisma/                   # Prisma schema MySQL & script seed
     │   │   └── src/
     │   │       ├── modules/
-    │   │       │   ├── auth/auth.routes.ts     # /api/auth/*, /api/users, /api/users/me
-    │   │       │   ├── catalog/catalog.routes.ts # /api/models (lọc & khóa serial đang giữ chỗ)
-    │   │       │   └── orders/orders.routes.ts   # /api/orders (tạo đơn, gán serial, giữ chỗ 15p, pay)
-    │   │       ├── db.ts                 # Khởi tạo SQLite, seed & fs.watch đồng bộ fujifilm-catalog.json
-    │   │       └── index.ts              # Khởi động Express Server tại cổng 4000
+    │   │       │   ├── auth/auth.routes.ts     # /api/auth/* (Rate Limit login/register), /api/users, /api/users/me
+    │   │       │   ├── catalog/catalog.routes.ts # /api/models?start_date=&end_date= & /:id/availability
+    │   │       │   └── orders/
+    │   │       │       ├── availability.helper.ts # Thuật toán Date-Range Overlap, giải phóng hold 15p & tính giá server
+    │   │       │       └── orders.routes.ts       # Dual Member/Guest, guest-lookup, guest-cancel & /api/admin/orders POS
+    │   │       ├── db.ts                 # Khởi tạo SQLite, migration Guest & fs.watch đồng bộ fujifilm-catalog.json
+    │   │       └── index.ts              # Khởi động Express Server tại cổng 4000 (+ mount /api/admin/orders)
     │   └── web/                          # [PORT 5174] Cổng Quản trị POS Nhân viên & App Đa trang
     │       ├── src/
     │       │   ├── layouts/              # ClientLayout (Dark) & StaffPosLayout
-    │       │   ├── pages/admin-staff/    # Dashboard, Kho Serial, Duyệt đơn, Check-out/in, Khách hàng...
+    │       │   ├── pages/admin-staff/    # Dashboard, Kho Serial, Duyệt đơn (OrderApprovalPage POS), Check-out (KYC Alert)...
     │       │   ├── pages/auth/           # LoginPage, RegisterPage, ForgotPasswordPage
     │       │   ├── pages/client/         # Catalog, Checkout, Orders, Profile KYC, Membership...
     │       │   └── routes/AppRoutes.tsx  # Điều phối route `/` và `/staff/*`
     │       └── vite.config.ts            # Vite Port 5174 + Proxy `/api` sang `:4000`
-    └── packages/shared/                  # Types, Enums, Validators dùng chung
+    └── packages/shared/                  # Types, Enums (`GUEST_INQUIRY`), Validators dùng chung
 ```
 
 ---
@@ -136,14 +143,17 @@ cd refuji-system && npm install
 
 ---
 
-### 4.2. Cách 1 — Khởi chạy nhanh Website Khách hàng + Backend API (Khuyên dùng)
+### 4.2. Cách 1 — Khởi chạy nhanh Website Khách hàng + Backend API + Admin POS
 Tại thư mục gốc `refuji/`, chạy **1 lệnh duy nhất**:
 ```bash
+npm run dev:all              # Bật đồng thời cả 3 dịch vụ: API (:4000) + Web Client (:5173) + Admin POS (:5174)
+# hoặc nếu chỉ chạy Website Khách hàng + Backend API:
 npm run dev
 ```
-Lệnh này sử dụng `concurrently` để bật song song:
-- **Backend API Server**: `http://localhost:4000` (tự động chạy `npm run server`)
+Lệnh sử dụng `concurrently` để bật song song:
+- **Backend API Server**: `http://localhost:4000` (`npm run server`)
 - **Website Khách hàng**: `http://localhost:5173` (`vite`)
+- **Cổng Quản trị POS Nhân viên** *(khi dùng `dev:all`)*: `http://localhost:5174` (`cd refuji-system && npm run dev`)
 
 ---
 
@@ -227,7 +237,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 | Dịch vụ | Địa chỉ URL | Chức năng chính |
 |---|---|---|
-| **Website Khách hàng chính** | `http://localhost:5173/` | Giao diện Light mode *Liquid Glass*: duyệt 139 thiết bị, kiểm tra tồn kho, giỏ hàng, đặt giữ chỗ 15 phút (khóa Serial thật), thanh toán VietQR / VNPAY / tại quầy, widget đếm ngược đơn chờ thanh toán. |
+| **Website Khách hàng chính** | `http://localhost:5173/` | Giao diện Light mode *Liquid Glass*: duyệt thiết bị, lọc tồn kho theo khoảng ngày, giỏ hàng bền vững, **đặt thuê nhanh Khách vãng lai 3 bước (không cần OTP)**, thanh toán VietQR / VNPAY / Yêu cầu tại quầy, tra cứu đơn & tự hủy. |
 | **Cổng Quản trị POS & Web đa trang** | `http://localhost:5174/` | Giao diện Dark mode (`refuji-system/apps/web`): gồm các trang khách hàng đa route (`/catalog`, `/checkout`, `/orders`, `/profile`, `/login`, `/register`) và **phân hệ POS Nhân viên (`/staff/*`)**. |
 | **Backend REST API** | `http://localhost:4000/api` | API Express + SQLite (hỗ trợ cả `/api/*` và `/api/v1/*`). |
 | **API Health Check** | `http://localhost:4000/api/health` | Kiểm tra trạng thái Backend API. |
@@ -260,19 +270,24 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ## 6. CÁC PHÂN HỆ & TÍNH NĂNG CHÍNH
 
-1. **Giữ chỗ 15 phút & Gán Serial kho thực tế (`POST /api/orders`)**:
-   - Kiểm tra ngày thuê hợp lệ (không chọn ngày quá khứ, tối thiểu 1 ngày, tối đa 30 ngày).
-   - Tự động hủy các đơn `PENDING_PAYMENT` đã quá hạn 15 phút để trả máy về kho.
-   - Kiểm tra số lượng khả dụng thực tế và gán mã `assigned_serials` độc quyền cho từng đơn (cả đặt lẻ và đặt cả giỏ hàng), tránh đặt trùng lịch.
-2. **Thanh toán cọc & Theo dõi đơn chờ (`POST /api/orders/:orderCode/pay`)**:
-   - Hỗ trợ 3 hình thức trong `PaymentModal` / `BookingModal` / `CartModal`: **Chuyển khoản VietQR** (tạo QR kèm số tiền và nội dung `REFUJI <MÃ ĐƠN>`), **Cổng VNPAY Sandbox**, và **Thanh toán tại quầy**.
-   - Nếu đóng modal để thanh toán sau, widget nổi **`ReservationFloatingWidget`** ở góc dưới bên phải sẽ đếm ngược thời gian giữ chỗ 15 phút để mở lại thanh toán bất cứ lúc nào (hoặc mở lại từ tab *Đơn thuê* trong Hồ sơ tài khoản).
-3. **Ràng buộc tồn kho ở Frontend & Tự động đồng bộ Catalog JSON ↔ SQLite**:
-   - Khi thiết bị hết máy khả dụng, giao diện tự chuyển trạng thái *"Đã có khách giữ chỗ"*, ẩn/khóa nút đặt chỗ và chặn tăng số lượng giỏ hàng vượt quá số lượng kho.
-   - Backend chạy `fs.watch` theo dõi `public/fujifilm-catalog.json`: mọi chỉnh sửa về máy hoặc số lượng serial trong file JSON sẽ tự động cập nhật vào SQLite ngay lập tức.
-4. **Tài khoản, Định danh & Hạng thành viên**:
-   - Chiết khấu tiền cọc theo hạng: **Đồng** (`0%`), **Bạc** (`5%`), **Vàng** (`10%`), **Bạch Kim** (`15%`).
-   - Tự động xóa giỏ hàng khi đăng xuất, và ngăn modal đăng nhập bật lại khi reload nếu đã có phiên đăng nhập.
+1. **Đặt thuê nhanh Khách vãng lai 3 bước (không cần OTP SMS/Gmail)**:
+   - Khách vãng lai có thể duyệt thiết bị, lưu giỏ hàng qua reload (F5) và điền thông tin ở **Bước 2** (`GuestCustomerStep`: Họ tên, SĐT 10 số, Email, Ghi chú, Privacy Consent 2025) mà **không cần tạo tài khoản hay xác minh OTP** — hoặc bấm **"Đăng nhập thành viên"** để hưởng giảm cọc 5–15%.
+   - **2 chế độ xử lý rõ ràng:**
+     - **Thanh toán Online (VietQR / VNPAY):** Khóa Serial 15 phút (`PENDING_PAYMENT`), chống spam tối đa 2 giữ chỗ mỗi SĐT/IP, thanh toán xong tự động `CONFIRMED` (đóng đủ 100% cọc chuẩn, giảm `0%`, không tích lũy hạng).
+     - **Yêu cầu giữ tại quầy (`GUEST_INQUIRY`):** Không khóa Serial kho để tránh đầu cơ giữ chỗ ảo; chờ Admin/Staff duyệt trên POS (`CONFIRMED` mới gán Serial) hoặc khách tự chuyển sang trả Online nếu máy còn trống.
+   - *(Ghi chú mở rộng: Schema CSDL đã lưu sẵn `guest_phone` và `guest_email` để cắm thêm module gửi thông báo SMS/Email/OTP trong các giai đoạn phát triển tiếp theo).*
+2. **Kiểm tra khả dụng theo giao thoa khoảng ngày (`Date-Range Overlap`) & Gán Serial thực tế (`POST /api/orders`)**:
+   - Lọc tồn kho chính xác theo `[start_date, end_date]` qua `GET /api/models?start_date=&end_date=` và `GET /api/models/:id/availability`: cho phép đặt khác tuần trên cùng 1 máy nhưng chặn ngay `409 Conflict` nếu trùng lịch.
+   - Tự động loại bỏ `GUEST_INQUIRY` khỏi tập khóa kho và hủy các đơn `PENDING_PAYMENT` quá hạn 15 phút.
+3. **Tra cứu đơn công khai, Tự hủy giữ chỗ & Admin POS thực tế**:
+   - Nút **"Tra cứu đơn"** trên Navbar & AvailabilityExplorer mở `GuestOrderLookupModal`: yêu cầu khớp đồng thời **Mã đơn + SĐT** (`GET /api/orders/guest-lookup`), cho phép thanh toán tiếp đơn chờ 15p hoặc tự hủy (`POST /api/orders/:orderCode/guest-cancel`) để giải phóng Serial ngay.
+   - Cổng Admin POS (`:5174`) tại `/staff/approval` và `/staff/checkout-wizard` kết nối trực tiếp API thật `/api/admin/orders` *(đăng nhập bằng `fuji@refuji.vn`)*, hiển thị badge phân biệt Thành viên vs **Khách vãng lai** và **Banner cảnh báo kiểm tra KYC gắt hơn** khi bàn giao tại quầy.
+4. **Ràng buộc tồn kho ở Frontend & Tự động đồng bộ Catalog JSON ↔ SQLite**:
+   - Khi thiết bị hết máy khả dụng trong khoảng ngày đã chọn, giao diện tự chuyển trạng thái *"Đã có khách giữ chỗ"*, khóa nút đặt và chặn tăng số lượng giỏ hàng vượt tồn kho.
+   - Backend chạy `fs.watch` theo dõi `public/fujifilm-catalog.json` để đồng bộ trực tiếp vào SQLite.
+5. **Tài khoản, Định danh & Hạng thành viên**:
+   - Chiết khấu tiền cọc theo hạng: **Đồng** (`0%`), **Bạc** (`5%`), **Vàng** (`10%`), **Bạch Kim** (`15%`) — chỉ áp dụng cho Thành viên đăng nhập.
+   - Bảo mật endpoint `/api/orders/my-orders` (`401` nếu chưa xác thực) và tự động xóa giỏ hàng khi thành viên đăng xuất.
 
 ---
 

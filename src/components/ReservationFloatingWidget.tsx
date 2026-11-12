@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, ChevronDown, ArrowUpRight } from 'lucide-react';
+import { Clock, ChevronDown } from 'lucide-react';
 import { ActiveReservation } from '../types';
 
 interface ReservationFloatingWidgetProps {
@@ -49,7 +49,7 @@ export const ReservationFloatingWidget: React.FC<ReservationFloatingWidgetProps>
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.96 }}
           transition={{ type: 'spring', damping: 25, stiffness: 380 }}
-          className="bg-white hover:bg-neutral-50 rytox-hover-lift h-11 pl-2.5 pr-3.5 sm:pr-4 rounded-full flex items-center gap-2.5 font-medium text-xs sm:text-sm text-[#14171f] cursor-pointer shadow-[0_8px_30px_rgba(20,24,32,0.14)] border border-[#14171f]/12 hover:border-[#14171f]/30 transition-all group"
+          className="bg-white hover:bg-neutral-50 refuji-hover-lift h-11 pl-2.5 pr-3.5 sm:pr-4 rounded-full flex items-center gap-2.5 font-medium text-xs sm:text-sm text-[#14171f] cursor-pointer shadow-[0_8px_30px_rgba(20,24,32,0.14)] border border-[#14171f]/12 hover:border-[#14171f]/30 transition-all group"
           title="Bấm để xem lại đơn chờ thanh toán & giữ chỗ 15 phút"
           aria-label="Xem đơn chờ thanh toán"
         >
@@ -68,9 +68,9 @@ export const ReservationFloatingWidget: React.FC<ReservationFloatingWidgetProps>
             Đơn chờ thanh toán
           </span>
 
-          {/* Badge đếm ngược thời gian thực */}
+          {/* Badge đếm ngược thời gian thực — Chức năng: Đồng bộ font-sans num */}
           <span
-            className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+            className={`font-sans num text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
               isExpired
                 ? 'bg-rose-50 text-rose-700 border-rose-200'
                 : isUrgent

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -n \"API,WEB\" -c \"cyan,magenta\" \"npm run server\" \"vite\"",
+    "dev:all": "concurrently -n \"API,WEB,POS\" -c \"cyan,magenta,yellow\" \"npm run server\" \"vite\" \"cd refuji-system && npm run dev\"",
     "dev:frontend": "vite",
     "server": "cd refuji-system/apps/api && npx tsx watch src/index.ts",
     "build": "tsc && vite build",

@@ -23,7 +23,7 @@ export const CheckinSettlementPage: React.FC = () => {
         <p className="text-xs text-zinc-400 mb-8">Nghiệm thu tình trạng thiết bị, tính toán phí phát sinh và lập phiếu hoàn cọc</p>
 
         {isSettled ? (
-          <div className="liquid-glass rounded-2xl p-8 border border-emerald-500/30 text-center flex flex-col items-center gap-4">
+          <div className="liquid-glass rounded-3xl p-8 border border-emerald-500/30 text-center flex flex-col items-center gap-4">
             <CheckCircle2 className="w-12 h-12 text-emerald-400" />
             <h2 className="text-xl font-bold text-white">QUYẾT TOÁN THÀNH CÔNG</h2>
             <p className="text-sm text-zinc-300">
@@ -31,11 +31,11 @@ export const CheckinSettlementPage: React.FC = () => {
             </p>
             <Button variant="primary" size="md" onClick={() => window.print()}>
               <Printer className="w-4 h-4 mr-2" />
-              <span>In Phiếu quyết toán & Hoàn cọc</span>
+              <span>In Phiếu quyết toán &amp; Hoàn cọc</span>
             </Button>
           </div>
         ) : (
-          <div className="liquid-glass rounded-2xl p-6 border border-white/15 flex flex-col gap-6">
+          <div className="liquid-glass rounded-3xl p-6 border border-white/15 flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input label="Mã đơn hàng" value={orderCode} onChange={(e) => setOrderCode(e.target.value)} />
               <div>
@@ -45,7 +45,7 @@ export const CheckinSettlementPage: React.FC = () => {
                   min="0"
                   value={lateHours}
                   onChange={(e) => setLateHours(Number(e.target.value))}
-                  className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-white/15 text-sm text-white focus:outline-none num"
+                  className="w-full min-h-[44px] px-4 py-2.5 rounded-full bg-zinc-900 border border-white/15 text-sm text-white focus:outline-none num"
                 />
               </div>
             </div>
@@ -58,7 +58,7 @@ export const CheckinSettlementPage: React.FC = () => {
                     key={lvl}
                     type="button"
                     onClick={() => setDamageLevel(lvl as DamageLevel)}
-                    className={`p-3 rounded-xl border text-left text-xs transition-colors ${
+                    className={`p-3.5 rounded-3xl border text-left text-xs transition-colors ${
                       damageLevel === lvl
                         ? 'bg-emerald-500/20 border-emerald-500 text-white'
                         : 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white/10'
@@ -74,7 +74,7 @@ export const CheckinSettlementPage: React.FC = () => {
             </div>
 
             {/* Settlement Calculation Summary */}
-            <div className="p-4 rounded-xl bg-black/40 border border-white/10 flex flex-col gap-2.5 text-xs">
+            <div className="p-4 sm:p-5 rounded-2xl bg-black/40 border border-white/10 flex flex-col gap-2.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-zinc-400">Tiền cọc ban đầu nhận:</span>
                 <span className="font-bold text-white num">{formatVND(baseDeposit)}</span>

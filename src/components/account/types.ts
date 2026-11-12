@@ -22,6 +22,7 @@ export interface AccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentTier: MembershipTierType;
+  initialTab?: 'tiers' | 'orders' | 'profile';
   onChangeTier?: (tier: MembershipTierType) => void;
   onApplyVoucher?: (code: string, discount: number) => void;
 }

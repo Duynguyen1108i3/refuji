@@ -30,7 +30,7 @@ export const MembershipReputationPage: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-        <div className="liquid-glass rounded-2xl p-5 border border-white/15">
+        <div className="liquid-glass rounded-3xl p-5 sm:p-6 border border-white/15">
           <span className="text-xs text-zinc-400 block mb-1">Điểm uy tín hiện tại</span>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-emerald-400 num">{user.reputationScore}</span>
@@ -38,12 +38,12 @@ export const MembershipReputationPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="liquid-glass rounded-2xl p-5 border border-white/15">
+        <div className="liquid-glass rounded-3xl p-5 sm:p-6 border border-white/15">
           <span className="text-xs text-zinc-400 block mb-1">Lượt thuê hoàn tất</span>
           <span className="text-3xl font-bold text-white num">{user.completedRentals}</span>
         </div>
 
-        <div className="liquid-glass rounded-2xl p-5 border border-white/15">
+        <div className="liquid-glass rounded-3xl p-5 sm:p-6 border border-white/15">
           <span className="text-xs text-zinc-400 block mb-1">Đặc quyền giảm cọc</span>
           <span className="text-3xl font-bold text-amber-400 num">-10%</span>
         </div>
@@ -57,7 +57,7 @@ export const MembershipReputationPage: React.FC = () => {
           return (
             <div
               key={t.tier}
-              className={`rounded-2xl p-5 border flex flex-col justify-between ${
+              className={`rounded-3xl p-5 sm:p-6 border flex flex-col justify-between ${
                 isCurrent
                   ? 'bg-emerald-950/20 border-emerald-500/50 shadow-lg shadow-emerald-950/40'
                   : 'liquid-glass border-white/15'

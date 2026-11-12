@@ -9,29 +9,21 @@ import {
   ArrowRight,
   ShoppingBag
 } from 'lucide-react';
+import { isSmallThumbnailImage } from '../utils/cn';
 
+// Chức năng: Đồng bộ card rounded-3xl, gỡ nút Tra cứu đơn dư thừa & giữ dòng "₫ / ngày" không xuống hàng
 interface AvailabilityExplorerProps {
-  onSearch: (params: { category: string; mount: string; series: string; dates: string }) => void;
+  onSearch: (params: { category: string; mount: string; series: string; dates: string; priceRange?: string }) => void;
   onSelectItem: (item: CameraModel | LensModel | AccessoryModel) => void;
   membershipTier?: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
   onOpenAllEquipment: () => void;
-  filterParams: { category: string; mount: string; series: string; dates: string };
+  filterParams: { category: string; mount: string; series: string; dates: string; priceRange?: string };
   onOpenCalendar: () => void;
   cameras?: CameraModel[];
   lenses?: LensModel[];
   accessories?: AccessoryModel[];
   onAddToCart?: (item: EquipmentItem) => void;
 }
-
-// Helper nhận diện ảnh thumbnail có viền trắng lớn để scale đều kích thước
-const isSmallThumbnailImage = (item: { name: string; image: string }) => {
-  return (
-    item.image.includes('thum') ||
-    item.image.includes('small') ||
-    item.image.includes('product-list_gfx100rf') ||
-    item.name.includes('GFX')
-  );
-};
 
 export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
   onSearch: _onSearch,
@@ -98,8 +90,8 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
         </p>
       </div>
 
-      {/* 2. NÚT CHỌN LỊCH NHANH DẠNG PILL GLASS */}
-      <div className="flex justify-center mb-5">
+      {/* 2. NÚT CHỌN LỊCH NHANH */}
+      <div className="flex flex-wrap items-center justify-center gap-3 mb-5">
         <button
           type="button"
           onClick={onOpenCalendar}
@@ -147,7 +139,7 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: Math.min(idx * 0.05, 0.3), ease: [0.16, 1, 0.3, 1] }}
-                className="relative liquid-glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 group cursor-pointer"
+                className="relative liquid-glass-card rounded-3xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 group cursor-pointer"
                 onClick={() => onSelectItem(item as any)}
               >
                   <div>
@@ -188,7 +180,7 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                     </div>
 
                     {/* Technical Meta Tag */}
-                    <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-[#6e7587] mb-1 truncate font-medium">
+                    <div className="text-[10.5px] font-sans num uppercase tracking-[0.08em] text-[#6e7587] mb-1 truncate font-medium">
                       {item.type === 'BODY' 
                         ? `Fujifilm • ${(item as CameraModel).series || 'X'} Series • ${(item as CameraModel).resolution || 'APS-C'}`
                         : item.type === 'LENS'
@@ -225,17 +217,17 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                   </div>
 
                   {/* Bottom: Pricing & Action Button */}
-                  <div className="pt-3.5 border-t border-[#14171f]/[0.08] flex items-end justify-between gap-3 mt-auto">
+                  <div className="pt-3.5 border-t border-[#14171f]/[0.08] flex items-end justify-between gap-2 mt-auto">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl sm:text-2xl font-bold text-[#14171f] tracking-tight font-sans">
+                      <div className="flex items-baseline gap-1 num whitespace-nowrap">
+                        <span className="text-lg sm:text-[21px] font-bold text-[#14171f] tracking-tight font-sans">
                           {item.dailyRate.toLocaleString('vi-VN')}
                         </span>
                         <span className="text-xs font-semibold text-[#14171f]/80">₫</span>
-                        <span className="text-[11px] text-[#6e7587] font-light ml-0.5">/ ngày</span>
+                        <span className="text-[11px] text-[#6e7587] font-light ml-0.5 whitespace-nowrap">/ ngày</span>
                       </div>
 
-                      <div className="text-[11.5px] text-[#62687a] mt-1 flex items-center gap-1.5 flex-wrap">
+                      <div className="text-[11.5px] text-[#62687a] mt-1 flex items-center gap-1.5 flex-wrap num">
                         <span className="text-[#7a8192]">Cọc:</span>
                         {currentTier.discount > 0 ? (
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
@@ -270,6 +262,7 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                         </button>
                       )}
 
+                      {/* Tính năng: Đổi nhãn nút từ Đặt chỗ / Đã giữ chỗ thành Đặt hàng / Đã hết hàng */}
                       <button
                         type="button"
                         disabled={isOutOfStock}
@@ -277,13 +270,13 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
                           e.stopPropagation();
                           if (!isOutOfStock) onSelectItem(item as any);
                         }}
-                        className={`h-9 px-4 sm:px-5 rounded-full font-semibold text-xs tracking-wide flex items-center gap-1.5 transition-all duration-200 ${
+                        className={`h-9 px-3.5 sm:px-4 rounded-full font-semibold text-xs tracking-wide whitespace-nowrap flex items-center gap-1.5 ${
                           isOutOfStock
-                            ? 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
-                            : 'bg-[#14171f] hover:bg-[#252a37] active:scale-95 text-white shadow-[0_4px_14px_rgba(20,24,32,0.18)] hover:shadow-[0_6px_20px_rgba(20,24,32,0.26)] cursor-pointer'
+                            ? 'bg-neutral-200 text-neutral-600 border border-neutral-300 cursor-not-allowed shadow-none select-none'
+                            : 'bg-[#14171f] hover:bg-[#252a37] active:scale-95 text-white shadow-[0_4px_14px_rgba(20,24,32,0.18)] hover:shadow-[0_6px_20px_rgba(20,24,32,0.26)] transition-all duration-200 cursor-pointer'
                         }`}
                       >
-                        <span>{isOutOfStock ? 'Đã giữ chỗ' : 'Đặt chỗ'}</span>
+                        <span>{isOutOfStock ? 'Đã hết hàng' : 'Đặt hàng'}</span>
                         {!isOutOfStock && (
                           <ArrowUpRight size={14} className="stroke-[2.2] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                         )}
@@ -305,11 +298,11 @@ export const AvailabilityExplorer: React.FC<AvailabilityExplorerProps> = ({
         <button
           type="button"
           onClick={onOpenAllEquipment}
-          className="group relative crystal-liquid-glass rytox-hover-lift px-8 sm:px-10 py-4 rounded-full flex items-center gap-3.5 text-sm sm:text-base font-semibold text-[#14171f] hover:text-[#0b0d12] cursor-pointer shadow-md border border-[#14171f]/15 hover:border-[#14171f]/30 active:scale-95 transition-all"
+          className="group relative crystal-liquid-glass refuji-hover-lift px-8 sm:px-10 py-4 rounded-full flex items-center gap-3.5 text-sm sm:text-base font-semibold text-[#14171f] hover:text-[#0b0d12] cursor-pointer shadow-md border border-[#14171f]/15 hover:border-[#14171f]/30 active:scale-95 transition-all"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-[#14171f]/80 radar-pulse-white" />
           <span>Xem thêm toàn bộ máy &amp; phụ kiện</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-[#14171f]/[0.06] text-xs font-mono text-[#2c3242] border border-[#14171f]/10">
+          <span className="px-2.5 py-0.5 rounded-full bg-[#14171f]/[0.06] text-xs font-sans font-semibold num text-[#2c3242] border border-[#14171f]/10">
             {allEquipment.length}+ thiết bị
           </span>
           <ArrowRight size={17} className="transition-transform group-hover:translate-x-1 duration-200 text-[#14171f]/80" />

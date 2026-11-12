@@ -20,7 +20,7 @@ export const OrderTrackingPage: React.FC = () => {
   };
 
   const steps = [
-    { title: 'Đặt chỗ & Cọc VNPAY', done: true, time: '30/10 13:45' },
+    { title: 'Đặt hàng & Cọc VNPAY', done: true, time: '30/10 13:45' },
     { title: 'Duyệt hồ sơ & Kiểm tra kho', done: true, time: '30/10 13:55' },
     { title: 'Bàn giao thiết bị tại Showroom', done: true, time: '30/10 14:05' },
     { title: 'Đang trải nghiệm máy', active: true, time: 'Hiện tại' },
@@ -45,7 +45,7 @@ export const OrderTrackingPage: React.FC = () => {
       </div>
 
       {/* Timeline Steps */}
-      <div className="liquid-glass rounded-2xl p-6 mb-8 border border-white/15">
+      <div className="liquid-glass rounded-3xl p-6 mb-8 border border-white/15">
         <h2 className="text-sm font-bold text-white mb-6">Lộ trình đơn hàng</h2>
         <div className="relative flex flex-col md:flex-row justify-between gap-4">
           {steps.map((st, i) => (
@@ -73,14 +73,14 @@ export const OrderTrackingPage: React.FC = () => {
       </div>
 
       {/* Serials currently held */}
-      <div className="liquid-glass rounded-2xl p-6 mb-8 border border-white/15">
-        <h2 className="text-sm font-bold text-white mb-4">Thiết bị & Số Seri đang giữ</h2>
+      <div className="liquid-glass rounded-3xl p-6 mb-8 border border-white/15">
+        <h2 className="text-sm font-bold text-white mb-4">Thiết bị &amp; Số Seri đang giữ</h2>
         <div className="flex flex-col gap-3">
           {order.serials.map((s, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+            <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-white">{s.name}</p>
-                <p className="text-xs text-zinc-400 font-mono">Serial: {s.serial}</p>
+                <p className="text-xs text-zinc-400">Serial: <span className="font-sans tracking-wide text-zinc-300 num">{s.serial}</span></p>
               </div>
               <div className="text-right">
                 <span className="text-[11px] text-zinc-400 block">Số shot khi nhận</span>
@@ -94,11 +94,11 @@ export const OrderTrackingPage: React.FC = () => {
       </div>
 
       {/* Inspection Photos */}
-      <div className="liquid-glass rounded-2xl p-6 border border-white/15">
+      <div className="liquid-glass rounded-3xl p-6 border border-white/15">
         <h2 className="text-sm font-bold text-white mb-4">Ảnh đối chứng khi Check-out</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {order.photos.map((url, i) => (
-            <div key={i} className="aspect-video rounded-xl overflow-hidden bg-black/50 border border-white/15 p-2 flex items-center justify-center">
+            <div key={i} className="aspect-video rounded-2xl overflow-hidden bg-black/50 border border-white/15 p-2 flex items-center justify-center">
               <img src={url} alt={`Đối chứng ${i + 1}`} className="w-full h-full object-contain" />
             </div>
           ))}

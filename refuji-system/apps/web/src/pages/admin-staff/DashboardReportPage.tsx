@@ -16,31 +16,31 @@ export const DashboardReportPage: React.FC = () => {
 
         {/* 4 Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="liquid-glass rounded-2xl p-5 border border-white/15">
+          <div className="liquid-glass rounded-3xl p-5 sm:p-6 border border-white/15">
             <span className="text-xs text-zinc-400 block mb-1">Doanh thu thuê tháng 10</span>
             <span className="text-2xl font-bold text-emerald-400 num">128.450.000đ</span>
-            <div className="flex items-center gap-1 text-[11px] text-emerald-400 mt-2">
+            <div className="flex items-center gap-1 text-[11px] text-emerald-400 mt-2 num">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>+18.4% so với tháng trước</span>
             </div>
           </div>
 
-          <div className="liquid-glass rounded-2xl p-5 border border-white/15">
+          <div className="liquid-glass rounded-3xl p-5 sm:p-6 border border-white/15">
             <span className="text-xs text-zinc-400 block mb-1">Tỷ lệ lấp đầy kho (Occupancy)</span>
             <span className="text-2xl font-bold text-white num">84.2%</span>
-            <p className="text-[11px] text-zinc-400 mt-2">32/38 thiết bị đang được thuê</p>
+            <p className="text-[11px] text-zinc-400 mt-2 num">32/38 thiết bị đang được thuê</p>
           </div>
 
-          <div className="liquid-glass rounded-2xl p-5 border border-white/15">
+          <div className="liquid-glass rounded-3xl p-5 sm:p-6 border border-white/15">
             <span className="text-xs text-zinc-400 block mb-1">Đơn cần duyệt hôm nay</span>
             <span className="text-2xl font-bold text-amber-400 num">5 đơn</span>
-            <p className="text-[11px] text-amber-300 mt-2">Khách hẹn nhận trước 16:00</p>
+            <p className="text-[11px] text-amber-300 mt-2 num">Khách hẹn nhận trước 16:00</p>
           </div>
 
-          <div className="liquid-glass rounded-2xl p-5 border border-rose-500/30 bg-rose-950/10">
+          <div className="liquid-glass rounded-3xl p-5 sm:p-6 border border-rose-500/30 bg-rose-950/10">
             <span className="text-xs text-zinc-400 block mb-1">Cảnh báo quá hạn (Overdue)</span>
             <span className="text-2xl font-bold text-rose-400 num">1 thiết bị</span>
-            <div className="flex items-center gap-1 text-[11px] text-rose-400 mt-2">
+            <div className="flex items-center gap-1 text-[11px] text-rose-400 mt-2 num">
               <AlertTriangle className="w-3.5 h-3.5" />
               <span>Trễ 3 giờ - Đang liên hệ khách</span>
             </div>
@@ -48,11 +48,11 @@ export const DashboardReportPage: React.FC = () => {
         </div>
 
         {/* Recent Operations Activity */}
-        <div className="liquid-glass rounded-2xl p-6 border border-white/15">
-          <h2 className="text-base font-bold text-white mb-4">Hoạt động bàn giao & thu hồi gần nhất</h2>
+        <div className="liquid-glass rounded-3xl p-6 border border-white/15">
+          <h2 className="text-base font-bold text-white mb-4">Hoạt động bàn giao &amp; thu hồi gần nhất</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="border-b border-white/10 text-zinc-400 uppercase font-mono">
+              <thead className="border-b border-white/10 text-zinc-400 uppercase font-sans font-semibold tracking-wider">
                 <tr>
                   <th className="py-2.5">Mã đơn</th>
                   <th>Khách hàng</th>

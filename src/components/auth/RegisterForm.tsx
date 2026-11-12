@@ -73,6 +73,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         </div>
       )}
 
+      {/* Tính năng: Bo tròn pill cho các input, nút toggle mật khẩu & chuẩn hóa thẻ đồng thuận DLCN */}
       <form onSubmit={handleSubmit} className="space-y-3.5 pt-1" noValidate>
         {/* Field: Họ và tên */}
         <div className="space-y-1">
@@ -80,7 +81,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             Họ và tên đầy đủ <span className="text-[var(--refuji-accent-rose)]">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
               <User size={16} />
             </span>
             <input
@@ -95,7 +96,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 setFormData({ ...formData, full_name: e.target.value });
                 if (errors.full_name) setErrors((prev) => ({ ...prev, full_name: '' }));
               }}
-              className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
+              className="w-full pl-11 pr-4 py-2.5 text-xs sm:text-sm rounded-full outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
               style={{
                 backgroundColor: 'var(--refuji-input-bg)',
                 color: 'var(--refuji-text-primary)',
@@ -118,7 +119,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             Địa chỉ Email <span className="text-[var(--refuji-accent-rose)]">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
               <Mail size={16} />
             </span>
             <input
@@ -133,7 +134,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 setFormData({ ...formData, email: e.target.value });
                 if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
               }}
-              className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
+              className="w-full pl-11 pr-4 py-2.5 text-xs sm:text-sm rounded-full outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
               style={{
                 backgroundColor: 'var(--refuji-input-bg)',
                 color: 'var(--refuji-text-primary)',
@@ -156,7 +157,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             Số điện thoại <span className="text-[var(--refuji-accent-rose)]">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
               <Phone size={16} />
             </span>
             <input
@@ -171,7 +172,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 setFormData({ ...formData, phone: e.target.value });
                 if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
               }}
-              className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
+              className="w-full pl-11 pr-4 py-2.5 text-xs sm:text-sm rounded-full outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)] num"
               style={{
                 backgroundColor: 'var(--refuji-input-bg)',
                 color: 'var(--refuji-text-primary)',
@@ -194,7 +195,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             Mật khẩu bảo mật <span className="text-[var(--refuji-accent-rose)]">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
               <Lock size={16} />
             </span>
             <input
@@ -209,7 +210,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 setFormData({ ...formData, password: e.target.value });
                 if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
               }}
-              className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-2xl outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
+              className="w-full pl-11 pr-11 py-2.5 text-xs sm:text-sm rounded-full outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
               style={{
                 backgroundColor: 'var(--refuji-input-bg)',
                 color: 'var(--refuji-text-primary)',
@@ -222,7 +223,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               type="button"
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--refuji-text-muted)] hover:text-[var(--refuji-text-primary)] cursor-pointer"
+              className="absolute inset-y-0 right-1.5 my-auto w-8 h-8 rounded-full flex items-center justify-center text-[var(--refuji-text-muted)] hover:text-[var(--refuji-text-primary)] hover:bg-black/5 transition-colors cursor-pointer"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -243,7 +244,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             Xác nhận lại mật khẩu <span className="text-[var(--refuji-accent-rose)]">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
               <Lock size={16} />
             </span>
             <input
@@ -259,7 +260,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 if (errors.confirm_password)
                   setErrors((prev) => ({ ...prev, confirm_password: '' }));
               }}
-              className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-2xl outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
+              className="w-full pl-11 pr-11 py-2.5 text-xs sm:text-sm rounded-full outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
               style={{
                 backgroundColor: 'var(--refuji-input-bg)',
                 color: 'var(--refuji-text-primary)',
@@ -274,7 +275,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
               type="button"
               aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--refuji-text-muted)] hover:text-[var(--refuji-text-primary)] cursor-pointer"
+              className="absolute inset-y-0 right-1.5 my-auto w-8 h-8 rounded-full flex items-center justify-center text-[var(--refuji-text-muted)] hover:text-[var(--refuji-text-primary)] hover:bg-black/5 transition-colors cursor-pointer"
             >
               {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -288,7 +289,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
         {/* Checkbox bắt buộc: Luật Bảo vệ DLCN 2025 */}
         <div
-          className="p-3.5 rounded-2xl border space-y-2"
+          className="p-3.5 rounded-3xl border space-y-2"
           style={{
             backgroundColor: 'var(--refuji-input-bg)',
             borderColor: errors.privacy_consent
@@ -309,7 +310,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
                 if (errors.privacy_consent)
                   setErrors((prev) => ({ ...prev, privacy_consent: '' }));
               }}
-              className="w-4 h-4 rounded accent-[#14171f] mt-0.5 shrink-0 cursor-pointer"
+              className="w-4 h-4 rounded-md accent-[#14171f] mt-0.5 shrink-0 cursor-pointer"
             />
             <span className="text-[var(--refuji-text-secondary)]">
               Tôi đã đọc, hiểu rõ và tự nguyện đồng ý với{' '}

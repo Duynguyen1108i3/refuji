@@ -23,9 +23,10 @@ export const Input: React.FC<InputProps> = ({
           {label}
         </label>
       )}
+      {/* Tính năng: Bo tròn pill toàn bộ ô nhập liệu chuẩn thiết kế */}
       <input
         id={inputId}
-        className={`w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-zinc-900/80 border text-sm text-zinc-100 placeholder:text-zinc-500 transition-colors focus-visible:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 ${
+        className={`w-full min-h-[44px] px-4 py-2.5 rounded-full bg-zinc-900/80 border text-sm text-zinc-100 placeholder:text-zinc-500 transition-colors focus-visible:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 ${
           error ? 'border-rose-500/80 bg-rose-950/20' : 'border-white/15 hover:border-white/25'
         } ${className}`}
         {...props}

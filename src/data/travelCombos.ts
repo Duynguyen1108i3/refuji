@@ -1,4 +1,4 @@
-import { CameraModel, LensModel, AccessoryModel } from '../types';
+import { LensModel, AccessoryModel } from '../types';
 
 export interface TravelComboGuide {
   cameraKey: string;
@@ -21,9 +21,9 @@ export const TRAVEL_COMBOS: TravelComboGuide[] = [
       'FUJINON XF35mmF2 R WR',
     ],
     recommendedAccessoryNames: [
-      'Pin Lithium-ion NP-W126S',
-      'Bao da nửa thân BLC-XE4 chính hãng',
-      'Thẻ nhớ SD SanDisk Extreme PRO 128GB',
+      'Pin Fujifilm NP-W126S',
+      'Thẻ nhớ SD 128GB (UHS-II V90)',
+      'Flash Godox TT350F for Fujifilm',
     ],
   },
   {
@@ -37,9 +37,9 @@ export const TRAVEL_COMBOS: TravelComboGuide[] = [
       'FUJINON XF35mmF1.4 R',
     ],
     recommendedAccessoryNames: [
-      'Pin Lithium-ion NP-W126S',
-      'Grip kim loại cầm tay MHG-XT50',
-      'Đèn flash gắn rời EF-X8',
+      'Pin Fujifilm NP-W126S',
+      'Bộ sạc pin đơn Fujifilm BC-W126S',
+      'Flash Godox TT350F for Fujifilm',
     ],
   },
   {
@@ -53,9 +53,9 @@ export const TRAVEL_COMBOS: TravelComboGuide[] = [
       'FUJINON XF18-135mmF3.5-5.6 R LM OIS WR',
     ],
     recommendedAccessoryNames: [
-      'Pin dung lượng cao NP-W235',
-      'Grip kim loại tay cầm MHG-XT5',
-      'Thẻ nhớ SD Sony Tough G-Series 128GB',
+      'Pin Fujifilm NP-W235',
+      'Bộ sạc pin đôi Fujifilm BC-W235',
+      'Tripod du lịch Carbon gọn nhẹ',
     ],
   },
   {
@@ -69,9 +69,9 @@ export const TRAVEL_COMBOS: TravelComboGuide[] = [
       'FUJINON XF10-24mmF4 R OIS WR',
     ],
     recommendedAccessoryNames: [
-      'Pin dung lượng cao NP-W235',
-      'Quạt làm mát ngoài FAN-001',
-      'Tripod tay cầm quay Vlog TG-BT1',
+      'Pin Fujifilm NP-W235',
+      'Microphone Hollyland Lark M2',
+      'Gimbal DJI RS Series (RS3 / RS4 Mini)',
     ],
   },
   {
@@ -85,9 +85,9 @@ export const TRAVEL_COMBOS: TravelComboGuide[] = [
       'FUJINON XF27mmF2.8 R WR',
     ],
     recommendedAccessoryNames: [
-      'Pin Lithium-ion NP-W126S',
-      'Tripod tay cầm Bluetooth TG-BT1',
-      'Thẻ nhớ MicroSD kèm adapter SDXC 128GB',
+      'Pin Fujifilm NP-W126S',
+      'Chân máy mini cầm tay & để bàn',
+      'Microphone Rode VideoMicro',
     ],
   },
   {
@@ -101,9 +101,9 @@ export const TRAVEL_COMBOS: TravelComboGuide[] = [
       'FUJINON XF35mmF2 R WR',
     ],
     recommendedAccessoryNames: [
-      'Pin Lithium-ion NP-W126S',
-      'Nút bấm kim loại Soft Shutter đỏ',
-      'Grip ngón cái Thumb Rest kim loại',
+      'Pin Fujifilm NP-W126S',
+      'Thẻ nhớ SD 64GB (UHS-II V60)',
+      'Flash rời tương thích Fujifilm (TTL)',
     ],
   },
   {
@@ -117,9 +117,9 @@ export const TRAVEL_COMBOS: TravelComboGuide[] = [
       'FUJINON XF35mmF1.4 R',
     ],
     recommendedAccessoryNames: [
-      'Pin dung lượng cao NP-W235',
-      'Kính ngắm EVF xoay lật góc EVF-TL1',
-      'Dây đeo thao tác nhanh Peak Design Slide',
+      'Pin Fujifilm NP-W235',
+      'Thẻ nhớ SD 128GB (UHS-II V90)',
+      'Tripod chuyên nghiệp (Video & Studio)',
     ],
   },
 ];

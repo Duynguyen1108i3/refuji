@@ -30,23 +30,30 @@ export const HomePage: React.FC<HomePageProps> = ({
   onSelectModel,
   onOpenAuth
 }) => {
-  // 1. Search Filters State
+  // 1. Search Filters State (Tính năng: Bổ sung bộ lọc theo Mức giá thuê/ngày đồng bộ giữa hai app)
   const defaultDates = useMemo(() => getDefaultRentalDates(), []);
   const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'BODY' | 'LENS'>('BODY');
   const [mountFilter, setMountFilter] = useState<'ALL' | 'X' | 'G' | 'FIXED'>('ALL');
+  const [priceRangeFilter, setPriceRangeFilter] = useState<'ALL' | 'UNDER_200' | '200_400' | '400_700' | 'OVER_700'>('ALL');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [selectedModelForModal, setSelectedModelForModal] = useState<ProductModelEntity | null>(null);
 
-  // 2. Filter logic (Strictly eliminates X100VI when X-Mount is selected)
+  // 2. Filter logic (Strictly eliminates X100VI when X-Mount is selected & filters by price tier)
   const filteredModels = useMemo(() => {
     return PRODUCT_FIXTURES.filter((model) => {
       // Category filter
       if (categoryFilter !== 'ALL' && model.category !== categoryFilter) return false;
       // Mount filter
       if (mountFilter !== 'ALL' && model.mount !== mountFilter) return false;
+      // Price range filter
+      const price = model.baseRentalPricePerDay;
+      if (priceRangeFilter === 'UNDER_200' && price >= 200000) return false;
+      if (priceRangeFilter === '200_400' && (price < 200000 || price > 400000)) return false;
+      if (priceRangeFilter === '400_700' && (price <= 400000 || price > 700000)) return false;
+      if (priceRangeFilter === 'OVER_700' && price <= 700000) return false;
       return true;
     });
-  }, [categoryFilter, mountFilter]);
+  }, [categoryFilter, mountFilter, priceRangeFilter]);
 
   // Featured Monthly Highlight (different from card, showing GFX 100 II Medium Format)
   const monthlySpotlight = useMemo(() => {
@@ -87,7 +94,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
         {/* Hero Headlines */}
         <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center">
-          <span className="text-xs uppercase font-mono tracking-widest text-emerald-400 font-semibold mb-3">
+          <span className="text-xs uppercase font-sans tracking-widest text-emerald-400 font-semibold mb-3">
             Hệ thống cho thuê máy ảnh Fujifilm chính hãng
           </span>
 
@@ -103,12 +110,12 @@ export const HomePage: React.FC<HomePageProps> = ({
             Thủ tục thẩm định 2 chiều, giữ chỗ 15 phút an toàn với biểu phí cọc minh bạch.
           </p>
 
-          {/* Integrated Modern Glass Search Bar */}
-          <div className="w-full max-w-3xl liquid-glass rounded-2xl p-3 sm:p-4 border border-white/20 shadow-2xl">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Integrated Modern Glass Search Bar (Tính năng: Bổ sung cột lọc Mức giá & bo tròn toàn bộ khung/nút) */}
+          <div className="w-full max-w-5xl liquid-glass rounded-3xl p-3 sm:p-4 border border-white/20 shadow-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
               {/* Phân loại */}
-              <div className="flex flex-col text-left px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                <label htmlFor="search-cat" className="text-xs font-medium text-zinc-400">Phân loại thiết bị</label>
+              <div className="flex flex-col justify-center text-left px-5 py-2.5 rounded-full bg-white/5 border border-white/10">
+                <label htmlFor="search-cat" className="text-[11px] font-medium text-zinc-400">Phân loại thiết bị</label>
                 <select
                   id="search-cat"
                   value={categoryFilter}
@@ -122,8 +129,8 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
 
               {/* Hệ Ngàm (Mount) - Resolving Mount Filter Bug */}
-              <div className="flex flex-col text-left px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                <label htmlFor="search-mount" className="text-xs font-medium text-zinc-400">Hệ ngàm / Dòng máy</label>
+              <div className="flex flex-col justify-center text-left px-5 py-2.5 rounded-full bg-white/5 border border-white/10">
+                <label htmlFor="search-mount" className="text-[11px] font-medium text-zinc-400">Hệ ngàm / Dòng máy</label>
                 <select
                   id="search-mount"
                   value={mountFilter}
@@ -137,12 +144,29 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </select>
               </div>
 
+              {/* Cột thứ 4: Mức giá thuê/ngày */}
+              <div className="flex flex-col justify-center text-left px-5 py-2.5 rounded-full bg-white/5 border border-white/10">
+                <label htmlFor="search-price" className="text-[11px] font-medium text-zinc-400">Mức giá thuê/ngày</label>
+                <select
+                  id="search-price"
+                  value={priceRangeFilter}
+                  onChange={(e) => setPriceRangeFilter(e.target.value as any)}
+                  className="bg-transparent text-white text-sm font-semibold focus:outline-none cursor-pointer mt-0.5 num"
+                >
+                  <option value="ALL" className="bg-zinc-900 text-white">Tất cả mức giá</option>
+                  <option value="UNDER_200" className="bg-zinc-900 text-white">Dưới 200.000đ</option>
+                  <option value="200_400" className="bg-zinc-900 text-white">200.000đ – 400.000đ</option>
+                  <option value="400_700" className="bg-zinc-900 text-white">400.000đ – 700.000đ</option>
+                  <option value="OVER_700" className="bg-zinc-900 text-white">Trên 700.000đ</option>
+                </select>
+              </div>
+
               {/* CTA Button: 1 Single Primary Button */}
-              <div className="flex items-center">
+              <div className="flex items-stretch">
                 <Button 
                   variant="primary" 
                   size="md" 
-                  className="w-full text-sm font-semibold shadow-lg shadow-emerald-950/50"
+                  className="w-full h-full min-h-[54px] text-sm font-semibold shadow-lg shadow-emerald-950/50"
                   onClick={() => {
                     const el = document.getElementById('catalog-results');
                     el?.scrollIntoView({ behavior: 'smooth' });
@@ -196,7 +220,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span 
                 aria-live="polite" 
-                className="text-xs uppercase font-mono tracking-wider text-emerald-400 font-semibold"
+                className="text-xs uppercase font-sans tracking-wider text-emerald-400 font-semibold num"
               >
                 Tìm thấy {filteredModels.length} thiết bị phù hợp
               </span>
@@ -210,7 +234,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             href="/catalog" 
             className="text-sm font-medium text-emerald-400 hover:text-emerald-300 flex items-center gap-1 group self-start md:self-end"
           >
-            <span>Xem toàn bộ kho máy & ống kính</span>
+            <span>Xem toàn bộ kho máy &amp; ống kính</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </a>
         </div>
@@ -224,7 +248,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             return (
               <article 
                 key={model.id}
-                className="liquid-glass rounded-2xl p-4 flex flex-col justify-between h-full border border-white/15 hover:border-emerald-500/40 transition-all duration-300 group shadow-lg"
+                className="liquid-glass rounded-3xl p-4 sm:p-5 flex flex-col justify-between h-full border border-white/15 hover:border-emerald-500/40 transition-all duration-300 group shadow-lg"
               >
                 <div>
                   {/* Top Header Badge & Favorite Heart */}
@@ -243,7 +267,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </div>
 
                   {/* Product Image with fixed aspect-ratio, loading="lazy", and accessible alt */}
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-zinc-900 mb-4 border border-white/10 flex items-center justify-center p-2">
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 mb-4 border border-white/10 flex items-center justify-center p-2">
                     <img 
                       src={model.imageUrl} 
                       alt={`${model.modelName} - mặt trước thiết bị`}
@@ -254,7 +278,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                     />
                     {model.mount === 'FIXED' && (
-                      <span className="absolute bottom-2 left-2 text-[11px] font-medium bg-black/75 px-2 py-0.5 rounded text-amber-300 border border-amber-500/30">
+                      <span className="absolute bottom-2 left-2 text-[11px] font-medium bg-black/75 px-2.5 py-0.5 rounded-full text-amber-300 border border-amber-500/30">
                         Ống kính liền
                       </span>
                     )}
@@ -306,7 +330,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                         else setSelectedModelForModal(model);
                       }}
                     >
-                      Đặt chỗ 15p
+                      Đặt hàng 15p
                     </Button>
                   </div>
                 </div>
@@ -330,9 +354,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               {/* Offset decorative frame */}
               <div 
                 aria-hidden="true" 
-                className="absolute -bottom-3 -left-3 w-full h-full border-2 border-emerald-500/30 rounded-2xl pointer-events-none" 
+                className="absolute -bottom-3 -left-3 w-full h-full border-2 border-emerald-500/30 rounded-3xl pointer-events-none" 
               />
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden liquid-glass border border-white/20 p-4">
+              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden liquid-glass border border-white/20 p-4">
                 <img 
                   src={monthlySpotlight.imageUrl} 
                   alt={`${monthlySpotlight.modelName} góc cận cảnh`}
@@ -359,19 +383,19 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Specs Pills */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full mb-8">
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
                   <span className="text-[11px] text-zinc-400 block mb-0.5">Cảm biến</span>
                   <span className="text-xs font-semibold text-white num">102MP BSI CMOS</span>
                 </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
                   <span className="text-[11px] text-zinc-400 block mb-0.5">Chống rung</span>
                   <span className="text-xs font-semibold text-white num">IBIS 8.0 Stops</span>
                 </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
                   <span className="text-[11px] text-zinc-400 block mb-0.5">Video</span>
-                  <span className="text-xs font-semibold text-white num">8K/30p & ProRes</span>
+                  <span className="text-xs font-semibold text-white num">8K/30p &amp; ProRes</span>
                 </div>
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
                   <span className="text-[11px] text-zinc-400 block mb-0.5">Hệ ngàm</span>
                   <span className="text-xs font-semibold text-white">G-Mount rời</span>
                 </div>
@@ -443,9 +467,9 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="lg:col-span-5 relative order-1 lg:order-2">
             <div 
               aria-hidden="true" 
-              className="absolute -bottom-3 -left-3 w-full h-full border-2 border-amber-500/30 rounded-2xl pointer-events-none" 
+              className="absolute -bottom-3 -left-3 w-full h-full border-2 border-amber-500/30 rounded-3xl pointer-events-none" 
             />
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden liquid-glass border border-white/20 p-4">
+            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden liquid-glass border border-white/20 p-4">
               <img 
                 src={legendaryLens.imageUrl} 
                 alt={`${legendaryLens.modelName} góc nghiêng`}
@@ -463,6 +487,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* =========================================================================
           5. MODAL BOOKING PREVIEW / DETAIL (Accessible Modal)
           ========================================================================= */}
+      {/* Chức năng: Đồng bộ hiển thị nội dung popup chi tiết máy trên nền khung trắng cố định chung */}
       <Modal
         isOpen={!!selectedModelForModal}
         onClose={() => setSelectedModelForModal(null)}
@@ -470,48 +495,56 @@ export const HomePage: React.FC<HomePageProps> = ({
         description="Xác nhận cấu hình và thông tin tiền cọc trước khi chuyển đến bước đặt máy"
       >
         {selectedModelForModal && (
-          <div className="flex flex-col gap-4 text-sm">
-            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/10">
-              <img 
-                src={selectedModelForModal.imageUrl} 
-                alt={selectedModelForModal.modelName} 
-                className="w-20 h-16 object-contain"
-              />
-              <div>
-                <p className="font-bold text-white">{selectedModelForModal.modelName}</p>
-                <p className="text-xs text-zinc-400">{selectedModelForModal.tagline}</p>
+          <div className="flex-1 flex flex-col gap-4 text-sm text-[#14171f]">
+            <div className="flex flex-col sm:flex-row items-center gap-4 pb-2 bg-white">
+              <div className="w-36 h-36 sm:w-44 sm:h-44 aspect-square shrink-0 flex items-center justify-center overflow-hidden bg-transparent">
+                <img 
+                  src={selectedModelForModal.imageUrl} 
+                  alt={selectedModelForModal.modelName} 
+                  className="w-full h-full object-contain mix-blend-multiply scale-105"
+                />
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="font-bold text-[#14171f] text-base sm:text-lg">{selectedModelForModal.modelName}</p>
+                <p className="text-xs text-[#6e7587] mt-1 leading-relaxed">{selectedModelForModal.tagline}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <span className="text-zinc-400 block mb-1">Giá thuê 1 ngày</span>
-                <span className="text-base font-bold text-emerald-400 num">
+              <div className="p-4 rounded-3xl bg-[#f7f8fa] border border-[#14171f]/10">
+                <span className="text-[#6e7587] block mb-1">Giá thuê 1 ngày</span>
+                <span className="text-base font-bold text-emerald-700 num">
                   {formatVND(selectedModelForModal.baseRentalPricePerDay)}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                <span className="text-zinc-400 block mb-1">Tiền cọc thực nhận</span>
-                <span className="text-base font-bold text-white num">
+              <div className="p-4 rounded-3xl bg-[#f7f8fa] border border-[#14171f]/10">
+                <span className="text-[#6e7587] block mb-1">Tiền cọc thực nhận</span>
+                <span className="text-base font-bold text-[#14171f] num">
                   {formatVND(calcDeposit(selectedModelForModal.depositAmount, userTier))}
                 </span>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-3xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-2.5 leading-relaxed">
+              <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-emerald-700" />
               <span>
                 Máy được giữ chỗ trong 15 phút. Bạn chỉ cần thanh toán tiền cọc qua VNPAY hoặc chọn nhận máy trực tiếp tại Showroom.
               </span>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setSelectedModelForModal(null)}>
+            <div className="mt-auto flex items-center justify-end gap-2.5 pt-4 border-t border-[#14171f]/10">
+              <Button
+                variant="outline"
+                size="sm"
+                className="!text-[#14171f] !border-[#14171f]/20 hover:!bg-neutral-100 hover:!text-[#14171f]"
+                onClick={() => setSelectedModelForModal(null)}
+              >
                 Đóng
               </Button>
               <Button 
                 variant="primary" 
                 size="sm"
+                className="!bg-[#14171f] hover:!bg-[#252a37] !text-white !shadow-md"
                 onClick={() => {
                   window.location.href = `/checkout?modelId=${selectedModelForModal.id}`;
                 }}
@@ -523,10 +556,12 @@ export const HomePage: React.FC<HomePageProps> = ({
         )}
       </Modal>
 
-      {/* Guest Auth prompt modal */}
+      {/* Guest Auth prompt modal — giữ giao diện Login riêng theo yêu cầu */}
       <Modal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        variant="dark"
+        maxWidth="md"
         title="Đăng nhập tài khoản REFUJI"
         description="Đăng nhập để lưu danh sách yêu thích và nhận ưu đãi giảm tiền cọc lên đến 15% theo hạng thành viên."
       >

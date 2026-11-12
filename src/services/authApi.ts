@@ -27,6 +27,7 @@ export interface AuthResponse {
 
 export interface PendingRentalIntent {
   type: 'BOOK_RENTAL';
+  source?: 'CART' | 'BOOKING_MODAL';
   modelId: string | number;
   modelName: string;
   startDate: string;
@@ -78,30 +79,45 @@ export const getAccessTokenInMemory = (): string | null => {
   return inMemoryAccessToken;
 };
 
+let inFlightRefreshPromise: Promise<AuthResponse | null> | null = null;
+
 /**
  * Khôi phục phiên làm việc (Silent Refresh) từ HttpOnly Cookie refuji_refresh_token
- * Đảm bảo người dùng reload trang (F5) không bị đăng xuất
+ * Đảm bảo người dùng reload trang (F5) không bị đăng xuất và chống gọi trùng khi nhiều component mount cùng lúc
  */
 export async function refreshAuthSession(): Promise<AuthResponse | null> {
-  try {
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      credentials: 'include',
-    });
-
-    if (response.ok) {
-      const result: AuthResponse = await response.json();
-      setAccessTokenInMemory(result.accessToken);
-      saveUserToStorage(result.user);
-      return result;
-    }
-  } catch (_) {
-    // Không thể kết nối tới server
+  if (inFlightRefreshPromise) {
+    return inFlightRefreshPromise;
   }
 
-  setAccessTokenInMemory(null);
-  saveUserToStorage(null);
-  return null;
+  inFlightRefreshPromise = (async () => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      if (response.ok) {
+        const result: AuthResponse = await response.json();
+        setAccessTokenInMemory(result.accessToken);
+        saveUserToStorage(result.user);
+        return result;
+      }
+    } catch (_) {
+      // Không thể kết nối tới server
+    }
+
+    setAccessTokenInMemory(null);
+    saveUserToStorage(null);
+    return null;
+  })();
+
+  try {
+    return await inFlightRefreshPromise;
+  } finally {
+    inFlightRefreshPromise = null;
+  }
 }
 
 export async function getValidAccessToken(): Promise<string | null> {
@@ -141,7 +157,7 @@ export async function loginUser(data: LoginFormData): Promise<AuthResponse> {
   }
 
   if (response.status === 429) {
-    throw new Error('Bạn đã thử quá nhiều lần. Vui lòng thử lại sau 15 phút.');
+    throw new Error(err.message || 'Bạn đã thử sai quá nhiều lần. Vui lòng thử lại sau ít phút.');
   }
 
   if (response.status === 502 || response.status === 503 || response.status === 504) {
@@ -264,22 +280,128 @@ export async function logoutUser(): Promise<void> {
   }
 }
 
-/**
- * Gọi API POST /api/orders (Tạo đơn đặt thuê giữ chỗ 15 phút thật qua Backend)
- */
-export async function createRentalOrder(
-  intent: PendingRentalIntent,
-  userId: number
-): Promise<{
+// Tính năng: Hỗ trợ tạo đơn, thanh toán, tra cứu và tự hủy đơn cho cả Thành viên và Khách vãng lai
+export interface GuestInfoPayload {
+  full_name: string;
+  phone: string;
+  email: string;
+  note?: string;
+  privacy_consent: boolean;
+}
+
+export type GuestBookingMode = 'ONLINE_PAYMENT' | 'COUNTER_INQUIRY';
+
+export interface CreateOrderOptions {
+  guestInfo?: GuestInfoPayload;
+  bookingMode?: GuestBookingMode;
+  paymentMethod?: 'VIETQR' | 'VNPAY' | 'COUNTER';
+}
+
+export interface CreateOrderResponse {
   success: boolean;
   orderId: string;
-  holdDeadline: string;
-  payment_deadline?: string;
+  status?: string;
+  isGuest?: boolean;
+  paymentMethod?: 'VIETQR' | 'VNPAY' | 'COUNTER';
+  holdDeadline: string | null;
+  payment_deadline?: string | null;
   assignedSerials?: string[];
+  totalRent?: number;
+  depositAmount?: number;
+  totalDue?: number;
   message?: string;
-}> {
+}
+
+export interface GuestLookupOrderResponse {
+  id: number;
+  order_code: string;
+  is_guest: number;
+  guest_name: string;
+  guest_phone: string;
+  guest_email: string;
+  guest_note?: string | null;
+  payment_method: 'VIETQR' | 'VNPAY' | 'COUNTER';
+  model_id: string;
+  model_name: string;
+  start_date: string;
+  expected_return_date: string;
+  total_rent: number;
+  deposit_amount: number;
+  order_status: string;
+  payment_deadline: string | null;
+  created_at: string;
+  assigned_serials: string | null;
+  quantity: number;
+  items_detail: string | null;
+}
+
+export interface RecentGuestOrder {
+  orderCode: string;
+  phone: string;
+  modelName: string;
+  status: string;
+  createdAt: number;
+}
+
+const GUEST_PROFILE_KEY = 'refuji_guest_profile';
+const GUEST_ORDERS_KEY = 'refuji_guest_orders';
+
+export function saveGuestProfileDraft(info: Partial<GuestInfoPayload>): void {
+  try {
+    localStorage.setItem(
+      GUEST_PROFILE_KEY,
+      JSON.stringify({
+        full_name: info.full_name || '',
+        phone: info.phone || '',
+        email: info.email || '',
+        note: info.note || '',
+      })
+    );
+  } catch (_) {}
+}
+
+export function getGuestProfileDraft(): Partial<GuestInfoPayload> | null {
+  try {
+    const raw = localStorage.getItem(GUEST_PROFILE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+export function getRecentGuestOrders(): RecentGuestOrder[] {
+  try {
+    const raw = localStorage.getItem(GUEST_ORDERS_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+export function saveRecentGuestOrder(entry: RecentGuestOrder): void {
+  try {
+    const current = getRecentGuestOrders().filter((o) => o.orderCode !== entry.orderCode);
+    const next = [entry, ...current].slice(0, 10);
+    localStorage.setItem(GUEST_ORDERS_KEY, JSON.stringify(next));
+  } catch (_) {}
+}
+
+export function updateRecentGuestOrderStatus(orderCode: string, status: string): void {
+  try {
+    const current = getRecentGuestOrders();
+    const next = current.map((o) => (o.orderCode === orderCode ? { ...o, status } : o));
+    localStorage.setItem(GUEST_ORDERS_KEY, JSON.stringify(next));
+  } catch (_) {}
+}
+
+export async function createRentalOrder(
+  intent: PendingRentalIntent,
+  userId?: number | null,
+  options?: CreateOrderOptions
+): Promise<CreateOrderResponse> {
   let token = getAccessTokenInMemory();
-  if (!token) {
+  if (!token && userId) {
     token = await getValidAccessToken();
   }
   const response = await fetch('/api/orders', {
@@ -290,7 +412,10 @@ export async function createRentalOrder(
     },
     credentials: 'include',
     body: JSON.stringify({
-      user_id: userId,
+      ...(userId ? { user_id: userId } : {}),
+      ...(options?.guestInfo ? { guest_info: options.guestInfo } : {}),
+      ...(options?.bookingMode ? { booking_mode: options.bookingMode } : {}),
+      ...(options?.paymentMethod ? { payment_method: options.paymentMethod } : {}),
       model_id: intent.modelId,
       model_name: intent.modelName,
       start_date: intent.startDate,
@@ -310,15 +435,13 @@ export async function createRentalOrder(
   throw new Error(err.error || err.message || 'Không thể tạo đơn giữ chỗ');
 }
 
-/**
- * Gọi API POST /api/orders/:orderCode/pay (Thanh toán cọc và xác nhận đơn thuê)
- */
 export async function payRentalOrder(
   orderCode: string,
-  paymentMethod: 'VIETQR' | 'VNPAY' | 'COUNTER' = 'VIETQR'
-): Promise<{ success: boolean; message: string; orderStatus: string }> {
+  paymentMethod: 'VIETQR' | 'VNPAY' | 'COUNTER' = 'VIETQR',
+  guestPhone?: string
+): Promise<{ success: boolean; message: string; orderStatus: string; assignedSerials?: string[] }> {
   let token = getAccessTokenInMemory();
-  if (!token) {
+  if (!token && !guestPhone) {
     token = await getValidAccessToken();
   }
   const response = await fetch(`/api/orders/${orderCode}/pay`, {
@@ -328,7 +451,10 @@ export async function payRentalOrder(
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     credentials: 'include',
-    body: JSON.stringify({ payment_method: paymentMethod }),
+    body: JSON.stringify({
+      payment_method: paymentMethod,
+      ...(guestPhone ? { guest_phone: guestPhone } : {}),
+    }),
   });
 
   if (response.ok) {
@@ -337,6 +463,65 @@ export async function payRentalOrder(
 
   const err = await response.json().catch(() => ({}));
   throw new Error(err.error || err.message || 'Không thể xử lý thanh toán');
+}
+
+// Tính năng: Tra cứu đơn hàng khách vãng lai theo cặp Mã đơn + Số điện thoại
+export async function lookupGuestOrder(
+  orderCode: string,
+  phone: string
+): Promise<GuestLookupOrderResponse> {
+  const params = new URLSearchParams({
+    orderCode: orderCode.replace(/^#/, '').trim().toUpperCase(),
+    phone: phone.replace(/[\s.-]/g, '').trim(),
+  });
+  const response = await fetch(`/api/orders/guest-lookup?${params.toString()}`);
+  if (response.ok) {
+    return await response.json();
+  }
+  const err = await response.json().catch(() => ({}));
+  throw new Error(err.error || 'Không tìm thấy đơn hàng khớp với thông tin đã nhập');
+}
+
+// Tính năng: Khách vãng lai tự hủy giữ chỗ hoặc hủy yêu cầu đặt tại quầy
+export async function cancelGuestOrder(
+  orderCode: string,
+  phone: string
+): Promise<{ success: boolean; orderCode: string; orderStatus: string; message: string }> {
+  const cleanCode = orderCode.replace(/^#/, '').trim().toUpperCase();
+  const response = await fetch(`/api/orders/${cleanCode}/guest-cancel`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ phone: phone.replace(/[\s.-]/g, '').trim() }),
+  });
+  if (response.ok) {
+    return await response.json();
+  }
+  const err = await response.json().catch(() => ({}));
+  throw new Error(err.error || 'Không thể hủy đơn hàng');
+}
+
+// Tính năng: Thành viên tự hủy giữ chỗ hoặc hủy đơn chờ duyệt qua JWT Bearer/Cookie
+export async function cancelMyOrder(
+  orderCode: string
+): Promise<{ success: boolean; orderCode: string; orderStatus: string; message: string }> {
+  let token = getAccessTokenInMemory();
+  if (!token) {
+    token = await getValidAccessToken();
+  }
+
+  const cleanCode = orderCode.replace(/^#/, '').trim().toUpperCase();
+  const response = await fetch(`/api/orders/${cleanCode}/cancel`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: 'include',
+  });
+  if (response.ok) {
+    return await response.json();
+  }
+  const err = await response.json().catch(() => ({}));
+  throw new Error(err.error || 'Không thể hủy giữ chỗ đơn hàng');
 }
 
 /**

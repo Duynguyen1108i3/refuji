@@ -1,7 +1,16 @@
 import React from 'react';
 import { Clock, ShieldCheck, Layers } from 'lucide-react';
 
-export const Footer: React.FC<{ isStandalonePage?: boolean }> = ({ isStandalonePage = true }) => {
+// Tính năng: Bổ sung liên kết phụ "Tra cứu đơn hàng" gọn tại chân trang (mở Dashboard / Popup Tài khoản)
+export const Footer: React.FC<{
+  isStandalonePage?: boolean;
+  onOpenOrderLookup?: () => void;
+  onOpenDashboard?: () => void;
+}> = ({
+  isStandalonePage = true,
+  onOpenOrderLookup,
+  onOpenDashboard,
+}) => {
   return (
     <footer id="policies" className="relative w-full pt-8 pb-16 text-[#5a6072] text-xs sm:text-sm">
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
@@ -17,8 +26,9 @@ export const Footer: React.FC<{ isStandalonePage?: boolean }> = ({ isStandaloneP
               Bảo Toàn Quyền Lợi Khách Hàng
             </h3>
 
+            {/* Chức năng: Đồng bộ card chính sách bo tròn rounded-3xl */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="liquid-glass rounded-2xl p-6 border border-[#14171f]/10 shadow-sm flex items-start gap-4">
+              <div className="liquid-glass rounded-3xl p-6 border border-[#14171f]/10 shadow-sm flex items-start gap-4">
                 <Clock size={24} className="text-[#14171f] flex-shrink-0 mt-1" />
                 <div>
                   <h5 className="font-semibold text-sm text-[#14171f] mb-1.5">Khóa giữ chỗ 15 phút</h5>
@@ -28,7 +38,7 @@ export const Footer: React.FC<{ isStandalonePage?: boolean }> = ({ isStandaloneP
                 </div>
               </div>
 
-              <div className="liquid-glass rounded-2xl p-6 border border-[#14171f]/10 shadow-sm flex items-start gap-4">
+              <div className="liquid-glass rounded-3xl p-6 border border-[#14171f]/10 shadow-sm flex items-start gap-4">
                 <ShieldCheck size={24} className="text-[#14171f] flex-shrink-0 mt-1" />
                 <div>
                   <h5 className="font-semibold text-sm text-[#14171f] mb-1.5">Tuân thủ Luật Căn cước 2023</h5>
@@ -38,7 +48,7 @@ export const Footer: React.FC<{ isStandalonePage?: boolean }> = ({ isStandaloneP
                 </div>
               </div>
 
-              <div className="liquid-glass rounded-2xl p-6 border border-[#14171f]/10 shadow-sm flex items-start gap-4">
+              <div className="liquid-glass rounded-3xl p-6 border border-[#14171f]/10 shadow-sm flex items-start gap-4">
                 <Layers size={24} className="text-[#14171f] flex-shrink-0 mt-1" />
                 <div>
                   <h5 className="font-semibold text-sm text-[#14171f] mb-1.5">Kiểm tra Serial &amp; Biên bản 2 chiều</h5>
@@ -72,6 +82,28 @@ export const Footer: React.FC<{ isStandalonePage?: boolean }> = ({ isStandaloneP
               <li><a href="#cameras" className="hover:text-[#14171f] transition-colors">Máy ảnh Hot</a></li>
               <li><a href="#lenses" className="hover:text-[#14171f] transition-colors">Ống kính Fujinon</a></li>
               <li><a href="#explore" className="hover:text-[#14171f] transition-colors">Tra cứu lịch trống</a></li>
+              {onOpenOrderLookup && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={onOpenOrderLookup}
+                    className="hover:text-[#14171f] transition-colors cursor-pointer text-left"
+                  >
+                    Tra cứu đơn hàng
+                  </button>
+                </li>
+              )}
+              {onOpenDashboard && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={onOpenDashboard}
+                    className="hover:text-[#14171f] transition-colors cursor-pointer text-left"
+                  >
+                    Quản trị Studio (POS)
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 

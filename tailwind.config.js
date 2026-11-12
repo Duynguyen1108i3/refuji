@@ -17,6 +17,7 @@ export default {
           emerald: '#10B981',
         }
       },
+      // Tính năng: Khôi phục bộ font gốc Cormorant Garamond & Poppins / Plus Jakarta Sans của :5173
       fontFamily: {
         serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
         sans: ['"Poppins"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],

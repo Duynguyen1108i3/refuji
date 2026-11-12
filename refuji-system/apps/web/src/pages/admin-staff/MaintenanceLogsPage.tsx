@@ -41,9 +41,9 @@ export const MaintenanceLogsPage: React.FC = () => {
           </Button>
         </div>
 
-        <div className="liquid-glass rounded-2xl border border-white/15 overflow-hidden">
+        <div className="liquid-glass rounded-3xl border border-white/15 overflow-hidden">
           <table className="w-full text-xs text-left">
-            <thead className="border-b border-white/10 text-zinc-400 uppercase font-mono bg-white/5">
+            <thead className="border-b border-white/10 text-zinc-400 uppercase font-sans font-semibold tracking-wider bg-white/5">
               <tr>
                 <th className="p-4">Mã phiếu</th>
                 <th className="p-4">Số Serial & Thiết bị</th>

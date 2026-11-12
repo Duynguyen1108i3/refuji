@@ -42,9 +42,9 @@ export const PaymentReconcilePage: React.FC = () => {
           </Button>
         </div>
 
-        <div className="liquid-glass rounded-2xl border border-white/15 overflow-hidden">
+        <div className="liquid-glass rounded-3xl border border-white/15 overflow-hidden">
           <table className="w-full text-xs text-left">
-            <thead className="border-b border-white/10 text-zinc-400 uppercase font-mono bg-white/5">
+            <thead className="border-b border-white/10 text-zinc-400 uppercase font-sans font-semibold tracking-wider bg-white/5">
               <tr>
                 <th className="p-4">Mã GD</th>
                 <th className="p-4">Mã đơn hàng</th>
@@ -61,7 +61,7 @@ export const PaymentReconcilePage: React.FC = () => {
                   <td className="p-4 font-mono font-bold text-white">{t.id}</td>
                   <td className="p-4 font-mono text-zinc-300">#{t.orderCode}</td>
                   <td className="p-4 text-zinc-300 font-medium">{t.type}</td>
-                  <td className="p-4"><span className="px-2 py-0.5 rounded bg-white/10 text-white font-mono">{t.method}</span></td>
+                  <td className="p-4"><span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white font-sans font-medium">{t.method}</span></td>
                   <td className="p-4 font-mono text-zinc-400">{t.vnpayTxn}</td>
                   <td className="p-4 text-right font-bold text-emerald-400 num">{formatVND(t.amount)}</td>
                   <td className="p-4 text-center">

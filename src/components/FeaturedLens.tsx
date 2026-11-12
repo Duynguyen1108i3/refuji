@@ -83,8 +83,8 @@ export const FeaturedLens: React.FC<FeaturedLensProps> = ({ lenses, onSelectLens
                   {activeLens.description}
                 </p>
 
-                {/* Giá thuê & Thông số */}
-                <div className="w-full bg-[#14171f]/[0.025] border-l-3 border-l-[#14171f] p-3.5 sm:p-4 rounded-r-xl mb-6 text-xs sm:text-sm text-[#383e4e]">
+                {/* Giá thuê & Thông số — Chức năng: Đồng bộ khung bo tròn mềm & số tabular */}
+                <div className="w-full bg-[#14171f]/[0.025] border border-[#14171f]/10 border-l-4 border-l-[#14171f] p-3.5 sm:p-4 rounded-2xl mb-6 text-xs sm:text-sm text-[#383e4e] num">
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-1.5">
                     <span><strong>Giá thuê:</strong> {activeLens.dailyRate.toLocaleString('vi-VN')}₫ / ngày</span>
                     <span className="text-[#14171f]/20">•</span>
@@ -127,12 +127,12 @@ export const FeaturedLens: React.FC<FeaturedLensProps> = ({ lenses, onSelectLens
 
           {/* Cột phải: Khung ảnh ống kính viền lệch than tre 1px */}
           <div className="lg:col-span-5 flex flex-col items-center order-1 lg:order-2">
-            <div className="relative w-full max-w-[340px] sm:max-w-[380px]">
+            <div className="relative w-full max-w-[330px] sm:max-w-[360px]">
               {/* Khung viền lệch 1px than tre tinh tế */}
-              <div className="absolute -top-3.5 -right-3.5 w-full h-full border border-[#14171f]/20 pointer-events-none z-0 transition-transform duration-500 hover:-translate-x-1 hover:translate-y-1 rounded-2xl" />
+              <div className="absolute -top-3.5 -right-3.5 w-full h-full border border-[#14171f]/20 pointer-events-none z-0 transition-transform duration-500 hover:-translate-x-1 hover:translate-y-1 rounded-3xl" />
 
-              {/* Bục ảnh ống kính nền trắng tinh khôi */}
-              <div className="relative z-10 rounded-2xl overflow-hidden shadow-[0_16px_40px_rgba(20,24,32,0.1)] bg-white border border-[#14171f]/10 aspect-[4/3] flex items-center justify-center">
+              {/* Bục ảnh ống kính nền trắng tinh khôi cỡ vuông */}
+              <div className="relative z-10 rounded-3xl overflow-hidden shadow-[0_16px_40px_rgba(20,24,32,0.1)] bg-white border border-[#14171f]/10 aspect-square flex items-center justify-center p-4">
                 <motion.img 
                   key={activeLens.id}
                   src={activeLens.image} 

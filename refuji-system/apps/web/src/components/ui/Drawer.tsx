@@ -34,7 +34,7 @@ export const Drawer: React.FC<DrawerProps> = ({
 
   const positionStyles = {
     right: 'inset-y-0 right-0 max-w-md w-full border-l border-white/15',
-    bottom: 'inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl border-t border-white/15'
+    bottom: 'inset-x-0 bottom-0 max-h-[85vh] rounded-t-3xl border-t border-white/15'
   };
 
   return (
@@ -53,7 +53,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           <button
             onClick={onClose}
             aria-label="Đóng bảng"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
+            className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

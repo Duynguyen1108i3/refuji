@@ -52,9 +52,9 @@ export const CustomerManagePage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-2">QUẢN LÝ HỒ SƠ KHÁCH HÀNG</h1>
         <p className="text-xs text-zinc-400 mb-8">Tra cứu điểm uy tín, lịch sử vi phạm hợp đồng và quyền kích hoạt tài khoản</p>
 
-        <div className="liquid-glass rounded-2xl border border-white/15 overflow-hidden">
+        <div className="liquid-glass rounded-3xl border border-white/15 overflow-hidden">
           <table className="w-full text-xs text-left">
-            <thead className="border-b border-white/10 text-zinc-400 uppercase font-mono bg-white/5">
+            <thead className="border-b border-white/10 text-zinc-400 uppercase font-sans font-semibold tracking-wider bg-white/5">
               <tr>
                 <th className="p-4">Họ và tên</th>
                 <th className="p-4">Liên hệ</th>
@@ -89,7 +89,7 @@ export const CustomerManagePage: React.FC = () => {
                       <span className="text-zinc-200 block">{c.phone}</span>
                       <span className="text-zinc-500 text-[11px]">{c.email}</span>
                     </td>
-                    <td className="p-4 font-mono text-zinc-300">**** **** {c.idCardLast4}</td>
+                    <td className="p-4 font-sans num text-zinc-300">**** **** {c.idCardLast4}</td>
                     <td className="p-4"><MembershipTierBadge tier={c.tier} /></td>
                     <td className="p-4 text-center">
                       <span className={`font-bold num ${c.reputationScore >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -98,15 +98,15 @@ export const CustomerManagePage: React.FC = () => {
                     </td>
                     <td className="p-4 text-center">
                       {c.isActive ? (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Hoạt động</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Hoạt động</span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400">Đã khóa</span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400">Đã khóa</span>
                       )}
                     </td>
                     <td className="p-4 text-center">
                       <button
                         onClick={() => toggleStatus(c.id)}
-                        className={`text-xs font-semibold px-3 py-1 rounded-lg border transition-colors ${
+                        className={`text-xs font-semibold px-3.5 py-1.5 rounded-full border transition-colors ${
                           c.isActive
                             ? 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10'
                             : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'

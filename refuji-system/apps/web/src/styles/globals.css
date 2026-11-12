@@ -83,6 +83,11 @@
   outline-offset: 2px;
 }
 
+/* Tính năng: Đồng bộ font chữ hệ thống Plus Jakarta Sans toàn cục */
+body {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+}
+
 /* Typography Enhancements for Vietnamese Glyph support */
 h1, h2, h3, .font-serif {
   text-wrap: balance;

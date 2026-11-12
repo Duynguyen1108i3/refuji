@@ -40,33 +40,34 @@ export const ClientLayout: React.FC<ClientLayoutProps> = ({
             : 'bg-transparent py-5'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4">
+          {/* Tính năng: Đồng bộ font Plus Jakarta Sans, bo tròn nút & căn giữa tuyệt đối thanh menu desktop */}
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-[#00805e] flex items-center justify-center text-white shadow-lg shadow-emerald-950/40 group-hover:scale-105 transition-transform">
+          <a href="/" className="justify-self-start flex items-center gap-2.5 group shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-[#00805e] flex items-center justify-center text-white shadow-lg shadow-emerald-950/40 group-hover:scale-105 transition-transform">
               <Camera className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
               <span className="font-serif text-2xl font-bold tracking-wider text-white">REFUJI</span>
-              <span className="text-[10px] tracking-widest text-zinc-400 uppercase font-mono">Fujifilm Rental</span>
+              <span className="text-[10px] tracking-widest text-zinc-400 uppercase font-sans font-medium">Fujifilm Rental</span>
             </div>
           </a>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-300" aria-label="Menu chính">
+          <nav className="hidden md:flex justify-self-center items-center gap-6 lg:gap-8 text-sm font-medium text-zinc-300 whitespace-nowrap" aria-label="Menu chính">
             <a href="/" className="hover:text-emerald-400 transition-colors">Trang chủ</a>
-            <a href="/catalog" className="hover:text-emerald-400 transition-colors">Thiết bị & Ống kính</a>
+            <a href="/catalog" className="hover:text-emerald-400 transition-colors">Thiết bị &amp; Ống kính</a>
             <a href="/membership" className="hover:text-emerald-400 transition-colors">Đặc quyền Hạng</a>
-            <a href="/policies" className="hover:text-emerald-400 transition-colors">Chính sách & Cọc</a>
+            <a href="/policies" className="hover:text-emerald-400 transition-colors">Chính sách &amp; Cọc</a>
           </nav>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-3">
+          <div className="justify-self-end flex items-center gap-3 shrink-0">
             {/* Cart / Booking Bag */}
             <a
               href="/checkout"
               aria-label={`Giỏ thiết bị: ${cartCount} món`}
-              className="relative p-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-zinc-200 transition-colors"
+              className="relative p-2.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-zinc-200 transition-colors"
             >
               <ShoppingBag className="w-5 h-5" />
               {cartCount > 0 && (
@@ -80,7 +81,7 @@ export const ClientLayout: React.FC<ClientLayoutProps> = ({
             {userName ? (
               <a
                 href="/profile"
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-sm font-medium text-white transition-colors"
+                className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 text-sm font-medium text-white transition-colors"
               >
                 <UserIcon className="w-4 h-4 text-emerald-400" />
                 <span className="max-w-[120px] truncate">{userName}</span>
@@ -101,7 +102,7 @@ export const ClientLayout: React.FC<ClientLayoutProps> = ({
             {/* Mobile menu hamburger */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2.5 rounded-xl border border-white/15 bg-white/5 text-zinc-200"
+              className="md:hidden p-2.5 rounded-full border border-white/15 bg-white/5 text-zinc-200"
               aria-label="Mở menu di động"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -136,13 +137,13 @@ export const ClientLayout: React.FC<ClientLayoutProps> = ({
           {/* Col 1: Brand & Showroom Contact */}
           <div className="md:col-span-1 flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
                 <Camera className="w-4 h-4" />
               </div>
               <span className="font-serif text-xl font-bold text-white tracking-wide">REFUJI</span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed mt-1">
-              Hệ thống cho thuê máy ảnh & ống kính Fujifilm chính hãng. Đặt cọc linh hoạt theo hạng thành viên, bàn giao máy kiểm định kỹ thuật 2 chiều minh bạch.
+              Hệ thống cho thuê máy ảnh &amp; ống kính Fujifilm chính hãng. Đặt cọc linh hoạt theo hạng thành viên, bàn giao máy kiểm định kỹ thuật 2 chiều minh bạch.
             </p>
             <div className="flex flex-col gap-2 mt-2 text-xs text-zinc-300">
               <div className="flex items-start gap-2">
@@ -166,34 +167,35 @@ export const ClientLayout: React.FC<ClientLayoutProps> = ({
 
           {/* Col 2: Danh mục thiết bị */}
           <div className="flex flex-col gap-2.5">
-            <h3 className="text-xs uppercase font-mono tracking-widest text-white font-semibold mb-1">Thiết bị cho thuê</h3>
+            <h3 className="text-xs uppercase font-sans tracking-widest text-white font-semibold mb-1">Thiết bị cho thuê</h3>
             <a href="/catalog?cat=BODY" className="text-xs hover:text-emerald-400 transition-colors">Thân máy Fujifilm X-Series</a>
             <a href="/catalog?cat=BODY&mount=G" className="text-xs hover:text-emerald-400 transition-colors">Medium Format GFX System</a>
             <a href="/catalog?cat=BODY&mount=FIXED" className="text-xs hover:text-emerald-400 transition-colors">Compact Street X100 Series</a>
             <a href="/catalog?cat=LENS" className="text-xs hover:text-emerald-400 transition-colors">Ống kính Fujinon XF / GF Prime</a>
-            <a href="/catalog?cat=ACCESSORY" className="text-xs hover:text-emerald-400 transition-colors">Phụ kiện Pin, Sạc kép & Kính lọc ND</a>
+            <a href="/catalog?cat=ACCESSORY" className="text-xs hover:text-emerald-400 transition-colors">Phụ kiện Pin, Thẻ nhớ, Flash, Mic &amp; Gimbal</a>
           </div>
 
           {/* Col 3: Chính sách & Pháp lý */}
           <div className="flex flex-col gap-2.5">
-            <h3 className="text-xs uppercase font-mono tracking-widest text-white font-semibold mb-1">Chính sách & Cọc</h3>
-            <a href="/policies#deposit" className="text-xs hover:text-emerald-400 transition-colors">Biểu phí cọc & Hoàn tiền ngay</a>
-            <a href="/policies#late-fee" className="text-xs hover:text-emerald-400 transition-colors">Quy định trả trễ & Phí bồi thường</a>
+            <h3 className="text-xs uppercase font-sans tracking-widest text-white font-semibold mb-1">Chính sách &amp; Cọc</h3>
+            <a href="/policies#deposit" className="text-xs hover:text-emerald-400 transition-colors">Biểu phí cọc &amp; Hoàn tiền ngay</a>
+            <a href="/policies#late-fee" className="text-xs hover:text-emerald-400 transition-colors">Quy định trả trễ &amp; Phí bồi thường</a>
             <a href="/policies#privacy" className="text-xs hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-zinc-300">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>Bảo vệ Dữ liệu Cá nhân 2025</span>
             </a>
             <a href="/policies#inspection" className="text-xs hover:text-emerald-400 transition-colors">Quy trình thẩm định Serial 2 chiều</a>
-            <a href="/membership" className="text-xs hover:text-emerald-400 transition-colors">Đặc quyền Thẻ Vàng & Bạch Kim</a>
+            <a href="/membership" className="text-xs hover:text-emerald-400 transition-colors">Đặc quyền Thẻ Vàng &amp; Bạch Kim</a>
+            <a href="/orders#guest-lookup" className="text-xs hover:text-emerald-400 transition-colors">Tra cứu đơn hàng</a>
           </div>
 
           {/* Col 4: Cam kết & Pháp lý */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-xs uppercase font-mono tracking-widest text-white font-semibold mb-1">Cam kết tiêu chuẩn</h3>
+            <h3 className="text-xs uppercase font-sans tracking-widest text-white font-semibold mb-1">Cam kết tiêu chuẩn</h3>
             <p className="text-xs text-zinc-400 leading-relaxed">
               100% thiết bị Fujifilm chính hãng được kiểm tra cảm biến, nút bấm cơ học và cập nhật firmware mới nhất trước mỗi lượt bàn giao.
             </p>
-            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-zinc-300">
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs text-zinc-300">
               <span className="font-semibold text-emerald-400 block mb-0.5">Giữ chỗ 15 phút an toàn</span>
               Hệ thống tự động khóa giữ máy 15 phút trong khi thanh toán cọc online qua VNPAY.
             </div>
@@ -202,12 +204,12 @@ export const ClientLayout: React.FC<ClientLayoutProps> = ({
 
         {/* Bottom copyright line */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-          <p>© 2026 REFUJI Camera Rental Services. Giấy chứng nhận ĐKKD số 0318923456 do Sở KH&ĐT TP.HCM cấp.</p>
+          <p className="num">© 2026 REFUJI Camera Rental Services. Giấy chứng nhận ĐKKD số 0318923456 do Sở KH&amp;ĐT TP.HCM cấp.</p>
           <div className="flex items-center gap-6">
             <a href="/terms" className="hover:text-zinc-300">Điều khoản sử dụng</a>
             <a href="/privacy" className="hover:text-zinc-300">Chính sách bảo mật</a>
             <span className="text-zinc-600">|</span>
-            <span className="text-emerald-500/80 font-mono">Status: All Systems Operational</span>
+            <span className="text-emerald-500/80 font-sans font-medium">Status: All Systems Operational</span>
           </div>
         </div>
       </footer>

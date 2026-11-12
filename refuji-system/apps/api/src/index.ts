@@ -6,8 +6,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { initDatabase, db } from './db.js';
 import { authRouter, meRouter } from './modules/auth/auth.routes.js';
-import { ordersRouter } from './modules/orders/orders.routes.js';
+import { ordersRouter, adminOrdersRouter } from './modules/orders/orders.routes.js';
 import { catalogRouter } from './modules/catalog/catalog.routes.js';
+import { cartRouter } from './modules/cart/cart.routes.js';
+import { adminRouter } from './modules/admin/index.js';
+import { startBackgroundCronScheduler } from './modules/admin/cron.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,10 +37,11 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
 
 // Khởi tạo Database SQLite ReFuji v1.1
 initDatabase();
+startBackgroundCronScheduler();
 
 // 1. Health check
 app.get(['/api/health', '/api/v1/health'], (_req, res) => {
@@ -48,7 +52,10 @@ app.get(['/api/health', '/api/v1/health'], (_req, res) => {
 app.use(['/api/auth', '/api/v1/auth'], authRouter);
 app.use(['/api/users', '/api/v1/users'], meRouter);
 app.use(['/api/orders', '/api/v1/orders'], ordersRouter);
+app.use(['/api/admin/orders', '/api/v1/admin/orders'], adminOrdersRouter);
+app.use(['/api/admin', '/api/v1/admin'], adminRouter);
 app.use(['/api/models', '/api/v1/models'], catalogRouter);
+app.use(['/api/cart', '/api/v1/cart'], cartRouter);
 
 // Start API server
 const server = app.listen(PORT, () => {
@@ -58,6 +65,7 @@ const server = app.listen(PORT, () => {
   console.log(`   - Users:  http://localhost:${PORT}/api/users/me`);
   console.log(`   - Orders: http://localhost:${PORT}/api/orders`);
   console.log(`   - Models: http://localhost:${PORT}/api/models`);
+  console.log(`   - Cart:   http://localhost:${PORT}/api/cart`);
 });
 
 process.on('SIGTERM', async () => {

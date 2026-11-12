@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw, Check, Clock } from 'lucide-react';
+import {
+  POPUP_BACKDROP_CLASS,
+  POPUP_FRAME_CLASS,
+  POPUP_INNER_CLASS,
+  POPUP_CLOSE_BUTTON_CLASS,
+  getBackdropDismissProps,
+} from './ui/popupTheme';
 
 interface CalendarModalProps {
   isOpen: boolean;
@@ -154,13 +161,15 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
     return `${d} Th${m}, ${y}`;
   };
 
+  // Tính năng: Quy chuẩn khung popup Chọn lịch về cố định 1 khung chung toàn dự án
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/40 backdrop-blur-xl"
+      {...getBackdropDismissProps(onClose)}
+      className={`${POPUP_BACKDROP_CLASS} z-[110]`}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.94, y: 20 }}
@@ -168,19 +177,20 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-white border border-[#14171f]/10 rounded-3xl p-5 sm:p-7 shadow-[0_24px_70px_rgba(20,24,32,0.18)] text-[#14171f] flex flex-col h-[650px] max-h-[92vh] overflow-hidden justify-between select-text"
+        className={POPUP_FRAME_CLASS}
       >
+        <div className={POPUP_INNER_CLASS}>
         {/* NÚT ĐÓNG (X) DẠNG TRÒN */}
         <button
           onClick={onClose}
           aria-label="Đóng popup lịch"
-          className="absolute top-5 right-5 z-20 w-9 h-9 rounded-full bg-[#14171f]/[0.05] hover:bg-[#14171f]/[0.1] border border-[#14171f]/10 text-[#14171f] flex items-center justify-center transition-all cursor-pointer active:scale-90"
+          className={POPUP_CLOSE_BUTTON_CLASS}
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
         {/* HEADER: Tiêu đề Chọn ngày thuê */}
-        <div className="pb-4 border-b border-[#14171f]/10 pr-12">
+        <div className="px-6 sm:px-8 py-5 pb-4 border-b border-[#14171f]/10 pr-14 shrink-0">
           <div className="flex items-center gap-2">
             <CalendarIcon size={18} className="text-[#14171f]" />
             <h3 className="font-serif text-xl sm:text-2xl text-[#14171f] font-medium">
@@ -192,12 +202,12 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
           </p>
         </div>
 
-        {/* NỘI DUNG CHÍNH */}
-        <div className="overflow-y-auto py-4 flex-1">
+        {/* NỘI DUNG CHÍNH — Chức năng: Đồng bộ khung lịch rounded-3xl, nút tháng rounded-full & số tabular */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-8 py-5 num">
           {/* 1. HAI Ô HIỂN THỊ NGÀY NHẬN & NGÀY TRẢ */}
           <div className="grid grid-cols-2 gap-3 mb-5">
             <div
-              className={`p-3 rounded-2xl border transition-all ${
+              className={`p-3.5 rounded-3xl border transition-all ${
                 !endDateStr
                   ? 'border-[#14171f] bg-[#14171f]/[0.05] text-[#14171f] shadow-sm'
                   : 'border-[#14171f]/12 bg-[#f7f8fa] text-[#444a59]'
@@ -213,7 +223,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
             </div>
 
             <div
-              className={`p-3 rounded-2xl border transition-all ${
+              className={`p-3.5 rounded-3xl border transition-all ${
                 endDateStr
                   ? 'border-[#14171f] bg-[#14171f]/[0.05] text-[#14171f] shadow-sm'
                   : 'border-[#14171f]/12 bg-[#f7f8fa] text-[#444a59]'
@@ -230,7 +240,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
           </div>
 
           {/* 2. BỐ CỤC CHÍNH 2 CỘT: CỘT THÁNG BÊN TRÁI & LƯỚI LỊCH BÊN PHẢI */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 border border-[#14171f]/10 rounded-2xl p-4 bg-[#f7f8fa]">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 border border-[#14171f]/10 rounded-3xl p-4 bg-[#f7f8fa]">
             
             {/* Cột trái (4 cols): Danh sách tháng */}
             <div className="md:col-span-4 border-b md:border-b-0 md:border-r border-[#14171f]/10 pb-3 md:pb-0 md:pr-4 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible">
@@ -247,7 +257,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                       setCurrentYear(m.year);
                       setCurrentMonth(m.monthIndex);
                     }}
-                    className={`relative text-left px-3 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all shrink-0 cursor-pointer ${
+                    className={`relative text-left px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all shrink-0 cursor-pointer ${
                       isSelected
                         ? 'text-white font-bold shadow-sm'
                         : 'text-[#525868] hover:text-[#14171f] hover:bg-[#14171f]/[0.05]'
@@ -262,7 +272,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
                           damping: 32,
                           mass: 0.8,
                         }}
-                        className="absolute inset-0 rounded-xl bg-[#14171f] -z-10"
+                        className="absolute inset-0 rounded-full bg-[#14171f] -z-10"
                       />
                     )}
                     <span className="relative z-10">{m.name} {m.year !== 2026 && `(${m.year})`}</span>
@@ -377,7 +387,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
         </div>
 
         {/* FOOTER THANH DƯỚI */}
-        <div className="pt-4 border-t border-[#14171f]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="px-6 sm:px-8 py-4 border-t border-[#14171f]/10 bg-white shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           {/* Hiển thị số ngày thuê */}
           <div className="flex items-center gap-2">
             <span className="text-base sm:text-lg font-serif font-bold text-[#14171f] tracking-wide">
@@ -410,6 +420,7 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
               <span>Áp dụng lịch</span>
             </button>
           </div>
+        </div>
         </div>
 
       </motion.div>

@@ -10,26 +10,65 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refuji_refresh_sec
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
-// Rate Limiting in-memory chống tấn công Brute Force
-const loginAttempts: Record<string, { count: number; lastAttempt: number }> = {};
+// Rate Limiting in-memory chống tấn công Brute Force & spam bcrypt
+const LOGIN_RATE_WINDOW_MS = 5 * 60 * 1000;
+const REGISTER_RATE_WINDOW_MS = 15 * 60 * 1000;
 
-const checkRateLimit = (ip: string): boolean => {
+interface RateLimitEntry {
+  count: number;
+  windowStart: number;
+  lastAttempt: number;
+}
+
+const loginFailedAttempts: Record<string, RateLimitEntry> = {};
+const registerAttempts: Record<string, RateLimitEntry> = {};
+
+const formatCooldownMessage = (prefix: string, remainingSec: number): string => {
+  if (remainingSec >= 60) {
+    return `${prefix} Vui lòng thử lại sau ${Math.ceil(remainingSec / 60)} phút.`;
+  }
+  return `${prefix} Vui lòng thử lại sau ${remainingSec} giây.`;
+};
+
+const getRateLimitRemainingSec = (
+  key: string,
+  bucket: Record<string, RateLimitEntry>,
+  maxAttempts: number,
+  windowMs: number
+): number => {
   const now = Date.now();
-  const attempt = loginAttempts[ip];
-  if (!attempt) {
-    loginAttempts[ip] = { count: 1, lastAttempt: now };
-    return true;
+  const attempt = bucket[key];
+  if (!attempt) return 0;
+  if (now - attempt.windowStart > windowMs) {
+    delete bucket[key];
+    return 0;
   }
-  if (now - attempt.lastAttempt > 15 * 60 * 1000) {
-    loginAttempts[ip] = { count: 1, lastAttempt: now };
-    return true;
+  if (attempt.count >= maxAttempts) {
+    return Math.max(1, Math.ceil((windowMs - (now - attempt.windowStart)) / 1000));
   }
-  if (attempt.count >= 10) {
-    return false; // Throttled
+  return 0;
+};
+
+const recordRateLimitAttempt = (
+  key: string,
+  bucket: Record<string, RateLimitEntry>,
+  windowMs: number
+): void => {
+  const now = Date.now();
+  const attempt = bucket[key];
+  if (!attempt || now - attempt.windowStart > windowMs) {
+    bucket[key] = { count: 1, windowStart: now, lastAttempt: now };
+    return;
   }
-  attempt.count++;
+  attempt.count += 1;
   attempt.lastAttempt = now;
-  return true;
+};
+
+const clearRateLimitAttempts = (
+  key: string,
+  bucket: Record<string, RateLimitEntry>
+): void => {
+  delete bucket[key];
 };
 
 /**
@@ -95,7 +134,24 @@ export function syncAndEvaluateUserTier(userId: number) {
  * Đăng ký tài khoản người dùng THỰC TẾ (Bcrypt hash + SQLite Persistent Database)
  * Bắt buộc kèm cờ privacy_consent = true theo Luật Bảo vệ DLCN 2025
  */
+// Tính năng: Gắn Rate Limit bảo vệ endpoint đăng ký tài khoản (bcrypt cost 12) khỏi spam
 authRouter.post('/register', async (req: Request, res: Response) => {
+  const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+  const registerCooldownSec = getRateLimitRemainingSec(
+    clientIp,
+    registerAttempts,
+    10,
+    REGISTER_RATE_WINDOW_MS
+  );
+  if (registerCooldownSec > 0) {
+    res.set('Retry-After', String(registerCooldownSec));
+    return res.status(429).json({
+      message: formatCooldownMessage('Bạn đã gửi quá nhiều yêu cầu đăng ký.', registerCooldownSec),
+      retryAfterSeconds: registerCooldownSec,
+    });
+  }
+  recordRateLimitAttempt(clientIp, registerAttempts, REGISTER_RATE_WINDOW_MS);
+
   try {
     const { full_name, email, phone, password, confirm_password, privacy_consent } = req.body;
 
@@ -205,9 +261,20 @@ authRouter.post('/register', async (req: Request, res: Response) => {
 authRouter.post('/login', async (req: Request, res: Response) => {
   const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
 
-  if (!checkRateLimit(clientIp)) {
+  const loginCooldownSec = getRateLimitRemainingSec(
+    clientIp,
+    loginFailedAttempts,
+    10,
+    LOGIN_RATE_WINDOW_MS
+  );
+  if (loginCooldownSec > 0) {
+    res.set('Retry-After', String(loginCooldownSec));
     return res.status(429).json({
-      message: 'Bạn đã thử đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.',
+      message: formatCooldownMessage(
+        'Bạn đã nhập sai thông tin đăng nhập quá nhiều lần.',
+        loginCooldownSec
+      ),
+      retryAfterSeconds: loginCooldownSec,
     });
   }
 
@@ -226,9 +293,12 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       FROM users WHERE email = ?
     `).get(trimmedEmail) as any;
 
-    // Chống User Enumeration: thông báo chung nếu không tìm thấy
+    // Chống User Enumeration: thông báo chung nếu không tìm thấy (chỉ đếm Rate Limit khi thất bại)
     if (!user) {
-      return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
+      recordRateLimitAttempt(clientIp, loginFailedAttempts, LOGIN_RATE_WINDOW_MS);
+      return res.status(401).json({
+        message: 'Email hoặc mật khẩu không chính xác (lưu ý phân biệt chữ hoa/thường).',
+      });
     }
 
     // 2. So sánh mật khẩu bằng Bcrypt (hỗ trợ cả Test@1188 và test@123 cho tài khoản quản trị fuji@refuji.vn)
@@ -237,12 +307,18 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       isMatch = true;
     }
     if (!isMatch) {
-      return res.status(401).json({ message: 'Email hoặc mật khẩu không chính xác' });
+      recordRateLimitAttempt(clientIp, loginFailedAttempts, LOGIN_RATE_WINDOW_MS);
+      return res.status(401).json({
+        message: 'Email hoặc mật khẩu không chính xác (lưu ý phân biệt chữ hoa/thường).',
+      });
     }
 
     if (!user.is_active) {
       return res.status(403).json({ message: 'Tài khoản của bạn tạm thời bị khóa. Vui lòng liên hệ hỗ trợ.' });
     }
+
+    // Đăng nhập hợp lệ -> Xóa bộ đếm sai mật khẩu ngay để không cộng dồn oan
+    clearRateLimitAttempts(clientIp, loginFailedAttempts);
 
     // 3. Ký Access Token & Refresh Token thật
     const accessToken = jwt.sign(

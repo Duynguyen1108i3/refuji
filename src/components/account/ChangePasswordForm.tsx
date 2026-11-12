@@ -59,21 +59,22 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onCloseF
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 rounded-2xl bg-neutral-50 border border-[#14171f]/15 space-y-3">
+    <form onSubmit={handleSubmit} className="p-4 sm:p-5 rounded-3xl bg-neutral-50 border border-[#14171f]/15 space-y-3">
+      {/* Tính năng: Bo tròn pill cho các input, nút toggle mật khẩu & button hành động */}
       <div className="flex items-center gap-2 text-xs font-bold text-[#14171f] border-b pb-2">
         <KeyRound size={14} />
         <span>Thay Đổi Mật Khẩu Đăng Nhập</span>
       </div>
 
       {passwordError && (
-        <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+        <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
           <AlertCircle size={14} className="shrink-0" />
           <span>{passwordError}</span>
         </div>
       )}
 
       {passwordSuccess && (
-        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+        <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
           <CheckCircle2 size={14} className="shrink-0 text-emerald-600" />
           <span>{passwordSuccess}</span>
         </div>
@@ -90,13 +91,13 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onCloseF
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="Nhập mật khẩu đang dùng"
-              className="w-full px-3.5 py-2 rounded-xl bg-white border border-neutral-300 focus:outline-none focus:border-[#14171f] text-xs pr-9"
+              className="w-full px-4 py-2.5 rounded-full bg-white border border-neutral-300 focus:outline-none focus:border-[#14171f] text-xs pr-10"
               required
             />
             <button
               type="button"
               onClick={() => setShowCurrentPass(!showCurrentPass)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
             >
               {showCurrentPass ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
@@ -113,13 +114,13 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onCloseF
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Nhập mật khẩu mới"
-              className="w-full px-3.5 py-2 rounded-xl bg-white border border-neutral-300 focus:outline-none focus:border-[#14171f] text-xs pr-9"
+              className="w-full px-4 py-2.5 rounded-full bg-white border border-neutral-300 focus:outline-none focus:border-[#14171f] text-xs pr-10"
               required
             />
             <button
               type="button"
               onClick={() => setShowNewPass(!showNewPass)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
             >
               {showNewPass ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
@@ -136,13 +137,13 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onCloseF
               value={confirmNewPassword}
               onChange={(e) => setConfirmNewPassword(e.target.value)}
               placeholder="Nhập lại mật khẩu mới"
-              className="w-full px-3.5 py-2 rounded-xl bg-white border border-neutral-300 focus:outline-none focus:border-[#14171f] text-xs pr-9"
+              className="w-full px-4 py-2.5 rounded-full bg-white border border-neutral-300 focus:outline-none focus:border-[#14171f] text-xs pr-10"
               required
             />
             <button
               type="button"
               onClick={() => setShowConfirmPass(!showConfirmPass)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
             >
               {showConfirmPass ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
@@ -153,14 +154,14 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onCloseF
           <button
             type="button"
             onClick={onCloseForm}
-            className="px-4 py-2 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 font-medium text-xs text-neutral-700 cursor-pointer"
+            className="px-4 py-2 rounded-full bg-neutral-200/80 hover:bg-neutral-300 font-medium text-xs text-neutral-700 cursor-pointer"
           >
             Hủy
           </button>
           <button
             type="submit"
             disabled={isChangingPass}
-            className="px-5 py-2 rounded-xl bg-[#14171f] hover:bg-[#252a37] text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-5 py-2 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white font-medium text-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             {isChangingPass && <Loader2 size={13} className="animate-spin" />}
             <span>Lưu mật khẩu mới</span>

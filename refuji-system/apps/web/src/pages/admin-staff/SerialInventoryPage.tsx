@@ -28,9 +28,9 @@ export const SerialInventoryPage: React.FC = () => {
           </Button>
         </div>
 
-        <div className="liquid-glass rounded-2xl border border-white/15 overflow-hidden">
+        <div className="liquid-glass rounded-3xl border border-white/15 overflow-hidden">
           <table className="w-full text-xs text-left">
-            <thead className="border-b border-white/10 text-zinc-400 uppercase font-mono bg-white/5">
+            <thead className="border-b border-white/10 text-zinc-400 uppercase font-sans font-semibold tracking-wider bg-white/5">
               <tr>
                 <th className="p-4">Mã Serial</th>
                 <th className="p-4">Thuộc Mẫu Máy</th>
@@ -49,7 +49,9 @@ export const SerialInventoryPage: React.FC = () => {
                   <td className="p-4 text-center num">{s.condition}%</td>
                   <td className="p-4"><StatusBadge status={s.status} type="item" /></td>
                   <td className="p-4 text-center">
-                    <button className="text-xs text-emerald-400 hover:underline">Lập phiếu vệ sinh</button>
+                    <button className="text-xs font-medium text-emerald-400 px-3 py-1 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors cursor-pointer">
+                      Lập phiếu vệ sinh
+                    </button>
                   </td>
                 </tr>
               ))}

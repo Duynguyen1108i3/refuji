@@ -39,9 +39,9 @@ export const AuditLogsViewerPage: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-2">NHẬT KÝ HỆ THỐNG (AUDIT LOGS)</h1>
         <p className="text-xs text-zinc-400 mb-8">Ghi vết bảo mật mọi thay đổi dữ liệu, sự kiện Webhook và tác vụ Cron ngầm</p>
 
-        <div className="liquid-glass rounded-2xl border border-white/15 overflow-hidden">
+        <div className="liquid-glass rounded-3xl border border-white/15 overflow-hidden">
           <table className="w-full text-xs text-left">
-            <thead className="border-b border-white/10 text-zinc-400 uppercase font-mono bg-white/5">
+            <thead className="border-b border-white/10 text-zinc-400 uppercase font-sans font-semibold tracking-wider bg-white/5">
               <tr>
                 <th className="p-4">Thời gian</th>
                 <th className="p-4">Hành động</th>
@@ -50,17 +50,17 @@ export const AuditLogsViewerPage: React.FC = () => {
                 <th className="p-4">Chi tiết thay đổi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 font-mono">
+            <tbody className="divide-y divide-white/5">
               {logs.map((log) => (
                 <tr key={log.id} className="hover:bg-white/[0.02]">
-                  <td className="p-4 text-zinc-400">{log.time}</td>
+                  <td className="p-4 text-zinc-400 font-sans num">{log.time}</td>
                   <td className="p-4">
-                    <span className="px-2 py-0.5 rounded bg-white/10 text-emerald-400 font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-emerald-400 font-mono font-bold">
                       {log.action}
                     </span>
                   </td>
-                  <td className="p-4 text-zinc-200">{log.entity}</td>
-                  <td className="p-4 text-zinc-400">{log.actor}</td>
+                  <td className="p-4 text-zinc-200 font-mono">{log.entity}</td>
+                  <td className="p-4 text-zinc-400 font-mono">{log.actor}</td>
                   <td className="p-4 text-zinc-300 font-sans">{log.details}</td>
                 </tr>
               ))}

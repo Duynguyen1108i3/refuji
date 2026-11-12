@@ -12,10 +12,17 @@ export interface RentalOrderDetailEntity {
   item?: ProductItemEntity;
 }
 
+// Tính năng: Mở rộng kiểu dữ liệu đơn thuê hỗ trợ khách vãng lai (userId nullable và thông tin liên hệ khách)
 export interface RentalOrderEntity {
   id: number;
   orderCode: string;
-  userId: number;
+  userId: number | null;
+  isGuest?: boolean;
+  guestName?: string | null;
+  guestPhone?: string | null;
+  guestEmail?: string | null;
+  guestNote?: string | null;
+  paymentMethod?: string | null;
   status: OrderStatus;
   rentalStartDate: string; // ISO 8601
   rentalEndDate: string; // ISO 8601

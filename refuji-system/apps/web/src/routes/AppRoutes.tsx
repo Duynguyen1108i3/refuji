@@ -51,15 +51,19 @@ export const AppRoutes: React.FC = () => {
 
   const [cartCount, setCartCount] = useState<number>(() => {
     try {
-      const rawUser = localStorage.getItem('refuji_auth_user');
-      if (!rawUser) return 0;
+      const rawGuestCart = localStorage.getItem('refuji_guest_cart_items');
+      if (rawGuestCart) {
+        const items = JSON.parse(rawGuestCart);
+        return Array.isArray(items) ? items.reduce((acc: number, c: any) => acc + (c.quantity || 1), 0) : 0;
+      }
       const rawCart = localStorage.getItem('refuji_cart_items');
-      if (!rawCart) return 0;
-      const items = JSON.parse(rawCart);
-      return Array.isArray(items) ? items.reduce((acc: number, c: any) => acc + (c.quantity || 1), 0) : 0;
-    } catch (_) {
-      return 0;
-    }
+      const rawCartUser = localStorage.getItem('refuji_cart_user_id');
+      if (rawCart && !rawCartUser) {
+        const items = JSON.parse(rawCart);
+        return Array.isArray(items) ? items.reduce((acc: number, c: any) => acc + (c.quantity || 1), 0) : 0;
+      }
+    } catch (_) {}
+    return 0;
   });
 
   useEffect(() => {
@@ -67,6 +71,22 @@ export const AppRoutes: React.FC = () => {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  useEffect(() => {
+    if (!userName) return;
+    const token = localStorage.getItem('refuji_token');
+    fetch('/api/cart', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.totalQuantity === 'number') {
+          setCartCount(data.totalQuantity);
+        }
+      })
+      .catch(() => {});
+  }, [userName, currentPath]);
 
   // Auth pages (no ClientLayout wrapper)
   if (currentPath === '/login') return <LoginPage />;
@@ -106,7 +126,7 @@ export const AppRoutes: React.FC = () => {
     <ClientLayout
       userTier={userTier}
       userName={userName}
-      cartCount={userName ? cartCount : 0}
+      cartCount={cartCount}
       onOpenAuth={() => (window.location.href = '/login')}
     >
       {renderClientPage()}

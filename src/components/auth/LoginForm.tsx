@@ -95,6 +95,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         </div>
       )}
 
+      {/* Tính năng: Bo tròn pill cho toàn bộ input, nút ẩn/hiện mật khẩu & giữ checkbox bo nhẹ */}
       <form onSubmit={handleSubmit} className="space-y-4 pt-1" noValidate>
         {/* Field: Email */}
         <div className="space-y-1.5">
@@ -102,7 +103,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             Địa chỉ Email <span className="text-[var(--refuji-accent-rose)]">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
               <Mail size={16} />
             </span>
             <input
@@ -117,7 +118,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 setFormData({ ...formData, email: e.target.value });
                 if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
               }}
-              className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
+              className="w-full pl-11 pr-4 py-2.5 text-xs sm:text-sm rounded-full outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
               style={{
                 backgroundColor: 'var(--refuji-input-bg)',
                 color: 'var(--refuji-text-primary)',
@@ -140,7 +141,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             Mật khẩu <span className="text-[var(--refuji-accent-rose)]">*</span>
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[var(--refuji-text-muted)]">
               <Lock size={16} />
             </span>
             <input
@@ -156,7 +157,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 setFormData({ ...formData, password: e.target.value });
                 if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
               }}
-              className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-2xl outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
+              className="w-full pl-11 pr-11 py-2.5 text-xs sm:text-sm rounded-full outline-none transition-all placeholder:text-[var(--refuji-input-placeholder)]"
               style={{
                 backgroundColor: 'var(--refuji-input-bg)',
                 color: 'var(--refuji-text-primary)',
@@ -169,7 +170,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               type="button"
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--refuji-text-muted)] hover:text-[var(--refuji-text-primary)] cursor-pointer"
+              className="absolute inset-y-0 right-1.5 my-auto w-8 h-8 rounded-full flex items-center justify-center text-[var(--refuji-text-muted)] hover:text-[var(--refuji-text-primary)] hover:bg-black/5 transition-colors cursor-pointer"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -188,7 +189,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               type="checkbox"
               checked={formData.remember_me}
               onChange={(e) => setFormData({ ...formData, remember_me: e.target.checked })}
-              className="w-4 h-4 rounded accent-[#14171f] cursor-pointer"
+              className="w-4 h-4 rounded-md accent-[#14171f] cursor-pointer"
             />
             <span>Ghi nhớ đăng nhập</span>
           </label>

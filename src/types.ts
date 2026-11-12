@@ -8,11 +8,22 @@ export interface ProductItem {
   note?: string;
 }
 
+export type CameraSeries =
+  | 'X100'
+  | 'X-S'
+  | 'X-T'
+  | 'X-M'
+  | 'X-E'
+  | 'X-Pro'
+  | 'GFX'
+  | 'X-H'
+  | 'X half';
+
 export interface CameraModel {
   id: string;
   name: string;
   category?: 'BODY';
-  series: 'X100' | 'X-T' | 'X-H' | 'GFX';
+  series: CameraSeries;
   brand?: string;
   mountType?: 'X_MOUNT' | 'G_MOUNT' | 'NONE';
   tagline: string;
@@ -57,6 +68,10 @@ export interface AccessoryModel {
   id: string;
   name: string;
   category: 'ACCESSORY';
+  subCategory?: string;
+  compatibility?: string;
+  capacity?: string;
+  readSpeed?: string;
   brand?: string;
   mountType?: 'NONE';
   image: string;
@@ -80,6 +95,7 @@ export interface CartItem {
   addedAt: string;
 }
 
+// Tính năng: Mở rộng ActiveReservation để lưu thông tin nhận diện khách vãng lai (guestPhone, isGuest)
 export interface ActiveReservation {
   orderCode: string;
   modelName: string;
@@ -95,5 +111,7 @@ export interface ActiveReservation {
   paymentDeadline: string;
   expiresAt: number;
   isPaid?: boolean;
+  isGuest?: boolean;
+  guestPhone?: string;
 }
 

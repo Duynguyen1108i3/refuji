@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Lock, Trash2, CheckCircle2 } from 'lucide-react';
+import { Lock, Trash2, CheckCircle2, Package, ArrowRight } from 'lucide-react';
 import { Button } from '../../components/ui/Button.tsx';
 import { Input } from '../../components/ui/Input.tsx';
 
@@ -55,18 +55,34 @@ export const UserProfileKycPage: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-serif font-bold text-white mb-2">HỒ SƠ CÁ NHÂN & ĐỊNH DANH KYC</h1>
+      {/* Tính năng: Lối tắt mở trang Đơn thuê & Tra cứu đơn ngay từ Hồ sơ thành viên */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+        <h1 className="text-3xl font-serif font-bold text-white">HỒ SƠ CÁ NHÂN & ĐỊNH DANH KYC</h1>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            window.location.href = '/orders';
+          }}
+          className="shrink-0"
+        >
+          <Package className="w-3.5 h-3.5" />
+          <span>Đơn thuê &amp; Tra cứu đơn</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Button>
+      </div>
       <p className="text-sm text-zinc-400 mb-8">
         Quản lý thông tin định danh và thực hiện quyền kiểm soát dữ liệu cá nhân theo Nghị định Bảo vệ Dữ liệu Cá nhân 2025.
       </p>
 
-      <div className="liquid-glass rounded-2xl p-6 sm:p-8 border border-white/15 mb-8">
+      <div className="liquid-glass rounded-3xl p-6 sm:p-8 border border-white/15 mb-8">
         <form onSubmit={handleSave} className="flex flex-col gap-5">
           <Input label="Họ và tên" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           <Input label="Địa chỉ Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input label="Số điện thoại" value={phone} onChange={(e) => setPhone(e.target.value)} />
 
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-2">
+          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-zinc-300 flex items-center gap-2">
                 <Lock className="w-3.5 h-3.5 text-emerald-400" />
@@ -74,7 +90,7 @@ export const UserProfileKycPage: React.FC = () => {
               </span>
               <span className="text-xs text-emerald-400 font-medium">Đã xác minh</span>
             </div>
-            <p className="text-sm font-mono text-white tracking-widest num">
+            <p className="text-sm font-sans font-semibold text-white tracking-widest num">
               {idCardLast4 ? `**** **** ${idCardLast4}` : 'Chưa có thông tin'}
             </p>
             <p className="text-[11px] text-zinc-500">
@@ -101,7 +117,7 @@ export const UserProfileKycPage: React.FC = () => {
         </form>
 
         {isSaved && (
-          <div className="mt-4 p-3 rounded-xl bg-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 border border-emerald-500/30">
+          <div className="mt-4 p-3.5 rounded-2xl bg-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 border border-emerald-500/30">
             <CheckCircle2 className="w-4 h-4" />
             <span>Hồ sơ đã được lưu thành công!</span>
           </div>

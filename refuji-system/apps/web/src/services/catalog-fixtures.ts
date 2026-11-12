@@ -1,29 +1,7 @@
 import { ProductModelEntity } from '@refuji/shared';
 
-// Single source of truth for products & accessories
+// Single source of truth for products & accessories (BODIES ordered by Series: X100 -> X-S -> X-T -> GFX)
 export const PRODUCT_FIXTURES: ProductModelEntity[] = [
-  {
-    id: 1,
-    modelName: 'Fujifilm X-T5 Body Silver',
-    slug: 'fujifilm-xt5-silver',
-    category: 'BODY',
-    mount: 'X', // X-Mount
-    brand: 'Fujifilm',
-    tagline: 'Độ phân giải 40.2MP & 20 Giả lập màu phim',
-    baseRentalPricePerDay: 450000,
-    depositAmount: 5900000, // Cọc gốc duy nhất: 5.900.000đ (Gold 10% -> 5.310.000đ)
-    availableCount: 2,
-    highlightBadge: 'Được thuê nhiều nhất',
-    imageUrl: '/assets/catalog/fujifilm-xt5-silver.webp',
-    description: 'Thân máy Mirrorless APS-C 40.2MP X-Trans CMOS 5 HR thế hệ mới, chống rung IBIS 7-stops, hỗ trợ quay video 6.2K/30p 4:2:2 10-bit nội bộ.',
-    specsJson: {
-      sensor: '40.2MP X-Trans CMOS 5 HR (APS-C)',
-      mount: 'Fujifilm X-Mount',
-      ibis: 'Chống rung 5 trục 7.0 stops',
-      video: '6.2K/30p 10-bit 4:2:2',
-      weight: '557g'
-    }
-  },
   {
     id: 2,
     modelName: 'Fujifilm X100VI Silver',
@@ -66,6 +44,28 @@ export const PRODUCT_FIXTURES: ProductModelEntity[] = [
       ibis: 'Chống rung 7.0 stops',
       video: '6.2K/30p Open Gate 3:2',
       weight: '491g'
+    }
+  },
+  {
+    id: 1,
+    modelName: 'Fujifilm X-T5 Body Silver',
+    slug: 'fujifilm-xt5-silver',
+    category: 'BODY',
+    mount: 'X', // X-Mount
+    brand: 'Fujifilm',
+    tagline: 'Độ phân giải 40.2MP & 20 Giả lập màu phim',
+    baseRentalPricePerDay: 450000,
+    depositAmount: 5900000, // Cọc gốc duy nhất: 5.900.000đ (Gold 10% -> 5.310.000đ)
+    availableCount: 2,
+    highlightBadge: 'Được thuê nhiều nhất',
+    imageUrl: '/assets/catalog/fujifilm-xt5-silver.webp',
+    description: 'Thân máy Mirrorless APS-C 40.2MP X-Trans CMOS 5 HR thế hệ mới, chống rung IBIS 7-stops, hỗ trợ quay video 6.2K/30p 4:2:2 10-bit nội bộ.',
+    specsJson: {
+      sensor: '40.2MP X-Trans CMOS 5 HR (APS-C)',
+      mount: 'Fujifilm X-Mount',
+      ibis: 'Chống rung 5 trục 7.0 stops',
+      video: '6.2K/30p 10-bit 4:2:2',
+      weight: '557g'
     }
   },
   {

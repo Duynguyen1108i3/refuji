@@ -118,12 +118,13 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
           <span className="text-[11px] text-[#6e7587] italic">Tự động tính khi kiểm tra &amp; đặt máy</span>
         </div>
 
+        {/* Tính năng: Đồng bộ font chữ Poppins / Plus Jakarta Sans (.num) & bo tròn thẻ hạng / nút đóng / voucher */}
         {/* Banner thông báo ràng buộc hoặc thao tác Admin */}
         {tierNotice && (
           <motion.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-3 rounded-xl text-xs mb-3 flex items-start gap-2 border ${
+            className={`p-3.5 rounded-2xl text-xs mb-3 flex items-start gap-2 border ${
               isAdmin
                 ? 'bg-amber-50 border-amber-200 text-amber-900'
                 : 'bg-neutral-100 border-neutral-200 text-neutral-800'
@@ -133,7 +134,7 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
             <div className="flex-1">{tierNotice}</div>
             <button
               onClick={() => setTierNotice(null)}
-              className="text-neutral-400 hover:text-neutral-700 ml-1 text-xs"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-black/5 transition-colors ml-1 text-xs cursor-pointer shrink-0"
             >
               ✕
             </button>
@@ -141,7 +142,7 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
         )}
 
         {/* 4 Thẻ Hạng Thành Viên */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 num">
           {tiers.map((tier) => {
             const isCurrent = effectiveTier === tier.id;
             const isEligible = completedRentals >= tier.minOrders;
@@ -151,7 +152,7 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
               <div
                 key={tier.id}
                 onClick={() => handleTierCardClick(tier.id, tier.minOrders)}
-                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all duration-200 relative select-none ${
+                className={`p-4 rounded-3xl border text-left transition-all duration-200 relative select-none ${
                   isCurrent
                     ? 'bg-neutral-50/80 border-[#14171f] shadow-sm ring-1 ring-[#14171f]/20 cursor-default'
                     : isAdmin
@@ -171,7 +172,7 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
                     {tier.label}
                   </span>
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                       isCurrent ? 'bg-[#14171f] text-white' : 'bg-[#14171f]/[0.08] text-[#14171f]'
                     }`}
                   >
@@ -194,7 +195,7 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
                       Ràng buộc: Hoàn thành {tier.minOrders} đơn
                     </span>
                   )}
-                  <span className="font-mono text-neutral-400">
+                  <span className="font-sans num text-neutral-500">
                     {isCurrent ? `Đã thuê: ${completedRentals} đơn` : `${completedRentals}/${tier.minOrders} đơn`}
                   </span>
                 </div>
@@ -203,7 +204,7 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
           })}
         </div>
 
-        <p className="text-[11px] text-[#6e7587] mt-2.5 flex items-center gap-1.5">
+        <p className="text-[11px] text-[#6e7587] mt-2.5 flex items-center gap-1.5 num">
           <ShieldCheck size={13} className="text-emerald-600 shrink-0" />
           <span>
             Hạng thành viên do hệ thống tự động kiểm tra và thăng hạng dựa trên số đơn thuê máy thành công (3 đơn lên Hạng Bạc, 8 đơn lên Hạng Vàng, 15 đơn lên Bạch Kim). Khách hàng không thể tự ý chuyển hạng.
@@ -212,7 +213,7 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
       </div>
 
       {/* KHU VỰC VOUCHER / MÃ ƯU ĐÃI */}
-      <div className="p-4 rounded-2xl bg-[#f7f8fa] border border-[#14171f]/10">
+      <div className="p-4 sm:p-5 rounded-3xl bg-[#f7f8fa] border border-[#14171f]/10">
         <div className="flex items-center justify-between mb-2.5">
           <label className="text-xs font-semibold text-[#14171f] uppercase tracking-wider flex items-center gap-1.5">
             <Tag size={13} className="text-[#14171f]" />
@@ -240,17 +241,17 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
         {voucherError && <p className="text-[11px] text-rose-500 mt-2">{voucherError}</p>}
 
         {appliedVoucher && (
-          <div className="mt-3 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-800">
+          <div className="mt-3 px-3.5 py-2 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-800">
             <div className="flex items-center gap-1.5 font-medium">
               <CheckCircle2 size={14} className="text-emerald-600" />
               <span>
-                Mã <strong>{appliedVoucher.code}</strong>: {appliedVoucher.discountText}
+                Mã <strong className="font-sans tracking-wide num">{appliedVoucher.code}</strong>: {appliedVoucher.discountText}
               </span>
             </div>
             <button
               type="button"
               onClick={() => setAppliedVoucher(null)}
-              className="text-[10px] text-emerald-600 hover:text-emerald-800 underline cursor-pointer"
+              className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 underline cursor-pointer px-2 py-0.5 rounded-full hover:bg-emerald-100/70 transition-colors"
             >
               Hủy mã
             </button>
@@ -259,7 +260,7 @@ export const MembershipTiersTab: React.FC<MembershipTiersTabProps> = ({
       </div>
 
       {/* Chú thích hệ thống */}
-      <div className="text-[11px] text-[#525868] leading-relaxed bg-[#14171f]/[0.03] p-3.5 rounded-xl border border-[#14171f]/10 flex items-start gap-2.5">
+      <div className="text-[11px] text-[#525868] leading-relaxed bg-[#14171f]/[0.03] p-4 rounded-2xl border border-[#14171f]/10 flex items-start gap-2.5">
         <Sparkles size={16} className="text-[#14171f] shrink-0 mt-0.5" />
         <span>
           Hệ thống <strong>REFUJI</strong> sẽ tự động tính toán mức cọc và chiết khấu ưu đãi tối ưu nhất ngay khi bạn tra cứu lịch hoặc chọn giữ máy. Bạn không cần phải chọn lại hạng mỗi lần xem thiết bị.

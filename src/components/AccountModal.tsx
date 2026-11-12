@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Award, ShieldCheck, Package, User as UserIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,13 @@ import {
 import { MembershipTiersTab } from './account/MembershipTiersTab';
 import { RentalOrdersTab } from './account/RentalOrdersTab';
 import { UserProfileTab } from './account/UserProfileTab';
+import {
+  POPUP_BACKDROP_CLASS,
+  POPUP_FRAME_CLASS,
+  POPUP_INNER_CLASS,
+  POPUP_CLOSE_BUTTON_CLASS,
+  getBackdropDismissProps,
+} from './ui/popupTheme';
 
 export type { MembershipTierType, AccountModalProps };
 
@@ -49,17 +56,28 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   isOpen,
   onClose,
   currentTier,
+  initialTab,
   onChangeTier,
   onApplyVoucher,
 }) => {
   const { user } = useAuth();
 
-  // Lưu và khôi phục tab đang chọn trong sessionStorage
+  // Lưu và khôi phục tab đang chọn trong sessionStorage (hoặc ưu tiên initialTab khi điều hướng từ menu Đơn thuê)
   const [activeTab, setActiveTab] = useState<'tiers' | 'orders' | 'profile'>(() => {
+    if (initialTab) return initialTab;
     if (typeof window === 'undefined') return 'tiers';
     const saved = sessionStorage.getItem('refuji_account_active_tab');
     return saved === 'tiers' || saved === 'orders' || saved === 'profile' ? saved : 'tiers';
   });
+
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab);
+      try {
+        sessionStorage.setItem('refuji_account_active_tab', initialTab);
+      } catch (_) {}
+    }
+  }, [isOpen, initialTab]);
 
   const [tabDirection, setTabDirection] = useState<number>(1);
   const [tierNotice, setTierNotice] = useState<string | null>(null);
@@ -98,13 +116,15 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     .join('')
     .toUpperCase() || 'KH';
 
+  // Tính năng: Quy chuẩn khung popup Tài khoản/Dashboard về cố định 1 khung chung theo thiết kế
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#14171f]/45 backdrop-blur-xl"
+      {...getBackdropDismissProps(onClose)}
+      className={`${POPUP_BACKDROP_CLASS} z-50`}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -117,19 +137,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           mass: 0.8,
         }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-[0_24px_70px_rgba(20,24,32,0.18)] border border-[#14171f]/10 text-[#14171f] h-[670px] max-h-[92vh] flex flex-col overflow-hidden select-text"
+        className={POPUP_FRAME_CLASS}
       >
+        <div className={POPUP_INNER_CLASS}>
         {/* Nút đóng */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 z-20 text-[#6e7587] hover:text-[#14171f] w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center transition-all active:scale-90 cursor-pointer"
+          className={POPUP_CLOSE_BUTTON_CLASS}
           aria-label="Đóng"
         >
           <X size={16} />
         </button>
 
         {/* 1. Header thông tin hội viên */}
-        <div className="p-6 sm:p-7 pb-4 border-b border-[#14171f]/10 shrink-0">
+        <div className="px-6 sm:px-8 py-5 pb-4 border-b border-[#14171f]/10 shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-[52px] h-[52px] aspect-square rounded-full bg-[#14171f] text-white flex items-center justify-center text-base sm:text-lg font-bold shadow-md shrink-0 ring-4 ring-[#14171f]/5 select-none">
               {initials || 'TX'}
@@ -148,19 +169,19 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#6e7587] mt-0.5 font-mono truncate">
+              <p className="text-xs text-[#6e7587] mt-0.5 font-sans num truncate">
                 {displayEmail} {user ? '' : '• ĐACN STU 2026'}
               </p>
               <div className="flex items-center gap-1.5 text-[11px] text-[#484e5e] mt-1">
                 <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
-                <span>Định danh CCCD / VNeID Mức 2 (Luật Căn cước 2023)</span>
+                <span>Tài khoản đã xác thực VNeID Mức 2</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* 2. Thanh Tab chuyển đổi phân hệ */}
-        <div className="px-6 sm:px-7 pt-4 pb-2 shrink-0">
+        <div className="px-6 sm:px-8 pt-4 pb-2 shrink-0">
           <div className="relative isolate select-none flex items-center justify-center bg-white border border-[#14171f]/10 shadow-[0_4px_20px_rgba(20,24,32,0.06)] rounded-full p-1.5 gap-1">
             {[
               {
@@ -207,7 +228,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* 3. Nội dung từng phân hệ */}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 sm:px-7 py-3 relative scrollbar-thin">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 sm:px-8 py-3 relative scrollbar-thin">
           <AnimatePresence mode="popLayout" custom={tabDirection} initial={false}>
             <motion.div
               key={activeTab}
@@ -246,8 +267,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         </div>
 
         {/* 4. Chân Modal */}
-        <div className="px-6 sm:px-7 py-4 border-t border-[#14171f]/10 bg-white/95 backdrop-blur-md shrink-0 flex items-center justify-between">
-          <div className="text-[11px] text-neutral-400 font-mono hidden sm:flex items-center gap-1.5">
+        <div className="px-6 sm:px-8 py-4 border-t border-[#14171f]/10 bg-white/95 backdrop-blur-md shrink-0 flex items-center justify-between">
+          <div className="text-[11px] text-neutral-400 font-sans hidden sm:flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span>Tài khoản đồng bộ thời gian thực</span>
           </div>
@@ -258,6 +279,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           >
             {activeTab === 'profile' ? 'Hoàn tất & Đóng' : 'Đóng'}
           </button>
+        </div>
         </div>
       </motion.div>
     </motion.div>

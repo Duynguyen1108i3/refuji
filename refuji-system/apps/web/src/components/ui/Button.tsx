@@ -15,12 +15,13 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2';
+  // Tính năng: Bo tròn pill toàn bộ nút bấm dùng chung
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2';
 
   const sizeClasses = {
-    sm: 'min-h-[38px] px-3.5 py-1.5 text-xs gap-1.5',
-    md: 'min-h-[44px] px-5 py-2.5 text-sm gap-2', // Min 44px touch target
-    lg: 'min-h-[50px] px-6 py-3 text-base gap-2.5 font-semibold'
+    sm: 'min-h-[38px] px-4 py-1.5 text-xs gap-1.5',
+    md: 'min-h-[44px] px-6 py-2.5 text-sm gap-2', // Min 44px touch target
+    lg: 'min-h-[50px] px-7 py-3 text-base gap-2.5 font-semibold'
   };
 
   // Primary variant uses Fujifilm Green with WCAG AA compliance

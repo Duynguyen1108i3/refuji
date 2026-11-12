@@ -1,7 +1,16 @@
+// Tính năng: Tích hợp bộ lọc Mức giá/ngày vào kho toàn bộ thiết bị & đồng bộ card rounded-3xl, font-sans num
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CameraModel, LensModel, AccessoryModel, EquipmentItem } from '../types';
-import { X, Heart, ArrowUpRight, Sparkles, Filter, RotateCcw, Search, ShoppingBag } from 'lucide-react';
+import { X, Heart, ArrowUpRight, Filter, RotateCcw, Search, ShoppingBag } from 'lucide-react';
+import { PRICE_RANGE_OPTIONS } from './GlassSearchBar';
+import { isSmallThumbnailImage } from '../utils/cn';
+import {
+  CAMERA_SERIES_META,
+  compareCamerasBySeries,
+  detectCameraSeries,
+  getCameraSeriesMeta,
+} from '../utils/cameraSeries';
 
 interface AllEquipmentModalProps {
   isOpen: boolean;
@@ -12,12 +21,14 @@ interface AllEquipmentModalProps {
     mount: string;
     series: string;
     dates: string;
+    priceRange?: string;
   };
   onFilterChange: (params: {
     category: string;
     mount: string;
     series: string;
     dates: string;
+    priceRange?: string;
   }) => void;
   membershipTier?: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
   cameras?: CameraModel[];
@@ -26,15 +37,14 @@ interface AllEquipmentModalProps {
   onAddToCart?: (item: EquipmentItem) => void;
 }
 
-// Helper nhận diện ảnh thumbnail có viền trắng lớn để scale đều kích thước
-const isSmallThumbnailImage = (item: { name: string; image: string }) => {
-  return (
-    item.image.includes('thum') ||
-    item.image.includes('small') ||
-    item.image.includes('product-list_gfx100rf') ||
-    item.name.includes('GFX')
-  );
-};
+const ACCESSORY_GROUPS = [
+  'Pin & Sạc',
+  'Thẻ nhớ',
+  'Flash',
+  'Tripod',
+  'Microphone',
+  'Gimbal',
+] as const;
 
 export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
   isOpen,
@@ -50,6 +60,29 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
 }) => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [accSubGroup, setAccSubGroup] = useState<string>('ALL');
+
+  const isCameraCategory =
+    filterParams.category === 'Thân máy (Body)' || filterParams.category === 'Máy ảnh';
+  const isAccessoryCategory =
+    filterParams.category === 'Phụ kiện & Pin' || filterParams.category === 'Phụ kiện';
+
+  // Sắp xếp toàn bộ thân máy theo đúng thứ tự Series chuẩn:
+  // 1. X100 -> 2. X-S -> 3. X-T -> 4. X-M -> 5. X-E -> 6. X-Pro -> 7. GFX (-> X-H -> X half)
+  const orderedCameras = [...cameras].sort(compareCamerasBySeries);
+
+  // Toàn bộ thiết bị (Thân máy, Ống kính, Phụ kiện)
+  const allEquipment: (EquipmentItem & { type: 'BODY' | 'LENS' | 'ACCESSORY' })[] = [
+    ...orderedCameras.map((c) => ({ ...c, type: 'BODY' as const })),
+    ...lenses.map((l) => ({ ...l, type: 'LENS' as const })),
+    ...accessories.map((a) => ({ ...a, type: 'ACCESSORY' as const })),
+  ];
+
+  // Counts by category
+  const countAll = allEquipment.length;
+  const countBody = allEquipment.filter((i) => i.type === 'BODY').length;
+  const countLens = allEquipment.filter((i) => i.type === 'LENS').length;
+  const countAcc = allEquipment.filter((i) => i.type === 'ACCESSORY').length;
 
   const getSearchPlaceholder = () => {
     switch (filterParams.category) {
@@ -61,9 +94,9 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
         return 'Tìm ống kính (16-55mm, 56mm, F1.4...)...';
       case 'Phụ kiện & Pin':
       case 'Phụ kiện':
-        return 'Tìm phụ kiện (W235, flash, grip...)...';
+        return 'Tìm phụ kiện (pin, thẻ nhớ, flash, tripod, mic, gimbal...)';
       default:
-        return 'Tìm trong tất cả 126 thiết bị & phụ kiện...';
+        return `Tìm trong tất cả ${countAll} thiết bị & phụ kiện...`;
     }
   };
 
@@ -129,18 +162,26 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
   };
   const currentTier = tierDiscountMap[membershipTier] || tierDiscountMap.BRONZE;
 
-  // Toàn bộ thiết bị (Thân máy, Ống kính, Phụ kiện)
-  const allEquipment: (EquipmentItem & { type: 'BODY' | 'LENS' | 'ACCESSORY' })[] = [
-    ...cameras.map((c) => ({ ...c, type: 'BODY' as const })),
-    ...lenses.map((l) => ({ ...l, type: 'LENS' as const })),
-    ...accessories.map((a) => ({ ...a, type: 'ACCESSORY' as const })),
-  ];
+  useEffect(() => {
+    if (!isAccessoryCategory) {
+      setAccSubGroup('ALL');
+    }
+  }, [isAccessoryCategory]);
 
-  // Counts by category
-  const countAll = allEquipment.length;
-  const countBody = allEquipment.filter((i) => i.type === 'BODY').length;
-  const countLens = allEquipment.filter((i) => i.type === 'LENS').length;
-  const countAcc = allEquipment.filter((i) => i.type === 'ACCESSORY').length;
+  // Đếm phụ kiện theo 6 nhóm chuyên biệt
+  const countByAccGroup = ACCESSORY_GROUPS.reduce<Record<string, number>>((acc, group) => {
+    acc[group] = accessories.filter((item) => item.subCategory === group).length;
+    return acc;
+  }, {});
+
+  // Đếm máy ảnh theo đúng thứ tự Series
+  const countBySeries = orderedCameras.reduce<Record<string, number>>((acc, cam) => {
+    const ser = cam.series || detectCameraSeries(cam.name);
+    acc[ser] = (acc[ser] || 0) + 1;
+    return acc;
+  }, {});
+  const activeSeriesMeta =
+    filterParams.series !== 'Tất cả dòng máy' ? getCameraSeriesMeta(filterParams.series) : undefined;
 
   // Lọc theo thông số filterParams từ search bar
   const filteredItems = allEquipment.filter((item) => {
@@ -148,6 +189,11 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
     if ((filterParams.category === 'Thân máy (Body)' || filterParams.category === 'Máy ảnh') && item.type !== 'BODY') return false;
     if ((filterParams.category === 'Ống kính (Lens)' || filterParams.category === 'Ống kính') && item.type !== 'LENS') return false;
     if ((filterParams.category === 'Phụ kiện & Pin' || filterParams.category === 'Phụ kiện') && item.type !== 'ACCESSORY') return false;
+
+    // 1b. Lọc theo nhóm phụ kiện (6 nhóm)
+    if (isAccessoryCategory && accSubGroup !== 'ALL' && item.type === 'ACCESSORY') {
+      if ((item as AccessoryModel).subCategory !== accSubGroup) return false;
+    }
 
     // 2. Lọc theo Hệ ngàm
     if (filterParams.mount === 'Hệ ngàm X (APS-C)') {
@@ -157,19 +203,26 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
     if (filterParams.mount === 'Hệ ngàm G (Medium Format)') {
       if (item.type === 'BODY' && (item as CameraModel).series !== 'GFX') return false;
       if (item.type === 'LENS' && (item as LensModel).mount !== 'GF') return false;
-      if (item.type === 'ACCESSORY') return false;
     }
 
-    // 3. Lọc theo Dòng máy
-    if (filterParams.series !== 'Tất cả dòng máy' && item.type === 'BODY') {
+    // 3. Lọc theo Dòng máy (1. X100 -> 2. X-S -> 3. X-T -> 4. X-M -> 5. X-E -> 6. X-Pro -> 7. GFX)
+    if (filterParams.series !== 'Tất cả dòng máy') {
+      if (item.type !== 'BODY') return false;
       const cam = item as CameraModel;
-      if (filterParams.series === 'Fujifilm X100 Series' && cam.series !== 'X100') return false;
-      if (filterParams.series === 'Fujifilm X-T Series' && cam.series !== 'X-T') return false;
-      if (filterParams.series === 'Fujifilm X-H Series' && cam.series !== 'X-H') return false;
-      if (filterParams.series === 'Fujifilm GFX Series' && cam.series !== 'GFX') return false;
+      const camSeries = cam.series || detectCameraSeries(cam.name);
+      if (activeSeriesMeta && camSeries !== activeSeriesMeta.series) return false;
     }
 
-    // 4. Lọc theo Ô Tìm Kiếm theo ngữ cảnh tab (không trộn lẫn khi ở tab chuyên biệt)
+    // 4. Lọc theo Mức giá/ngày
+    if (filterParams.priceRange && filterParams.priceRange !== 'Tất cả mức giá') {
+      const rate = item.dailyRate || 0;
+      if (filterParams.priceRange === 'Dưới 200.000đ' && rate >= 200000) return false;
+      if (filterParams.priceRange === '200.000đ – 400.000đ' && (rate < 200000 || rate > 400000)) return false;
+      if (filterParams.priceRange === '400.000đ – 700.000đ' && (rate <= 400000 || rate > 700000)) return false;
+      if (filterParams.priceRange === 'Trên 700.000đ' && rate <= 700000) return false;
+    }
+
+    // 5. Lọc theo Ô Tìm Kiếm theo ngữ cảnh tab (không trộn lẫn khi ở tab chuyên biệt)
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       const normalize = (str: string) => 
@@ -201,9 +254,11 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
         matchDetail = normMount.includes(normQ) || normFocal.includes(normQ) || normAperture.includes(normQ) || normDesc.includes(normQ);
       } else if (item.type === 'ACCESSORY') {
         const acc = item as AccessoryModel;
+        const normSub = normalize(acc.subCategory || '');
+        const normComp = normalize(acc.compatibility || '');
         const normDesc = normalize(acc.description || '');
         const normSpecs = (acc.specs || []).map((s) => normalize(s)).join(' ');
-        matchDetail = normDesc.includes(normQ) || normSpecs.includes(normQ);
+        matchDetail = normSub.includes(normQ) || normComp.includes(normQ) || normDesc.includes(normQ) || normSpecs.includes(normQ);
       }
 
       if (!matchName && !matchBrand && !matchDetail) {
@@ -215,19 +270,46 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
   });
 
   const handleQuickCategory = (cat: string) => {
+    if (cat !== 'Phụ kiện & Pin' && cat !== 'Phụ kiện') {
+      setAccSubGroup('ALL');
+    }
+    const isNextCameraOrAll =
+      cat === 'Tất cả thiết bị' || cat === 'Thân máy (Body)' || cat === 'Máy ảnh';
     onFilterChange({
       ...filterParams,
       category: cat,
+      series: isNextCameraOrAll ? filterParams.series : 'Tất cả dòng máy',
+    });
+  };
+
+  const handleSelectSeriesChip = (nextSeriesFilterValue: string) => {
+    let nextMount = filterParams.mount;
+    if (nextSeriesFilterValue === 'Fujifilm GFX Series' && nextMount === 'Hệ ngàm X (APS-C)') {
+      nextMount = 'Tất cả hệ ngàm';
+    } else if (
+      nextSeriesFilterValue !== 'Tất cả dòng máy' &&
+      nextSeriesFilterValue !== 'Fujifilm GFX Series' &&
+      nextMount === 'Hệ ngàm G (Medium Format)'
+    ) {
+      nextMount = 'Tất cả hệ ngàm';
+    }
+    onFilterChange({
+      ...filterParams,
+      category: 'Thân máy (Body)',
+      mount: nextMount,
+      series: nextSeriesFilterValue,
     });
   };
 
   const handleResetFilters = () => {
     setSearchQuery('');
+    setAccSubGroup('ALL');
     onFilterChange({
       category: 'Tất cả thiết bị',
       mount: 'Tất cả hệ ngàm',
       series: 'Tất cả dòng máy',
       dates: filterParams.dates,
+      priceRange: 'Tất cả mức giá',
     });
   };
 
@@ -271,10 +353,12 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
           {(filterParams.category !== 'Tất cả thiết bị' || 
             filterParams.mount !== 'Tất cả hệ ngàm' || 
             filterParams.series !== 'Tất cả dòng máy' ||
+            (filterParams.priceRange && filterParams.priceRange !== 'Tất cả mức giá') ||
+            accSubGroup !== 'ALL' ||
             searchQuery.trim() !== '') && (
             <button
               onClick={handleResetFilters}
-              className="crystal-liquid-glass rytox-hover-lift inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium text-[#2c3240] hover:text-[#0b0d12] border border-[#14171f]/15 hover:border-[#14171f]/30 active:scale-95 transition-all self-center sm:self-auto cursor-pointer shadow-sm group"
+              className="crystal-liquid-glass refuji-hover-lift inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium text-[#2c3240] hover:text-[#0b0d12] border border-[#14171f]/15 hover:border-[#14171f]/30 active:scale-95 transition-all self-center sm:self-auto cursor-pointer shadow-sm group"
             >
               <RotateCcw size={13} className="text-[#3c4252] group-hover:text-[#14171f] group-hover:-rotate-45 transition-all duration-300" />
               <span>Đặt lại bộ lọc</span>
@@ -318,7 +402,7 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
                   )}
                   <span>{tab.label}</span>
                   <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-sans num ${
                       isTabActive ? 'bg-[#14171f]/12 text-[#14171f] font-bold' : 'bg-[#14171f]/[0.05] text-[#62687a]'
                     }`}
                   >
@@ -357,6 +441,136 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
           </div>
         </div>
 
+        {/* Thứ tự dòng máy chuẩn: 1. X100 -> 2. X-S -> 3. X-T -> 4. X-M -> 5. X-E -> 6. X-Pro -> 7. GFX */}
+        {isCameraCategory && (
+          <div className="mb-5 space-y-2">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                type="button"
+                onClick={() => handleSelectSeriesChip('Tất cả dòng máy')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1.5 ${
+                  filterParams.series === 'Tất cả dòng máy'
+                    ? 'bg-[#14171f] text-white border-[#14171f] shadow-sm'
+                    : 'bg-white/80 text-[#525868] border-[#14171f]/10 hover:text-[#14171f] hover:border-[#14171f]/25'
+                }`}
+              >
+                <span>Tất cả Series</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] num ${
+                    filterParams.series === 'Tất cả dòng máy'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[#14171f]/[0.06] text-[#525868]'
+                  }`}
+                >
+                  {countBody}
+                </span>
+              </button>
+              {CAMERA_SERIES_META.filter((meta) => (countBySeries[meta.series] || 0) > 0).map((meta) => {
+                const active = filterParams.series === meta.filterValue;
+                const seriesCount = countBySeries[meta.series] || 0;
+                return (
+                  <button
+                    key={meta.series}
+                    type="button"
+                    title={meta.featureSummary}
+                    onClick={() => handleSelectSeriesChip(meta.filterValue)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      active
+                        ? 'bg-[#14171f] text-white border-[#14171f] shadow-sm'
+                        : 'bg-white/80 text-[#525868] border-[#14171f]/10 hover:text-[#14171f] hover:border-[#14171f]/25'
+                    }`}
+                  >
+                    <span>{meta.rank <= 7 ? `${meta.rank}. ${meta.series}` : meta.shortLabel}</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] num ${
+                        active ? 'bg-white/20 text-white' : 'bg-[#14171f]/[0.06] text-[#525868]'
+                      }`}
+                    >
+                      {seriesCount}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {activeSeriesMeta && (
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-[#14171f]/10 text-[11px] text-[#3c4252] shadow-xs">
+                <span className="font-semibold text-[#14171f]">{activeSeriesMeta.shortLabel}:</span>
+                <span>{activeSeriesMeta.featureSummary}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Nhóm phụ kiện chuyên biệt (6 nhóm chuẩn) khi đang chọn tab Phụ kiện */}
+        {isAccessoryCategory && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-5 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setAccSubGroup('ALL')}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1.5 ${
+                accSubGroup === 'ALL'
+                  ? 'bg-[#14171f] text-white border-[#14171f] shadow-sm'
+                  : 'bg-white/80 text-[#525868] border-[#14171f]/10 hover:text-[#14171f] hover:border-[#14171f]/25'
+              }`}
+            >
+              <span>Tất cả phụ kiện</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] num ${
+                  accSubGroup === 'ALL' ? 'bg-white/20 text-white' : 'bg-[#14171f]/[0.06] text-[#525868]'
+                }`}
+              >
+                {countAcc}
+              </span>
+            </button>
+            {ACCESSORY_GROUPS.map((group) => {
+              const active = accSubGroup === group;
+              const groupCount = countByAccGroup[group] || 0;
+              return (
+                <button
+                  key={group}
+                  type="button"
+                  onClick={() => setAccSubGroup(group)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    active
+                      ? 'bg-[#14171f] text-white border-[#14171f] shadow-sm'
+                      : 'bg-white/80 text-[#525868] border-[#14171f]/10 hover:text-[#14171f] hover:border-[#14171f]/25'
+                  }`}
+                >
+                  <span>{group}</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] num ${
+                      active ? 'bg-white/20 text-white' : 'bg-[#14171f]/[0.06] text-[#525868]'
+                    }`}
+                  >
+                    {groupCount}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Bộ lọc mức giá nhanh dành cho màn hình nhỏ (khi thanh Search Bar trên Header ẩn) */}
+        <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
+          {PRICE_RANGE_OPTIONS.map((opt) => {
+            const active = (filterParams.priceRange || 'Tất cả mức giá') === opt;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => onFilterChange({ ...filterParams, priceRange: opt })}
+                className={`px-3.5 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap border transition-all num ${
+                  active
+                    ? 'bg-[#14171f] text-white border-[#14171f]'
+                    : 'bg-white text-[#525868] border-[#14171f]/10 hover:text-[#14171f]'
+                }`}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Lưới Toàn Bộ Thiết Bị */}
         {filteredItems.length === 0 ? (
           <div className="liquid-glass rounded-3xl p-12 text-center border border-[#14171f]/10 my-8 shadow-sm">
@@ -370,7 +584,7 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
                   Không có thiết bị nào khớp với từ khóa <strong className="text-[#14171f]">&quot;{searchQuery}&quot;</strong> trong mục <strong className="text-[#14171f]">{filterParams.category}</strong>.
                 </>
               ) : (
-                'Vui lòng thử chọn phân loại, hệ ngàm hoặc dòng máy khác trên thanh tìm kiếm phía trên.'
+                'Vui lòng thử chọn phân loại, hệ ngàm, dòng máy hoặc mức giá khác trên thanh tìm kiếm phía trên.'
               )}
             </p>
             <div className="flex items-center justify-center gap-3">
@@ -395,7 +609,7 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
         ) : (
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
-              key={filterParams.category}
+              key={`${filterParams.category}-${filterParams.series}-${filterParams.mount}-${accSubGroup}`}
               initial={{ opacity: 0, y: 12, filter: 'blur(3px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
@@ -414,7 +628,7 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.28, delay: Math.min(idx * 0.02, 0.25), ease: [0.16, 1, 0.3, 1] }}
-                  className="relative liquid-glass-card rounded-2xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 group cursor-pointer"
+                  className="relative liquid-glass-card rounded-3xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 group cursor-pointer"
                   onClick={() => {
                     onSelectItem(item);
                   }}
@@ -455,12 +669,12 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
                     </div>
 
                     {/* Technical Meta Tag */}
-                    <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-[#6e7587] mb-1 truncate font-medium">
+                    <div className="text-[10.5px] font-sans num uppercase tracking-[0.08em] text-[#6e7587] mb-1 truncate font-medium">
                       {item.type === 'BODY' 
                         ? `Fujifilm • ${(item as CameraModel).series || 'X'} Series • ${(item as CameraModel).resolution || 'APS-C'}`
                         : item.type === 'LENS'
                         ? `Fujinon • ${(item as LensModel).mount === 'GF' ? 'G-Mount' : 'X-Mount'} • ${(item as LensModel).aperture?.split(' ')[0] || ''}`
-                        : `Phụ kiện chính hãng • ${item.brand || 'Fujifilm'}`}
+                        : `${(item as AccessoryModel).subCategory || 'Phụ kiện'} • ${item.brand || 'Fujifilm'}`}
                     </div>
 
                     {/* Product Name */}
@@ -492,17 +706,17 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
                   </div>
 
                   {/* Bottom: Pricing & Action Button */}
-                  <div className="pt-3.5 border-t border-[#14171f]/[0.08] flex items-end justify-between gap-3 mt-auto">
+                  <div className="pt-3.5 border-t border-[#14171f]/[0.08] flex items-end justify-between gap-2 mt-auto">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-xl sm:text-2xl font-bold text-[#14171f] tracking-tight font-sans">
+                      <div className="flex items-baseline gap-1 num whitespace-nowrap">
+                        <span className="text-lg sm:text-[21px] font-bold text-[#14171f] tracking-tight font-sans">
                           {item.dailyRate.toLocaleString('vi-VN')}
                         </span>
                         <span className="text-xs font-semibold text-[#14171f]/80">₫</span>
-                        <span className="text-[11px] text-[#6e7587] font-light ml-0.5">/ ngày</span>
+                        <span className="text-[11px] text-[#6e7587] font-light ml-0.5 whitespace-nowrap">/ ngày</span>
                       </div>
 
-                      <div className="text-[11.5px] text-[#62687a] mt-1 flex items-center gap-1.5 flex-wrap">
+                      <div className="text-[11.5px] text-[#62687a] mt-1 flex items-center gap-1.5 flex-wrap num">
                         <span className="text-[#7a8192]">Cọc:</span>
                         {currentTier.discount > 0 ? (
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
@@ -537,6 +751,7 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
                         </button>
                       )}
 
+                      {/* Tính năng: Đổi nhãn nút từ Đặt chỗ / Đã giữ chỗ thành Đặt hàng / Đã hết hàng */}
                       <button
                         type="button"
                         disabled={isOutOfStock}
@@ -544,13 +759,13 @@ export const AllEquipmentModal: React.FC<AllEquipmentModalProps> = ({
                           e.stopPropagation();
                           if (!isOutOfStock) onSelectItem(item);
                         }}
-                        className={`h-9 px-4 sm:px-5 rounded-full font-semibold text-xs tracking-wide flex items-center gap-1.5 transition-all duration-200 ${
+                        className={`h-9 px-3.5 sm:px-4 rounded-full font-semibold text-xs tracking-wide whitespace-nowrap flex items-center gap-1.5 ${
                           isOutOfStock
-                            ? 'bg-neutral-200 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
-                            : 'bg-[#14171f] hover:bg-[#252a37] active:scale-95 text-white shadow-[0_4px_14px_rgba(20,24,32,0.18)] hover:shadow-[0_6px_20px_rgba(20,24,32,0.26)] cursor-pointer'
+                            ? 'bg-neutral-200 text-neutral-600 border border-neutral-300 cursor-not-allowed shadow-none select-none'
+                            : 'bg-[#14171f] hover:bg-[#252a37] active:scale-95 text-white shadow-[0_4px_14px_rgba(20,24,32,0.18)] hover:shadow-[0_6px_20px_rgba(20,24,32,0.26)] transition-all duration-200 cursor-pointer'
                         }`}
                       >
-                        <span>{isOutOfStock ? 'Đã giữ chỗ' : 'Đặt chỗ'}</span>
+                        <span>{isOutOfStock ? 'Đã hết hàng' : 'Đặt hàng'}</span>
                         {!isOutOfStock && (
                           <ArrowUpRight size={14} className="stroke-[2.2] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                         )}

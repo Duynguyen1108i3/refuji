@@ -27,15 +27,15 @@ export const ModelDetailPage: React.FC<ModelDetailPageProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* Left: Product Images & Specs */}
         <div className="lg:col-span-7 flex flex-col gap-6">
-          <div className="aspect-[4/3] rounded-2xl liquid-glass border border-white/20 p-6 flex items-center justify-center bg-zinc-950/60">
+          <div className="aspect-[4/3] rounded-3xl liquid-glass border border-white/20 p-6 flex items-center justify-center bg-zinc-950/60">
             <img src={model.imageUrl} alt={model.modelName} className="max-h-full object-contain" />
           </div>
 
-          <div className="liquid-glass rounded-2xl p-6 border border-white/15">
+          <div className="liquid-glass rounded-3xl p-6 border border-white/15">
             <h2 className="text-base font-bold text-white mb-3">Thông số kỹ thuật chi tiết</h2>
             <div className="grid grid-cols-2 gap-3 text-xs">
               {model.specsJson && Object.entries(model.specsJson).map(([k, v]) => (
-                <div key={k} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                <div key={k} className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
                   <span className="text-zinc-400 capitalize block mb-0.5">{k}</span>
                   <span className="text-white font-medium num">{String(v)}</span>
                 </div>
@@ -46,15 +46,15 @@ export const ModelDetailPage: React.FC<ModelDetailPageProps> = ({
 
         {/* Right: Booking Panel & Availability */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="liquid-glass rounded-2xl p-6 border border-white/15">
-            <span className="text-xs uppercase font-mono tracking-widest text-emerald-400 font-semibold mb-1 block">
+          <div className="liquid-glass rounded-3xl p-6 border border-white/15">
+            <span className="text-xs uppercase font-sans tracking-widest text-emerald-400 font-semibold mb-1 block">
               {model.brand} • {model.mount === 'FIXED' ? 'Fixed Lens' : `Ngàm ${model.mount}`}
             </span>
             <h1 className="text-2xl font-bold font-serif text-white mb-2">{model.modelName}</h1>
             <p className="text-xs text-zinc-400 leading-relaxed mb-6">{model.description}</p>
 
             {/* Price calculation block */}
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10 mb-6 flex flex-col gap-3">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-6 flex flex-col gap-3">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-zinc-400">Giá thuê mỗi ngày:</span>
                 <span className="font-bold text-emerald-400 num">{formatVND(model.baseRentalPricePerDay)}</span>

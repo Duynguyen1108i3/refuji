@@ -12,7 +12,7 @@ export const LegalPoliciesPage: React.FC = () => {
       </p>
 
       {/* 1. BVDLCN 2025 */}
-      <section id="privacy" className="liquid-glass rounded-2xl p-6 sm:p-8 border border-white/15 mb-8">
+      <section id="privacy" className="liquid-glass rounded-3xl p-6 sm:p-8 border border-white/15 mb-8">
         <div className="flex items-center gap-2.5 text-emerald-400 mb-4">
           <ShieldCheck className="w-6 h-6" />
           <h2 className="text-xl font-bold font-serif text-white">1. Cam kết Bảo vệ Dữ liệu Cá nhân (Nghị định 2025)</h2>
@@ -31,7 +31,7 @@ export const LegalPoliciesPage: React.FC = () => {
       </section>
 
       {/* 2. Quy tắc trả trễ & Phí bồi thường */}
-      <section id="late-fee" className="liquid-glass rounded-2xl p-6 sm:p-8 border border-white/15 mb-8">
+      <section id="late-fee" className="liquid-glass rounded-3xl p-6 sm:p-8 border border-white/15 mb-8">
         <div className="flex items-center gap-2.5 text-amber-400 mb-4">
           <Clock className="w-6 h-6" />
           <h2 className="text-xl font-bold font-serif text-white">2. Quy định Trả trễ & Thẩm định Hư hỏng</h2>

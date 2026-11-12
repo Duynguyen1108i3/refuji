@@ -4,6 +4,13 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { PrismaClient } from '@prisma/client';
 import { db } from '../../db.js';
+import {
+  getLockedSerialsForRange,
+  normalizeDateStr,
+  getTodayLocalStr,
+  addDaysToDateStr,
+} from '../orders/availability.helper.js';
+import { sortModelsByCameraSeries } from '../../utils/cameraSeriesOrder.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,10 +37,12 @@ try {
   console.warn('Could not preload catalog JSON in catalog router:', e);
 }
 
-// GET / - Lấy toàn bộ danh sách thiết bị kèm ProductItems
+// Tính năng: Lấy danh mục thiết bị kèm kiểm tra khả dụng theo khoảng ngày (loại trừ GUEST_INQUIRY & đơn hết hạn 15p)
 catalogRouter.get('/', async (req: Request, res: Response) => {
   try {
-    const { category } = req.query;
+    const { category, start_date, end_date } = req.query;
+    const reqStartDate = typeof start_date === 'string' ? start_date : undefined;
+    const reqEndDate = typeof end_date === 'string' ? end_date : undefined;
 
     // 1. Thử truy vấn Prisma nếu MySQL đang chạy
     try {
@@ -47,43 +56,18 @@ catalogRouter.get('/', async (req: Request, res: Response) => {
         orderBy: { id: 'asc' },
       });
       if (models && models.length > 0) {
-        return res.json(models);
+        return res.json(sortModelsByCameraSeries(models));
       }
     } catch (_) {
       // Prisma offline -> chuyển sang SQLite / cached catalog
     }
 
-    // 2. Thử truy vấn SQLite db
+    // 2. Thử truy vấn SQLite db theo giao thoa khoảng ngày
     try {
-      // Dọn các đơn giữ chỗ hết hạn
-      try {
-        db.prepare(`
-          UPDATE rental_orders 
-          SET order_status = 'CANCELLED' 
-          WHERE order_status = 'PENDING_PAYMENT' 
-            AND datetime(payment_deadline) < datetime('now')
-        `).run();
-      } catch (_) {}
-
-      // Lấy danh sách serial đang bị khóa bởi đơn hàng đang có hiệu lực
-      const activeOrders = db.prepare(`
-        SELECT assigned_serials FROM rental_orders 
-        WHERE (
-          order_status IN ('CONFIRMED', 'DELIVERED')
-          OR (order_status = 'PENDING_PAYMENT' AND datetime(payment_deadline) > datetime('now'))
-        )
-      `).all() as any[];
-
-      const lockedSerials = new Set<string>();
-      for (const o of activeOrders) {
-        if (o.assigned_serials) {
-          o.assigned_serials
-            .split(',')
-            .map((s: string) => s.trim())
-            .filter(Boolean)
-            .forEach((s: string) => lockedSerials.add(s));
-        }
-      }
+      const { lockedSerials, activeDeliveredSerials } = getLockedSerialsForRange(
+        reqStartDate,
+        reqEndDate
+      );
 
       let query = 'SELECT * FROM product_models WHERE is_active = 1';
       const params: any[] = [];
@@ -96,10 +80,18 @@ catalogRouter.get('/', async (req: Request, res: Response) => {
       if (rows && rows.length > 0) {
         const modelsWithItems = rows.map((r) => {
           const rawItems = db.prepare('SELECT * FROM product_items WHERE model_id = ?').all(r.id) as any[];
-          const items = rawItems.map((item) => ({
-            ...item,
-            status: lockedSerials.has(item.serial_number) ? 'RENTED' : item.status,
-          }));
+          const items = rawItems.map((item) => {
+            if (item.status === 'MAINTENANCE' || item.status === 'LOST') {
+              return item;
+            }
+            const isLocked = lockedSerials.has(item.serial_number);
+            const isOrphanRented =
+              item.status === 'RENTED' && !activeDeliveredSerials.has(item.serial_number);
+            return {
+              ...item,
+              status: isLocked || isOrphanRented ? 'RENTED' : 'AVAILABLE',
+            };
+          });
 
           let specs = {};
           try {
@@ -112,7 +104,7 @@ catalogRouter.get('/', async (req: Request, res: Response) => {
             items,
           };
         });
-        return res.json(modelsWithItems);
+        return res.json(sortModelsByCameraSeries(modelsWithItems));
       }
     } catch (_) {
       // SQLite offline -> fallback to cachedCatalog
@@ -123,17 +115,62 @@ catalogRouter.get('/', async (req: Request, res: Response) => {
     if (category && typeof category === 'string') {
       result = result.filter((m) => m.category === category.toUpperCase());
     }
-    return res.json(result);
+    return res.json(sortModelsByCameraSeries(result));
   } catch (error) {
     console.error('❌ Error fetching models:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+// Tính năng: Kiểm tra số lượng khả dụng chi tiết của 1 mẫu máy theo khoảng ngày nhận - trả
+catalogRouter.get('/:id/availability', (req: Request, res: Response) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+
+    const reqStart = normalizeDateStr(req.query.start_date as string) || getTodayLocalStr();
+    const rawEnd = normalizeDateStr(req.query.end_date as string);
+    const reqEnd = rawEnd && rawEnd > reqStart ? rawEnd : addDaysToDateStr(reqStart, 3);
+
+    const model = db.prepare('SELECT id, model_name, is_active FROM product_models WHERE id = ?').get(id) as any;
+    if (!model) {
+      return res.status(404).json({ error: 'Product model not found' });
+    }
+
+    const { lockedSerials, activeDeliveredSerials } = getLockedSerialsForRange(reqStart, reqEnd);
+    const rawItems = db.prepare('SELECT id, serial_number, status FROM product_items WHERE model_id = ?').all(id) as Array<{
+      id: number;
+      serial_number: string;
+      status: string;
+    }>;
+
+    const activePool = rawItems.filter(
+      (p) => p.status === 'AVAILABLE' || (p.status === 'RENTED' && activeDeliveredSerials.has(p.serial_number))
+    );
+    const freeUnits = activePool.filter((p) => !lockedSerials.has(p.serial_number));
+
+    return res.json({
+      modelId: model.id,
+      modelName: model.model_name,
+      startDate: reqStart,
+      endDate: reqEnd,
+      activePool: activePool.length,
+      bookedUnits: activePool.length - freeUnits.length,
+      availableCount: freeUnits.length,
+      availableSerials: freeUnits.map((u) => u.serial_number),
+    });
+  } catch (error) {
+    console.error(`❌ Error checking availability for model ${req.params.id}:`, error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /:id - Chi tiết mẫu máy
 catalogRouter.get('/:id', async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(String(req.params.id), 10);
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid ID format' });
     }

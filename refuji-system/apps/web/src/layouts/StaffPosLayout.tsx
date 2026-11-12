@@ -42,13 +42,14 @@ export const StaffPosLayout: React.FC<StaffPosLayoutProps> = ({
       {/* Left Sidebar */}
       <aside className="w-64 border-r border-white/10 bg-[#0a0d14] flex flex-col shrink-0">
         {/* Brand */}
+        {/* Tính năng: Đồng bộ font Plus Jakarta Sans & bo tròn menu POS sidebar */}
         <div className="p-5 border-b border-white/10 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold">
+          <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold">
             R
           </div>
           <div>
             <h2 className="font-serif font-bold text-lg text-white">REFUJI POS</h2>
-            <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-mono">Staff & Operations</p>
+            <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-sans font-medium">Staff &amp; Operations</p>
           </div>
         </div>
 
@@ -61,7 +62,7 @@ export const StaffPosLayout: React.FC<StaffPosLayoutProps> = ({
               <a
                 key={item.key}
                 href={item.path}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-full text-xs font-medium transition-colors ${
                   isActive
                     ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
                     : 'text-zinc-400 hover:text-white hover:bg-white/5'
@@ -80,7 +81,7 @@ export const StaffPosLayout: React.FC<StaffPosLayoutProps> = ({
             <p className="font-medium text-white">{staffName}</p>
             <p className="text-zinc-500 text-[11px]">Showroom HCM 01</p>
           </div>
-          <a href="/login" aria-label="Đăng xuất" className="p-2 text-zinc-400 hover:text-rose-400 transition-colors">
+          <a href="/login" aria-label="Đăng xuất" className="p-2 rounded-full text-zinc-400 hover:text-rose-400 hover:bg-white/5 transition-colors">
             <LogOut className="w-4 h-4" />
           </a>
         </div>

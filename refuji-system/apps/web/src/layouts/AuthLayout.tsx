@@ -18,12 +18,12 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
         
         {/* Top brand */}
         <div className="relative z-10 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2.5 text-white hover:text-emerald-400 transition-colors">
+          <a href="/" className="flex items-center gap-2 text-white hover:text-emerald-400 px-3 py-1.5 rounded-full hover:bg-white/10 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span className="text-xs font-medium">Về trang chủ</span>
           </a>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white">
               <Camera className="w-4 h-4" />
             </div>
             <span className="font-serif text-xl font-bold tracking-wider">REFUJI</span>

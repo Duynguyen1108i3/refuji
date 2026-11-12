@@ -2,7 +2,7 @@
 ## BẢN ĐẶC TẢ KỸ THUẬT & NGHIỆP VỤ HỆ THỐNG
 
 > [!NOTE]
-> **Tài liệu chuẩn hóa toàn diện:** Khắc phục lỗi thiết kế `quantity`/`assigned_item_id`, hoàn thiện công thức Availability & Race Condition, chuẩn hóa pháp lý theo Luật Căn cước 2023 & Luật Bảo vệ Dữ liệu Cá nhân 2025, nâng cấp MySQL 8.4 LTS, tách luồng VNPAY Return/IPN và bổ sung đặc tả kiểm thử cho 3 học phần.
+> **Tài liệu chuẩn hóa toàn diện (Cập nhật luồng Đặt nhanh Khách vãng lai 3 bước):** Khắc phục lỗi thiết kế `quantity`/`assigned_item_id`, hoàn thiện công thức Availability theo khoảng ngày (Date-Range Overlap), bổ sung kiến trúc **Khách vãng lai (Guest Checkout 3 bước không cần OTP SMS/Gmail)** đi kèm `GUEST_INQUIRY` & tra cứu `order_code + phone`, chuẩn hóa pháp lý theo Luật Căn cước 2023 & Luật Bảo vệ Dữ liệu Cá nhân 2025, nâng cấp MySQL 8.4 LTS, tách luồng VNPAY Return/IPN và bổ sung đặc tả kiểm thử cho 3 học phần.
 > 
 > **Chủ dự án:** Tran Txi — Đại học Công nghệ Sài Gòn (STU), Khoa Công nghệ Thông tin
 
@@ -42,7 +42,7 @@
 | **HP 3: Đồ án Chuyên ngành (ĐACN)** | Hệ thống Production-ready đầy đủ 13 bảng: Quản lý kho theo Serial, Check-out/Check-in 2 chiều, VNPAY IPN/Return, Tính phí phạt/hư hỏng tự động, Bảo vệ dữ liệu cá nhân, Kiểm thử tự động & chống Race Condition |
 
 ### 1.2. Mô tả tóm tắt
-Hệ thống cho phép khách hàng tra cứu danh mục thiết bị nhiếp ảnh Fujifilm (Body, Lens, Phụ kiện), kiểm tra số lượng khả dụng theo khung thời gian thực tế, đặt lịch thuê trực tuyến, thanh toán tiền cọc qua cổng thanh toán điện tử và theo dõi vòng đời đơn thuê. Phía cửa hàng (Admin/Staff) quản lý từng cá thể thiết bị vật lý theo **Serial Number**, thực hiện quy trình bàn giao (Check-out) – thu hồi (Check-in) có đối chiếu hình ảnh và biên bản, tự động tính toán phí trễ hạn/phí hư hỏng, quyết toán tiền cọc và theo dõi lịch bảo dưỡng định kỳ.
+Hệ thống cho phép cả **Thành viên đã đăng nhập (Member)** lẫn **Khách vãng lai không cần tạo tài khoản (Guest — mô hình đặt nhanh 3 bước)** tra cứu danh mục thiết bị nhiếp ảnh Fujifilm (Body, Lens, Phụ kiện), kiểm tra số lượng khả dụng theo khoảng ngày nhận – trả thực tế, đặt lịch thuê trực tuyến (thanh toán giữ chỗ 15 phút qua VietQR/VNPAY hoặc gửi yêu cầu đặt tại quầy `GUEST_INQUIRY`), tra cứu tiến độ & tự hủy giữ chỗ bằng Mã đơn + SĐT mà **không bắt buộc xác minh OTP SMS/Gmail** tại bước đặt giữ chỗ. Phía cửa hàng (Admin/Staff POS) quản lý từng cá thể thiết bị vật lý theo **Serial Number**, duyệt đơn vãng lai kèm khóa Serial tự động, thực hiện quy trình bàn giao (Check-out với cảnh báo KYC gắt hơn cho khách vãng lai) – thu hồi (Check-in) có đối chiếu hình ảnh và biên bản, tự động tính toán phí trễ hạn/phí hư hỏng, quyết toán tiền cọc và theo dõi lịch bảo dưỡng định kỳ.
 
 ### 1.3. Phân bổ độ ưu tiên tính năng theo MoSCoW
 
@@ -50,9 +50,9 @@ Hệ thống cho phép khách hàng tra cứu danh mục thiết bị nhiếp �
 
 | Phân loại | Hạng mục tính năng | Học phần mục tiêu |
 |---|---|---|
-| **Must have** *(Bắt buộc)* | • Phân tách `ProductModels` (Mẫu mã) và `ProductItems` (Serial Number)<br/>• Thuật toán kiểm tra Availability theo khung thời gian & chống Race Condition<br/>• Đặt đơn thuê với cơ chế giữ chỗ tạm thời (Reservation Hold 15 phút)<br/>• Quy trình Check-out (gán Serial, chụp ảnh, thu tiền thuê) & Check-in (kiểm tra, tính phí trễ hạn/hư hỏng, hoàn cọc)<br/>• Tích hợp thanh toán VNPAY Sandbox (tách biệt ReturnURL và IPN Webhook)<br/>• Bảo mật JWT (HttpOnly Cookie + Refresh Token) & Mã hóa dữ liệu căn cước | HP 2 (Core) & HP 3 (Full) |
-| **Should have** *(Nên có)* | • Hệ thống hạng thành viên (`MembershipTiers`) & Điểm uy tín (`Reputation Score`)<br/>• Quản lý lịch sử bảo dưỡng thiết bị (`MaintenanceLogs`)<br/>• Cron jobs tự động giải phóng đơn quá hạn thanh toán và cảnh báo đơn trễ hạn<br/>• Báo cáo thống kê doanh thu và tần suất khai thác thiết bị | HP 3 |
-| **Could have** *(Có thể làm thêm)* | • Thông báo Email tự động (nhắc lịch trả máy, xác nhận đơn)<br/>• Giao diện tra cứu nhật ký hệ thống (`AuditLogs`) trực quan cho Admin<br/>• Xuất biên bản bàn giao / quyết toán ra file PDF in ấn tại quầy | HP 3 (Điểm cộng) |
+| **Must have** *(Bắt buộc)* | • Phân tách `ProductModels` (Mẫu mã) và `ProductItems` (Serial Number)<br/>• Thuật toán kiểm tra Availability theo giao thoa khoảng ngày (`Date-Range Overlap`) & chống Race Condition<br/>• Đặt đơn **Song song Thành viên & Khách vãng lai (đặt nhanh 3 bước, không cần OTP)**: giữ chỗ tạm thời `PENDING_PAYMENT` (15 phút) hoặc yêu cầu quầy `GUEST_INQUIRY` (không khóa kho), kèm tra cứu & tự hủy công khai theo `order_code + phone`<br/>• Quy trình Check-out (gán Serial, đối chiếu KYC tại quầy, chụp ảnh, thu tiền thuê) & Check-in (kiểm tra, tính phí trễ hạn/hư hỏng, hoàn cọc)<br/>• Tích hợp thanh toán VietQR / VNPAY Sandbox (tách biệt ReturnURL và IPN Webhook)<br/>• Bảo mật JWT (HttpOnly Cookie + Refresh Token) & Mã hóa dữ liệu căn cước | HP 2 (Core) & HP 3 (Full) |
+| **Should have** *(Nên có)* | • Hệ thống hạng thành viên (`MembershipTiers` giảm 5–15% cọc, không áp dụng cho Khách vãng lai) & Điểm uy tín (`Reputation Score`)<br/>• Chống spam giữ chỗ vãng lai theo IP/SĐT (tối đa 2 hold đồng thời) & phân tách Badge vãng lai trên POS<br/>• Quản lý lịch sử bảo dưỡng thiết bị (`MaintenanceLogs`)<br/>• Cron jobs tự động giải phóng đơn quá hạn thanh toán và cảnh báo đơn trễ hạn<br/>• Báo cáo thống kê doanh thu và tần suất khai thác thiết bị | HP 3 |
+| **Could have** *(Có thể làm thêm)* | • Gửi thông báo Email / SMS / OTP xác nhận tự động qua `guest_email`/`guest_phone` (kiến trúc DB đã lưu sẵn trường để cắm cổng gửi thông báo ở giai đoạn sau)<br/>• Giao diện tra cứu nhật ký hệ thống (`AuditLogs`) trực quan cho Admin<br/>• Xuất biên bản bàn giao / quyết toán ra file PDF in ấn tại quầy | HP 3 (Điểm cộng) |
 | **Won't have** *(Ngoài phạm vi)* | • Tích hợp cổng MoMo & SePay/payOS thực tế (chỉ thiết kế sẵn cấu trúc DB mở rộng)<br/>• Giao hàng tận nơi qua bên thứ 3 (do đặc thù thiết bị máy ảnh giá trị cao, khách bắt buộc nhận/trả và kiểm tra máy trực tiếp tại cửa hàng) | N/A |
 
 ---
@@ -102,11 +102,12 @@ Trong đó:
    $$\text{ActivePool}(M) = \text{COUNT}\big(\text{ProductItems WHERE } model\_id = M \land status \in \{\text{'AVAILABLE'}, \text{'RENTED'}\}\big)$$
    *(Lưu ý: Các máy đang ở trạng thái `'MAINTENANCE'` hoặc `'LOST'` bị loại khỏi nguồn cung ngay lập tức).*
 
-2. **Số lượng đơn vị đang bị chiếm chỗ ($\text{BookedUnits}$):** Là tổng số dòng trong `RentalOrderDetails` của mẫu $M$ thuộc các đơn hàng thỏa mãn đồng thời **cả 3 điều kiện**:
-   * **Điều kiện trạng thái đơn có hiệu lực:**
+2. **Số lượng đơn vị đang bị chiếm chỗ ($\text{BookedUnits}$):** Là tổng số dòng trong `RentalOrderDetails` (hoặc số lượng unit đã gán Serial) của mẫu $M$ thuộc các đơn hàng thỏa mãn đồng thời **cả 2 điều kiện**:
+   * **Điều kiện trạng thái đơn có hiệu lực giữ kho:**
      $$\text{order\_status} \in \{\text{'PENDING'}, \text{'CONFIRMED'}, \text{'DELIVERED'}, \text{'OVERDUE'}, \text{'OVERDUE\_CRITICAL'}\}$$
      **HOẶC** đơn đang chờ thanh toán nhưng **chưa hết hạn giữ chỗ**:
-     $$\big(\text{order\_status} = \text{'PENDING\_PAYMENT'} \land \text{payment\_deadline} > \text{NOW()}\big)$$
+     $$\big(\text{order\_status} = \text{'PENDING\_PAYMENT'} \land \text{payment\_deadline} \ge \text{NOW()}\big)$$
+     *(Quan trọng: Trạng thái **`GUEST_INQUIRY`** của khách vãng lai chọn "Đặt trước tại quầy" **KHÔNG nằm trong tập giữ kho**, nhằm đảm bảo nguyên tắc ưu tiên khách thanh toán cọc trước và chống đầu cơ giữ lịch ảo không tốn phí).*
    * **Điều kiện giao thoa thời gian (Time Overlap) hoặc Quá hạn giữ máy:**
      Một đơn hàng chiếm chỗ trong khoảng $[T_s, T_e]$ nếu khoảng thời gian của đơn giao thoa với $[T_s, T_e]$, **HOẶC** đơn đó đang ở trạng thái quá hạn chưa trả máy (`OVERDUE` / `OVERDUE_CRITICAL`) và ngày bắt đầu thuê của khách mới nằm sau ngày bắt đầu của đơn quá hạn:
      $$\Big(T_s^{order} < T_e \;\land\; T_e^{order} > T_s\Big) \;\lor\; \Big(\text{order\_status} \in \{\text{'OVERDUE'}, \text{'OVERDUE\_CRITICAL'}\} \;\land\; T_s^{order} < T_e\Big)$$
@@ -142,12 +143,14 @@ flowchart LR
 | **C02** | Quản lý hồ sơ & KYC | Cập nhật họ tên, SĐT, thông tin Thẻ căn cước (được mã hóa AES-256 trên server, chỉ hiển thị số cuối). Xem hạng thành viên và điểm uy tín |
 | **C03** | Tra cứu danh mục thiết bị | Tìm kiếm Full-text theo tên dòng máy. Lọc theo: Category (`BODY`/`LENS`/`ACCESSORY`), Ngàm (`X-mount`/`G-mount`), khoảng giá thuê |
 | **C04** | Kiểm tra Availability | Chọn thời gian nhận $T_s$ và trả $T_e$ → Hệ thống trả về số lượng máy còn trống chính xác theo từng Model |
-| **C05** | Tạo đơn đặt thuê | Chọn một hoặc nhiều thiết bị → Hệ thống tách từng đơn vị thiết bị thành dòng chi tiết, tính tiền thuê + tiền cọc (sau khi trừ ưu đãi hạng thành viên) và giữ chỗ 15 phút |
-| **C06** | Thanh toán trực tuyến | Thanh toán **Tiền cọc** (hoặc **Trọn gói Cọc + Tiền thuê**) qua VNPAY Sandbox, hoặc chọn giữ đơn thanh toán tại quầy |
+| **C05** | Tạo đơn đặt thuê (Thành viên & Vãng lai) | Chọn một hoặc nhiều thiết bị theo khoảng ngày $[T_s, T_e]$ → Thành viên đặt thẳng bằng tài khoản (giảm cọc theo hạng); **Khách vãng lai** đi qua **Bước 2 nhập thông tin liên hệ (Họ tên, SĐT, Email, Ghi chú, Privacy Consent 2025) không cần tạo tài khoản hay OTP** và thanh toán giữ chỗ 15 phút (100% tiền cọc chuẩn) |
+| **C06** | Thanh toán trực tuyến & Đặt tại quầy | Thanh toán **Tiền cọc** (hoặc **Trọn gói**) qua VietQR / VNPAY Sandbox để khóa lịch (`CONFIRMED`/`PENDING`), hoặc chọn giữ yêu cầu đặt tại quầy (`GUEST_INQUIRY` — không khóa Serial cho khách vãng lai) |
 | **C07** | Theo dõi đơn thuê | Xem tiến trình đơn hàng theo thời gian thực, xem biên bản bàn giao, danh sách Serial thiết bị đang giữ và ảnh chụp kiểm tra (qua Signed URL) |
-| **C08** | Hủy đơn đặt thuê | Hủy đơn trực tuyến khi đơn ở trạng thái `PENDING_PAYMENT`, `PENDING` hoặc `CONFIRMED` theo bảng quy tắc hoàn tiền |
-| **C09** | Lịch sử thuê & Giao dịch | Xem lại toàn bộ lịch sử đơn thuê, chi tiết hóa đơn quyết toán, lịch sử cộng/trừ điểm uy tín |
-| **C10** | Nhận thông báo | Nhận email khi: đặt đơn thành công, đơn được duyệt, nhắc lịch trả trước 24 giờ, và cảnh báo khi quá hạn trả máy |
+| **C08** | Hủy đơn đặt thuê | Hủy đơn trực tuyến khi đơn ở trạng thái `PENDING_PAYMENT`, `PENDING` hoặc `CONFIRMED` theo bảng quy tắc hoàn tiền; Khách vãng lai có quyền **tự hủy giữ chỗ (`PENDING_PAYMENT` / `GUEST_INQUIRY`)** qua cặp khóa xác nhận Mã đơn + SĐT |
+| **C09** | Lịch sử thuê & Giao dịch | Xem lại toàn bộ lịch sử đơn thuê, chi tiết hóa đơn quyết toán, lịch sử cộng/trừ điểm uy tín (áp dụng cho Thành viên) |
+| **C10** | Nhận thông báo *(Mở rộng)* | Kiến trúc DB lưu sẵn `guest_email`/`guest_phone` và `Users.email` để hỗ trợ gửi email/SMS khi: đặt đơn thành công, đơn được duyệt, nhắc lịch trả trước 24 giờ, và cảnh báo quá hạn trả máy (chưa kích hoạt OTP/Mail ở bước đặt giữ chỗ hiện tại) |
+| **C11** | Đặt lịch nhanh Khách vãng lai 3 bước | Giao diện 3 bước liền mạch (**Bước 1:** Chọn máy & ngày $\rightarrow$ **Bước 2:** Nhập thông tin hoặc Đăng nhập lấy ưu đãi $\rightarrow$ **Bước 3:** Thanh toán VietQR/VNPAY giữ chỗ 15 phút hoặc Yêu cầu tại quầy), giữ giỏ hàng bền vững trong `localStorage` |
+| **C12** | Tra cứu đơn công khai (Guest Lookup) | Cho phép Khách vãng lai tra cứu trạng thái, Serial được gán và tiếp tục thanh toán / tự hủy đơn bằng cách nhập khớp đồng thời **Mã đơn (`order_code`) + Số điện thoại (`guest_phone`)** mà không cần đăng nhập |
 
 ### B. Phân hệ Quản trị & Nhân viên (Admin & Staff Portal)
 
@@ -155,8 +158,8 @@ flowchart LR
 |---|---|---|
 | **S01** | Quản lý Mẫu mã (Catalog CRUD) | Thêm/sửa/ẩn các dòng máy ảnh, ống kính, phụ kiện Fujifilm; cấu hình bảng thông số kỹ thuật JSON, đơn giá thuê/ngày và mức cọc chuẩn |
 | **S02** | Quản lý Kho theo Serial (Item CRUD) | Quản lý từng cá thể vật lý theo `serial_number`, cập nhật `shutter_count`, `condition_percent`, trạng thái (`AVAILABLE`, `MAINTENANCE`, `LOST`) |
-| **S03** | Duyệt đơn đặt thuê | Kiểm tra các đơn đã hoàn tất đặt cọc (`PENDING`), đối chiếu lịch sử uy tín của khách để duyệt (`CONFIRMED`) hoặc từ chối (kèm hoàn tiền) |
-| **S04** | Bàn giao thiết bị (Check-out) | Đối chiếu Thẻ căn cước/VNeID trực tiếp tại quầy → Gán Serial cụ thể (`assigned_item_id`) → Ghi nhận phụ kiện đi kèm → Chụp ảnh tình trạng máy → Thu phần tiền thuê còn lại → Chuyển đơn sang `DELIVERED` |
+| **S03** | Duyệt đơn đặt thuê (Thành viên & Vãng lai) | Hàng đợi POS hiển thị badge phân biệt Thành viên và `Khách vãng lai`; khi duyệt `GUEST_INQUIRY` → `CONFIRMED`, hệ thống tự kiểm tra lại tồn kho theo khoảng ngày (`Date-Range Overlap`) và gán khóa Serial thực tế (trả `409 Conflict` nếu vừa hết máy) |
+| **S04** | Bàn giao thiết bị (Check-out & KYC Alert) | Màn hình Check-out tự hiển thị **Banner cảnh báo KYC gắt hơn đối với Khách vãng lai** (chưa từng định danh, không có điểm uy tín lịch sử). Staff đối chiếu CCCD/VNeID gốc tại quầy → Gán/xác nhận Serial → Chụp tối thiểu 2 ảnh tình trạng máy → Thu phần tiền thuê còn lại → Chuyển đơn sang `DELIVERED` |
 | **S05** | Thu hồi & Quyết toán (Check-in) | Kiểm tra thiết bị trả về → Cập nhật Shutter Count mới → Chụp ảnh đối chứng → Đánh giá mức độ hư hỏng/mất phụ kiện → Hệ thống tự tính `LateFee`, `DamageFee` và số tiền cọc hoàn lại (`Refund`) |
 | **S06** | Quản lý Bảo dưỡng | Tạo phiếu bảo dưỡng/vệ sinh cảm biến/sửa chữa (`MaintenanceLogs`), tự động chuyển thiết bị sang `MAINTENANCE` và mở lại `AVAILABLE` khi hoàn tất |
 | **S07** | Quản lý Khách hàng | Tra cứu hồ sơ khách hàng, xác thực thông tin định danh tại quầy, xem lịch sử vi phạm, khóa/mở khóa tài khoản vi phạm nghiêm trọng |
@@ -181,6 +184,7 @@ flowchart LR
   $$\text{TotalRentalFee} = \sum_{i=1}^{N} \big(\text{RentalPricePerDay}_i \times \text{RentalDays}\big)$$
   $$\text{DepositPerUnit}_i = \text{ round}\big(\text{BaseDeposit}_i \times (1 - d_{\text{tier}})\big)$$
   $$\text{TotalDeposit} = \sum_{i=1}^{N} \text{DepositPerUnit}_i$$
+  *(Ghi chú: Đối với **Khách vãng lai**, hệ thống cố định $d_{\text{tier}} = 0\%$ — luôn đóng 100% tiền cọc tiêu chuẩn, không được hưởng ưu đãi hạng và nhận $0$ điểm uy tín / $0$ tích lũy đơn).*
 
 * **Quy tắc Thu tiền theo giai đoạn (Thống nhất luồng thanh toán):**
   1. **Tại thời điểm Đặt đơn (Booking):**
@@ -221,6 +225,7 @@ $$\text{LateFee} = \min\left( 2 \times \text{TotalDeposit}, \;\; \text{LateDays}
 
 | Trạng thái đơn khi hủy | Thời điểm hủy so với giờ nhận máy ($T_s$) | Hoàn Tiền thuê (nếu đã đóng) | Hoàn Tiền cọc ($\text{TotalDeposit}$) | Phí hủy giữ lại |
 |---|---|---|---|---|
+| `GUEST_INQUIRY` | Bất kỳ lúc nào (chưa thanh toán, chưa khóa Serial) | $0\text{ ₫}$ | $0\text{ ₫}$ | $0\text{ ₫}$ |
 | `PENDING_PAYMENT` | Bất kỳ lúc nào (chưa thanh toán) | $0\text{ ₫}$ | $0\text{ ₫}$ | $0\text{ ₫}$ |
 | `PENDING` *(Chờ duyệt)* | Bất kỳ lúc nào trước khi Admin duyệt | **100%** | **100%** | $0\text{ ₫}$ |
 | `CONFIRMED` *(Đã duyệt)* | Trước giờ nhận máy $\ge 72\text{ giờ}$ ($\ge 3\text{ ngày}$) | **100%** | **100%** | $0\text{ ₫}$ |
@@ -270,9 +275,12 @@ sequenceDiagram
 * **Cách triển khai trong Prisma ORM:** Sử dụng Interactive Transaction kết hợp `$queryRaw`:
   `await tx.$queryRaw\`SELECT model_id FROM ProductModels WHERE model_id IN (${Prisma.join(modelIds)}) ORDER BY model_id ASC FOR UPDATE\`;`
   *(Sắp xếp `ORDER BY model_id ASC` bắt buộc để phòng chống **Deadlock** khi một đơn thuê nhiều model khác nhau).*
-* **Thời hạn giữ chỗ (`payment_deadline`):**
-  * Thanh toán Online (VNPAY): **15 phút** kể từ lúc tạo đơn.
-  * Thanh toán tại quầy (chỉ áp dụng cho khách đã xác thực SĐT và có `reputation_score >= 80`): **12 giờ** (hoặc tối đa đến 2 giờ trước `start_date`).
+* **Thời hạn giữ chỗ (`payment_deadline`) & Phân tách chế độ Khách vãng lai:**
+  * **Thanh toán Online (`ONLINE_PAYMENT` — VietQR / VNPAY):** Khóa Serial trong **15 phút** (`PENDING_PAYMENT`) cho cả Thành viên và Khách vãng lai mà **không cần bước xác minh OTP SMS/Email** trước khi thanh toán; nếu hết 15 phút chưa thanh toán thành công, Serial tự động giải phóng về kho.
+  * **Đặt tại quầy cho Thành viên (`COUNTER`):** Thành viên đã xác thực SĐT và đủ điều kiện uy tín (`reputation_score >= 80`) được giữ lịch tạm tối đa **12 giờ** (hoặc đến 2 giờ trước `start_date`).
+  * **Yêu cầu đặt tại quầy cho Khách vãng lai (`COUNTER_INQUIRY` $\rightarrow$ `GUEST_INQUIRY`):** Để chống đầu cơ khóa máy ảo không tốn phí, yêu cầu tại quầy của Khách vãng lai **KHÔNG khóa Serial** và `payment_deadline = NULL` (`assigned_serials = NULL`). Đơn chỉ khóa máy khi: (a) Staff gọi xác nhận và duyệt trên POS (`CONFIRMED`) hoặc (b) Khách chủ động chuyển sang thanh toán cọc Online trong lúc máy vẫn còn trống (nguyên tắc *Payment-first Priority*).
+* **Chống spam giữ chỗ Vãng lai (Anti-Spam Rate Limit):**
+  * Mỗi cặp `(guest_phone HOẶC ip_address)` của Khách vãng lai chỉ được giữ đồng thời tối đa **2 đơn `PENDING_PAYMENT`** còn hạn thanh toán và tối đa **3 yêu cầu `GUEST_INQUIRY`** đang chờ xử lý. Vượt ngưỡng sẽ trả HTTP `429 Too Many Requests` kèm hướng dẫn thanh toán hoặc tự hủy đơn cũ trong modal *Tra cứu đơn*.
 
 ### 4.5. Quy tắc tính Phí hư hỏng (Damage Fee) & Phụ kiện
 
@@ -292,6 +300,7 @@ sequenceDiagram
 
 | Hạng (`tier_name`) | Điều kiện đạt hạng | Ưu đãi giảm cọc | Quy trình thủ tục tại quầy (`fast_track_checkin`) |
 |---|---|---|---|
+| **Khách vãng lai (Guest)** | Không cần tài khoản `Users` | **$0\%$** *(Đóng 100% cọc chuẩn)* | **Cảnh báo KYC gắt hơn tại quầy:** Bắt buộc đối chiếu Thẻ căn cước/VNeID gốc (không giữ thẻ), chụp tối thiểu 2 ảnh máy & ký biên bản; nhận $0$ điểm uy tín / $0$ tích lũy hạng (không cộng hồi tố nếu đăng ký sau) |
 | **BRONZE** | Mặc định khi đăng ký | $0\%$ | Đối chiếu Thẻ căn cước/VNeID mức 2 + Chụp ảnh biên bản bàn giao |
 | **SILVER** | $\ge 5$ đơn hoàn tất $\land$ Reputation $\ge 80$ | Giảm **$5\%$** cọc | Đối chiếu Thẻ căn cước/VNeID + Ký biên bản |
 | **GOLD** | $\ge 15$ đơn hoàn tất $\land$ Reputation $\ge 90$ | Giảm **$10\%$** cọc | Ưu tiên duyệt đơn tự động + Kiểm tra nhanh |
@@ -478,13 +487,21 @@ CREATE TABLE ProductItems (
 
 ---
 
-### 5.5. Bảng `RentalOrders` — Đơn Đặt Thuê
+### 5.5. Bảng `RentalOrders` — Đơn Đặt Thuê *(Hỗ trợ song song Thành viên & Khách vãng lai)*
 
 ```sql
 CREATE TABLE RentalOrders (
     order_id                   INT PRIMARY KEY AUTO_INCREMENT,
-    order_code                 VARCHAR(25) UNIQUE NOT NULL,  -- VD: "RF-20261029-0001"
-    user_id                    INT NOT NULL,
+    order_code                 VARCHAR(25) UNIQUE NOT NULL,  -- VD: "ORD-202611-0001"
+    user_id                    INT NULL,                     -- NULL nếu là đơn Khách vãng lai (Guest)
+    -- Thông tin Khách vãng lai (chỉ điền khi is_guest = TRUE, không tạo bản ghi Users)
+    is_guest                   BOOLEAN NOT NULL DEFAULT FALSE,
+    guest_name                 VARCHAR(150) NULL,
+    guest_phone                VARCHAR(20) NULL,
+    guest_email                VARCHAR(191) NULL,
+    guest_note                 TEXT NULL,
+    privacy_consent_at         DATETIME(3) NULL,             -- Dấu thời gian Khách vãng lai tick đồng ý BVDLCN 2025
+    ip_address                 VARCHAR(45) NULL,             -- Dùng kết hợp guest_phone để giới hạn giữ chỗ chống spam
     -- Dùng DATETIME(3) để tính chính xác giờ nhận, giờ trả và Grace Period 2 giờ
     start_date                 DATETIME(3) NOT NULL,
     expected_return_date       DATETIME(3) NOT NULL,
@@ -494,12 +511,12 @@ CREATE TABLE RentalOrders (
     total_deposit              DECIMAL(12, 0) NOT NULL,
     tier_discount_amount       DECIMAL(12, 0) NOT NULL DEFAULT 0,
     -- Trạng thái
-    payment_method_selected    ENUM('VNPAY', 'PAY_AT_COUNTER') NOT NULL DEFAULT 'VNPAY',
+    payment_method_selected    ENUM('VIETQR', 'VNPAY', 'PAY_AT_COUNTER', 'COUNTER') NOT NULL DEFAULT 'VIETQR',
     payment_status             ENUM('UNPAID', 'DEPOSITED', 'PAID_FULL', 'REFUNDED', 'PARTIALLY_REFUNDED') NOT NULL DEFAULT 'UNPAID',
-    order_status               ENUM('PENDING_PAYMENT', 'PENDING', 'CONFIRMED', 'DELIVERED', 'RETURNED',
-                                    'OVERDUE', 'OVERDUE_CRITICAL', 'CANCELLED') NOT NULL DEFAULT 'PENDING_PAYMENT',
+    order_status               ENUM('GUEST_INQUIRY', 'PENDING_PAYMENT', 'PENDING', 'CONFIRMED', 'DELIVERED',
+                                    'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL', 'CANCELLED') NOT NULL DEFAULT 'PENDING_PAYMENT',
     -- Kiểm soát giữ chỗ & Hủy đơn
-    payment_deadline           DATETIME(3) NULL,
+    payment_deadline           DATETIME(3) NULL,             -- NULL với GUEST_INQUIRY; +15 phút với PENDING_PAYMENT
     cancellation_reason        TEXT NULL,
     cancelled_by               INT NULL,
     cancelled_at               DATETIME(3) NULL,
@@ -510,6 +527,7 @@ CREATE TABLE RentalOrders (
     CONSTRAINT fk_orders_cancelled_by FOREIGN KEY (cancelled_by) REFERENCES Users(user_id) ON DELETE SET NULL,
     CONSTRAINT chk_order_dates CHECK (expected_return_date > start_date),
     INDEX idx_orders_user (user_id),
+    INDEX idx_orders_guest_lookup (order_code, guest_phone),
     INDEX idx_orders_availability (order_status, start_date, expected_return_date),
     INDEX idx_orders_deadline (order_status, payment_deadline)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -743,9 +761,10 @@ CREATE TABLE AuditLogs (
 #### `RentalOrders.order_status` — Vòng đời đơn đặt thuê
 | Giá trị | Ý nghĩa | Tác nhân kích hoạt (Trigger) |
 |---|---|---|
-| `PENDING_PAYMENT` | Đang giữ chỗ tạm thời chờ thanh toán cọc | Khách hàng tạo đơn đặt thuê thành công |
-| `PENDING` | Đã đặt cọc (hoặc xác nhận giữ đơn tại quầy), chờ duyệt | VNPAY IPN trả về thành công hoặc khách đủ điều kiện giữ đơn tại quầy |
-| `CONFIRMED` | Cửa hàng đã duyệt lịch thuê | Admin/Staff bấm duyệt đơn |
+| `GUEST_INQUIRY` | Yêu cầu đặt tại quầy của Khách vãng lai (**không khóa Serial kho**) | Khách vãng lai chọn "Yêu cầu giữ / Thanh toán tại quầy" hoặc chuyển đơn `PENDING_PAYMENT` sang `COUNTER` |
+| `PENDING_PAYMENT` | Đang giữ chỗ tạm thời 15 phút (khóa Serial) chờ thanh toán cọc | Thành viên hoặc Khách vãng lai chọn thanh toán Online (VietQR / VNPAY) |
+| `PENDING` | Đã đặt cọc (hoặc xác nhận giữ đơn tại quầy của Thành viên), chờ duyệt | VNPAY IPN trả về thành công hoặc thành viên đủ điều kiện giữ đơn tại quầy |
+| `CONFIRMED` | Cửa hàng đã duyệt / Khách đã xác nhận thanh toán & khóa Serial | Khách hoàn tất thanh toán online hoặc Admin/Staff duyệt đơn trên POS |
 | `DELIVERED` | Đã bàn giao máy cho khách tại quầy | Staff hoàn tất Check-out (đã thu đủ tiền thuê + gán Serial) |
 | `RETURNED` | Khách đã trả máy và hoàn tất quyết toán | Staff hoàn tất Check-in |
 | `OVERDUE` | Quá hạn trả máy từ $> 2\text{ giờ}$ đến $\le 7\text{ ngày}$ | Cron Job quét định kỳ hoặc Staff ghi nhận |
@@ -760,10 +779,16 @@ CREATE TABLE AuditLogs (
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING_PAYMENT : Khách tạo đơn (Hold chỗ)
+    [*] --> PENDING_PAYMENT : Khách tạo đơn Online\n(Giữ chỗ & khóa Serial 15p)
+    [*] --> GUEST_INQUIRY : Khách vãng lai gửi yêu cầu tại quầy\n(Không khóa Serial kho)
 
+    PENDING_PAYMENT --> GUEST_INQUIRY : Khách vãng lai đổi sang COUNTER\n(Nhả khóa Serial)
     PENDING_PAYMENT --> PENDING : VNPAY IPN thành công\n(DEPOSITED / PAID_FULL)
-    PENDING_PAYMENT --> CANCELLED : Quá hạn payment_deadline (15p)\nhoặc Khách bấm hủy
+    PENDING_PAYMENT --> CONFIRMED : Thanh toán VietQR / Gateway xác nhận
+    PENDING_PAYMENT --> CANCELLED : Quá hạn payment_deadline (15p)\nhoặc Khách tự hủy giữ chỗ
+
+    GUEST_INQUIRY --> CONFIRMED : Khách trả tiền Online kịp lúc\nhoặc Staff duyệt & gán Serial còn trống
+    GUEST_INQUIRY --> CANCELLED : Khách tự hủy / Staff từ chối / Hết máy
 
     PENDING --> CONFIRMED : Admin/Staff duyệt đơn
     PENDING --> CANCELLED : Khách hủy / Admin từ chối\n(Hoàn 100% tiền đã đóng)
@@ -839,28 +864,27 @@ sequenceDiagram
 
 ### 7.4. Đặc tả Use Case Trọng tâm (Mẫu chuẩn cho học phần PTTKHTTT)
 
-#### UC-01: Đặt thuê thiết bị & Giữ chỗ (Create Rental Order)
-* **Tác nhân chính:** Khách hàng (`CUSTOMER` đã đăng nhập).
-* **Tiền điều kiện (Pre-conditions):** Tài khoản khách hàng đang hoạt động (`is_active = TRUE`), giỏ đặt thuê có ít nhất 1 thiết bị, thời gian $T_s < T_e$ hợp lệ trong khung giờ mở cửa.
-* **Luồng sự kiện chính (Basic Flow):**
-  1. Khách hàng chọn danh sách mẫu thiết bị (`model_id`), số lượng từng mẫu, thời điểm nhận máy $T_s$ và trả máy $T_e$, hình thức thanh toán (Tiền cọc hoặc Trọn gói qua VNPAY).
-  2. Hệ thống mở Database Transaction và thực hiện khóa `SELECT ... FOR UPDATE` trên các dòng `ProductModels` được yêu cầu theo thứ tự `model_id ASC`.
-  3. Hệ thống tính toán $\text{Available}(M, T_s, T_e)$ cho từng mẫu máy theo công thức tại Mục 2.2.
-  4. Hệ thống kiểm tra số lượng yêu cầu $\le \text{Available}$ cho tất cả mẫu máy.
-  5. Hệ thống tra cứu tỷ lệ giảm cọc theo `Users.membership_tier`, tính `total_rental_fee` và `total_deposit`.
-  6. Hệ thống tạo bản ghi `RentalOrders` ở trạng thái `PENDING_PAYMENT`, đặt `payment_deadline = NOW() + 15 phút`.
-  7. Với mỗi đơn vị thiết bị thuê, hệ thống tạo **1 dòng riêng biệt** trong `RentalOrderDetails` (lưu snapshot giá thuê và tiền cọc).
-  8. Hệ thống `COMMIT` transaction, khởi tạo URL thanh toán VNPAY và chuyển hướng khách hàng.
+#### UC-01: Đặt thuê thiết bị & Giữ chỗ 3 bước (Create Rental Order)
+* **Tác nhân chính:** Thành viên (`CUSTOMER` đã đăng nhập) **HOẶC** Khách vãng lai (`Guest` không cần đăng nhập/OTP).
+* **Tiền điều kiện (Pre-conditions):** Nếu là Thành viên thì tài khoản đang hoạt động (`is_active = TRUE`); giỏ đặt thuê có ít nhất 1 thiết bị; thời gian $T_s < T_e$ hợp lệ (1–30 ngày).
+* **Luồng sự kiện chính (Basic Flow — 3 Bước Đặt nhanh):**
+  1. **Bước 1 (Chọn máy & ngày):** Khách hàng chọn danh sách mẫu thiết bị (`model_id`), số lượng, và khoảng ngày nhận – trả $[T_s, T_e]$. Frontend gọi `GET /api/models?start_date=...&end_date=...` (hoặc `/availability`) để lọc số lượng trống thực tế theo khoảng ngày.
+  2. **Bước 2 (Thông tin khách hàng — bỏ qua nếu đã đăng nhập):** Nếu chưa đăng nhập, khách chọn **"Đăng nhập thành viên"** để hưởng giảm cọc 5–15%, **HOẶC** điền trực tiếp Họ tên, SĐT (10 số VN), Email, Ghi chú, đồng ý Chính sách BVDLCN 2025 và chọn hình thức: `ONLINE_PAYMENT` (giữ chỗ 15p) hay `COUNTER_INQUIRY` (yêu cầu tại quầy). Không yêu cầu xác minh OTP SMS/Email.
+  3. **Bước 3 (Tạo đơn & Thanh toán giữ chỗ):** Hệ thống mở Database Transaction, khóa/kiểm tra chống Spam (`max 2 active holds`), tính $\text{Available}(M, T_s, T_e)$ theo Mục 2.2 và kiểm tra giá từ Server (`BaseDeposit * (1 - d_tier)`, trong đó $d_{\text{tier}} = 0\%$ với Khách vãng lai).
+  4. Nếu chọn `ONLINE_PAYMENT`: tạo đơn `PENDING_PAYMENT` (`payment_deadline = NOW() + 15p`), khóa Serial tạm thời, hiển thị mã VietQR / VNPAY và widget đếm ngược.
+  5. Nếu Khách vãng lai chọn `COUNTER_INQUIRY`: tạo đơn `GUEST_INQUIRY` (`assigned_serials = NULL`, `payment_deadline = NULL`), không khóa kho, gửi thông báo chờ Staff xác nhận.
+  6. Khách vãng lai có thể dùng chức năng **Tra cứu đơn (`order_code + phone`)** để tiếp tục thanh toán hoặc tự hủy đơn khi còn ở `PENDING_PAYMENT` / `GUEST_INQUIRY`.
 * **Luồng ngoại lệ (Exception Flows):**
-  * **4a. Số lượng khả dụng không đủ (do khách khác vừa đặt trước):** Hệ thống `ROLLBACK` transaction và trả về mã lỗi `409 Conflict` kèm số lượng thực tế còn lại của mẫu máy đó.
-  * **8a. Khách hàng không hoàn tất thanh toán trong 15 phút:** Đơn hàng tự động hết hiệu lực giữ chỗ (ngay lập tức bị bỏ qua bởi truy vấn Availability tiếp theo và được Cron Job chuyển sang `CANCELLED`).
+  * **3a. Số lượng khả dụng không đủ (do khách khác vừa đặt trước):** Hệ thống `ROLLBACK` transaction và trả về mã lỗi `409 Conflict` kèm thông báo hết thiết bị trong khung ngày đã chọn.
+  * **3b. Khách vãng lai vượt giới hạn giữ chỗ (Spam):** Hệ thống từ chối với `429 Too Many Requests` nếu cùng SĐT/IP đang giữ $\ge 2$ đơn `PENDING_PAYMENT`.
+  * **4a. Khách hàng không hoàn tất thanh toán trong 15 phút:** Đơn hàng tự động hết hiệu lực giữ chỗ và trả Serial về kho ở truy vấn Availability kế tiếp.
 
 #### UC-02: Bàn giao thiết bị tại quầy (Check-out Order)
 * **Tác nhân chính:** Nhân viên cửa hàng (`STAFF` / `ADMIN`).
-* **Tiền điều kiện:** Đơn hàng đang ở trạng thái `CONFIRMED`. Khách hàng có mặt tại cửa hàng.
+* **Tiền điều kiện:** Đơn hàng đang ở trạng thái `CONFIRMED` (hoặc Staff đã duyệt đơn `GUEST_INQUIRY` $\rightarrow$ `CONFIRMED`). Khách hàng có mặt tại cửa hàng.
 * **Luồng sự kiện chính:**
-  1. Nhân viên mở chi tiết đơn `CONFIRMED` theo `order_code`.
-  2. Nhân viên kiểm tra Thẻ căn cước hoặc ứng dụng VNeID mức 2 của khách hàng, chọn phương thức xác minh (`kyc_verification_method`) và nhập 4 số cuối giấy tờ (tuyệt đối không giữ thẻ gốc của khách).
+  1. Nhân viên mở chi tiết đơn `CONFIRMED` theo `order_code` trên POS `/staff/checkout-wizard`.
+  2. Nếu `is_guest = TRUE`, hệ thống bật **Banner cảnh báo Khách vãng lai** yêu cầu đối chiếu KYC trực tiếp nghiêm ngặt hơn (do chưa có lịch sử thuê/điểm uy tín); nhân viên kiểm tra CCCD/VNeID gốc của khách và nhập 4 số cuối giấy tờ (tuyệt đối không giữ thẻ gốc).
   3. Với từng dòng trong `RentalOrderDetails`, nhân viên quét mã vạch/chọn một `ProductItem` cụ thể đang có trạng thái `AVAILABLE` thuộc đúng `model_id`.
   4. Hệ thống tự động lấy `shutter_count` và `condition_percent` hiện tại của từng máy lưu snapshot vào `RentalOrderDetails`.
   5. Nhân viên kiểm đếm phụ kiện đi kèm (pin, sạc, thẻ nhớ, dây đeo), chụp ảnh tình trạng máy tải lên hệ thống (`InspectionPhotos` với `phase = 'CHECKOUT'`).
@@ -889,9 +913,9 @@ sequenceDiagram
 
 | Method | Endpoint | Mô tả | Phân quyền |
 |---|---|---|---|
-| `GET` | `/api/models` | Danh sách mẫu mã (lọc theo category, mount, giá, full-text search) | Public |
+| `GET` | `/api/models` | Danh sách mẫu mã kèm tồn kho khả dụng theo `?start_date=...&end_date=...` (hỗ trợ lọc `category`) | Public |
 | `GET` | `/api/models/:id` | Chi tiết thông số kỹ thuật mẫu mã | Public |
-| `GET` | `/api/models/:id/availability` | Kiểm tra số lượng trống theo `?start_date=...&end_date=...` | Public |
+| `GET` | `/api/models/:id/availability` | Kiểm tra `availableCount`, `bookedUnits`, `availableSerials` theo `?start_date=...&end_date=...` | Public |
 | `POST` | `/api/admin/models` | Thêm mẫu thiết bị mới | Admin |
 | `PUT` | `/api/admin/models/:id` | Cập nhật thông tin/giá thuê/tiền cọc của mẫu mã | Admin |
 | `PATCH` | `/api/admin/models/:id/status` | Ẩn/hiện mẫu thiết bị trên trang chủ (`is_active`) | Admin |
@@ -908,17 +932,22 @@ sequenceDiagram
 | `POST` | `/api/admin/maintenance` | Tạo phiếu bảo dưỡng mới → Tự động chuyển Item sang `MAINTENANCE` | Staff/Admin |
 | `PATCH` | `/api/admin/maintenance/:logId/complete` | Hoàn tất bảo dưỡng → Cập nhật chi phí & chuyển Item về `AVAILABLE` | Staff/Admin |
 
-### 8.4. Quản lý Đơn thuê & Check-out/Check-in (Rental Orders — C05, C08, S03, S04, S05)
+### 8.4. Quản lý Đơn thuê & Check-out/Check-in (Rental Orders — C05, C08, C11, C12, S03, S04, S05)
 
 | Method | Endpoint | Mô tả | Phân quyền |
 |---|---|---|---|
-| `POST` | `/api/orders` | Tạo đơn đặt thuê (áp dụng Mutex Lock chống Race Condition) | Customer |
-| `GET` | `/api/orders/my-orders` | Danh sách đơn thuê của khách hàng hiện tại | Customer |
-| `GET` | `/api/orders/:id` | Xem chi tiết đơn, biên bản giao/trả, danh sách ảnh kiểm tra | Customer (own)/Staff |
-| `POST` | `/api/orders/:id/cancel` | Hủy đơn thuê và tự động tính toán mức hoàn tiền theo chính sách | Customer (own)/Admin |
-| `GET` | `/api/admin/orders` | Quản lý danh sách toàn bộ đơn thuê (lọc theo trạng thái, ngày) | Staff/Admin |
-| `POST` | `/api/admin/orders/:id/approve` | Duyệt đơn `PENDING` → `CONFIRMED` | Staff/Admin |
-| `POST` | `/api/admin/orders/:id/reject` | Từ chối đơn `PENDING` → `CANCELLED` (kèm hoàn cọc 100%) | Staff/Admin |
+| `POST` | `/api/orders` | Tạo đơn đặt thuê **Dual Mode** (Thành viên qua JWT hoặc Khách vãng lai qua `guest_info` + `booking_mode`), chống Race Condition & Rate Limit anti-spam | Customer / Guest (Public) |
+| `GET` | `/api/orders/my-orders` | Danh sách đơn thuê của Thành viên đang đăng nhập (`401 Unauthorized` nếu không có JWT hợp lệ) | Customer |
+| `GET` | `/api/orders/guest-lookup` | Tra cứu công khai đơn Khách vãng lai, bắt buộc khớp đồng thời `?orderCode=...&phone=...` | Guest (Dual-Key) |
+| `POST` | `/api/orders/:orderCode/guest-cancel` | Khách vãng lai tự hủy giữ chỗ `PENDING_PAYMENT` / `GUEST_INQUIRY` khi khớp `phone`, giải phóng Serial ngay lập tức | Guest (Phone Verify) |
+| `POST` | `/api/orders/:orderCode/pay` | Xác nhận thanh toán cọc (`VIETQR`/`VNPAY` $\rightarrow$ `CONFIRMED`) hoặc chuyển đơn vãng lai sang `GUEST_INQUIRY` (`COUNTER` nhả Serial). Kiểm tra chủ đơn (`userId` hoặc `guest_phone`) | Customer (own) / Guest (phone) / Staff |
+| `GET` | `/api/orders/:orderCode` | Xem chi tiết đơn (chặn truy cập trái phép nếu không phải chủ đơn, nhân viên, hoặc đúng `phone` khách vãng lai) | Customer (own) / Guest (`?phone`) / Staff |
+| `POST` | `/api/orders/:id/cancel` | Hủy đơn thuê Thành viên và tự động tính toán mức hoàn tiền theo chính sách | Customer (own)/Admin |
+| `GET` | `/api/admin/orders` | Hàng đợi toàn bộ đơn POS (hỗ trợ lọc `?status=GUEST_INQUIRY&customer_type=guest&search=...`) | Staff/Admin |
+| `GET` | `/api/admin/orders/:orderCode` | Chi tiết đơn POS kèm `warehouse_serials` & cờ cảnh báo KYC Khách vãng lai | Staff/Admin |
+| `PATCH` | `/api/admin/orders/:orderCode/status` | Cập nhật trạng thái POS (`CONFIRMED`, `DELIVERED`, `RETURNED`, `CANCELLED`, `OVERDUE`); tự động gán Serial & kiểm tra trùng lịch khi duyệt `GUEST_INQUIRY` | Staff/Admin |
+| `POST` | `/api/admin/orders/:id/approve` | Duyệt đơn `PENDING` / `GUEST_INQUIRY` → `CONFIRMED` | Staff/Admin |
+| `POST` | `/api/admin/orders/:id/reject` | Từ chối đơn `PENDING` / `GUEST_INQUIRY` → `CANCELLED` (kèm hoàn cọc nếu có) | Staff/Admin |
 | `POST` | `/api/admin/orders/:id/checkout` | Thực hiện bàn giao máy (gán Serial, lưu KYC, chuyển `DELIVERED`) | Staff/Admin |
 | `POST` | `/api/admin/orders/:id/checkin` | Thực hiện thu hồi máy (tính phí trễ/hư hỏng, quyết toán cọc, `RETURNED`) | Staff/Admin |
 
@@ -998,8 +1027,8 @@ sequenceDiagram
 |---|---|---|
 | 1 | **Tuân thủ Luật Căn cước 2023** | **Bãi bỏ hoàn toàn việc giữ Thẻ căn cước gốc.** Nhân viên chỉ đối chiếu trực tiếp tại quầy (hoặc qua VNeID), lưu 4 số cuối vào `CheckoutRecords.kyc_document_last4` và ký hợp đồng thuê |
 | 2 | **Mã hóa Dữ liệu Cá nhân Nhạy cảm (PII)** | Số Thẻ căn cước của khách trong bảng `Users` bắt buộc mã hóa **AES-256-GCM** trước khi lưu vào `id_card_encrypted`. Dùng `id_card_hash` (HMAC-SHA256) để kiểm tra trùng lặp và `id_card_last4` để hiển thị che mờ (`********1234`) |
-| 3 | **Sự đồng ý của Chủ thể dữ liệu (Consent)** | Form đăng ký bắt buộc có bước xác nhận đồng ý Chính sách Bảo vệ Dữ liệu Cá nhân, lưu dấu thời gian vào `Users.privacy_consent_at`. Hỗ trợ quyền yêu cầu xóa/ẩn danh dữ liệu khi không còn nghĩa vụ hợp đồng |
-| 4 | **Bảo mật Ảnh Kiểm định & Biên bản** | Không dùng Public URL cho ảnh chụp tại quầy (vì có thể chứa hình ảnh khách hàng/chữ ký/số Serial). Lưu `storage_key` riêng tư và chỉ cấp **Signed URL có thời hạn 15 phút** cho đúng chủ đơn hàng hoặc nhân viên |
+| 3 | **Sự đồng ý của Chủ thể dữ liệu (Consent)** | Cả form đăng ký Thành viên (`Users.privacy_consent_at`) lẫn Bước 2 đặt lịch Khách vãng lai (`RentalOrders.privacy_consent_at`) đều **bắt buộc tick đồng ý** Chính sách Bảo vệ Dữ liệu Cá nhân 2025. Khách vãng lai không bị tạo tài khoản ngầm (`Users`); giai đoạn hiện tại không bắt buộc gửi OTP SMS/Email tại bước giữ chỗ (đặt nhanh 3 bước), đồng thời dữ liệu liên hệ đã sẵn sàng cho module thông báo tương lai |
+| 4 | **Bảo mật Ảnh Kiểm định & Tra cứu đơn Vãng lai** | Không dùng Public URL cho ảnh chụp tại quầy (chỉ cấp **Signed URL 15 phút**). Riêng API `/api/orders/guest-lookup` & `/api/orders/:orderCode` không bao giờ cho phép tra cứu chỉ bằng SĐT hoặc chỉ bằng Mã đơn để chống rò rỉ PII (IDOR) — bắt buộc khớp đồng thời `order_code + guest_phone` |
 | 5 | **Bảo mật Mật khẩu & Token** | Mật khẩu băm bằng **Argon2id** (hoặc bcrypt cost $\ge 12$). Refresh Token và Password Reset Token chỉ lưu bản băm **SHA-256** trong CSDL (`refresh_token_hash`, `password_reset_token_hash`) |
 | 6 | **Bảo mật Cổng Thanh toán VNPAY** | Tách riêng `ReturnURL` và `IPN`. Trên `IPN`, bắt buộc kiểm tra chữ ký `vnp_SecureHash` (HMAC-SHA512), đối chiếu đúng `amount` trong DB và kiểm tra trạng thái giao dịch để đảm bảo tính **Idempotent** |
 | 7 | **Chống Dò tìm Tài khoản & Brute-force** | Áp dụng Rate Limiting (`express-rate-limit`) trên `/api/auth/*`. API `/forgot-password` luôn trả về cùng một thông báo thành công dù email có tồn tại hay không |
@@ -1033,7 +1062,11 @@ Tất cả các tiến trình chạy ngầm được cấu hình với múi gi�
 | **TC-AVAIL-01** | Kiểm tra Availability cơ bản | Kho có 3 máy X-T5 (`2 AVAILABLE`, `1 MAINTENANCE`). Có 1 đơn `CONFIRMED` từ 10/11 đến 12/11. Khách tìm thuê từ 11/11 đến 13/11 | `ActivePool = 2`, `BookedUnits = 1` $\Rightarrow$ Trả về `Available = 1` |
 | **TC-AVAIL-02** | Đơn `OVERDUE` chiếm chỗ | Kho có 1 máy X100VI. Đơn cũ thuê 01/11–05/11 đang ở trạng thái `OVERDUE` (chưa trả máy). Khách mới tìm thuê 06/11–08/11 | Hệ thống nhận diện máy vẫn chưa về kho $\Rightarrow$ Trả về `Available = 0` |
 | **TC-AVAIL-03** | Đơn `PENDING_PAYMENT` hết hạn | Kho có 1 máy. Đơn A có `order_status = 'PENDING_PAYMENT'` và `payment_deadline` đã qua 1 phút trước (Cron chưa kịp chạy) | Truy vấn Availability tự loại bỏ đơn A ngay lập tức $\Rightarrow$ Trả về `Available = 1` |
-| **TC-RACE-01** | **Concurrency Test (Race Condition)** | Kho chỉ còn **1 máy** X-T5 trống. Dùng `Promise.all` bắn đồng thời **10 HTTP POST `/api/orders`** cùng khung giờ | Nhờ khóa `SELECT ... FOR UPDATE` trên `ProductModels`, chỉ có **đúng 1 request nhận `201 Created`**, 9 request còn lại nhận `409 Conflict` |
+| **TC-AVAIL-04** | Giao thoa khoảng ngày (`Date-Range Overlap`) | Kho còn **1 máy** X-T5. Đơn A đặt từ `10/12 – 12/12`. Khách vãng lai B đặt `15/12 – 18/12` (khác tuần), Khách C đặt `11/12 – 14/12` (trùng ngày) | Khách B nhận `201 Created` (vì không giao thoa); Khách C nhận `409 Conflict` |
+| **TC-GUEST-01** | Khách vãng lai Online 15p (`ONLINE_PAYMENT`) | Khách chưa đăng nhập gửi `POST /api/orders` chọn `VIETQR` kèm `guest_info` hợp lệ (không qua OTP SMS/Email) | Trả `201 Created`, `status = PENDING_PAYMENT`, gán Serial khóa 15p, tính đúng 100% cọc tiêu chuẩn (giảm `0%`), không chèn dòng vào bảng `Users` |
+| **TC-GUEST-02** | Khách vãng lai tại quầy (`GUEST_INQUIRY`) | Khách gửi `COUNTER_INQUIRY`; trong lúc chờ Staff duyệt, kiểm tra lại `GET /api/models/:id/availability` rồi cho Staff duyệt trên POS | `GUEST_INQUIRY` **không trừ tồn kho** (`assigned_serials = NULL`); khi Staff duyệt (`CONFIRMED`), hệ thống tự kiểm tra lại kho và gán Serial (hoặc trả `409 Conflict` nếu khách khác đã cọc trước) |
+| **TC-GUEST-03** | Tra cứu, Tự hủy & Chống Spam (`429`) | Khách A giữ 2 đơn `PENDING_PAYMENT` với cùng SĐT/IP rồi gửi đơn thứ 3; sau đó gọi `GET /api/orders/guest-lookup` và `POST /:orderCode/guest-cancel` | Đơn thứ 3 bị chặn `429 Too Many Requests`; tra cứu sai SĐT trả `404`; tự hủy đơn trả `200 OK` (`CANCELLED`) và giải phóng Serial về kho |
+| **TC-RACE-01** | **Concurrency Test (Race Condition)** | Kho chỉ còn **1 máy** X-T5 trống. Dùng `Promise.all` bắn đồng thời **10 HTTP POST `/api/orders`** cùng khung giờ | Nhờ khóa `SELECT ... FOR UPDATE` trên `ProductModels` (hoặc ACID transaction SQLite), chỉ có **đúng 1 request nhận `201 Created`**, 9 request còn lại nhận `409 Conflict` |
 | **TC-FEE-01** | Tính Grace Period 2 giờ | Hẹn trả `20:00 10/11`, trả thực tế lúc `21:59 10/11` ($\Delta t = 119\text{ phút}$) | $\text{LateFee} = 0\text{ ₫}$ |
 | **TC-FEE-02** | Tính Late Fee & Mức trần (Cap) | Giá thuê $500.000\text{ ₫/ngày}$, cọc $2.000.000\text{ ₫}$. Trả trễ 10 ngày (Phí lý thuyết $= 7.500.000\text{ ₫}$) | Bị giới hạn bởi mức trần $2 \times \text{Cọc} \Rightarrow \text{LateFee} = 4.000.000\text{ ₫}$ |
 | **TC-VNPAY-01** | VNPAY IPN Idempotency | VNPAY gọi lại webhook `/api/payments/vnpay/ipn` lần thứ 2 cho cùng một giao dịch đã `SUCCESS` | Hệ thống không tạo thêm giao dịch trùng, trả về `{"RspCode": "02", "Message": "Order already confirmed"}` |
@@ -1056,3 +1089,4 @@ Tất cả các tiến trình chạy ngầm được cấu hình với múi gi�
 | 10 | Lệch số lượng bảng (tiêu đề ghi 12 nhưng có 13), thiếu FK `MembershipTiers` | Đồng bộ chính xác con số **13 bảng** trên toàn tài liệu; tạo FK từ `Users.membership_tier` sang `MembershipTiers(tier_code)` |
 | 11 | `AuditLogs.user_id` để `NOT NULL` làm lỗi khi Cron Job ghi log | Đổi `AuditLogs.user_id` thành `INT NULL` và thêm cột phân loại `actor_type` (`USER`, `SYSTEM_CRON`, `PAYMENT_WEBHOOK`) |
 | 12 | Dùng `DATE` cho ngày thuê và `DECIMAL(12,2)` cho tiền VND | Đổi ngày nhận/trả sang `DATETIME(3)` để tính chính xác Grace Period 2 giờ; đổi toàn bộ cột tiền tệ sang `DECIMAL(12, 0)` |
+| 13 | Luồng đặt máy bắt buộc đăng nhập & `my-orders` rò rỉ dữ liệu fallback | Triển khai luồng **Khách vãng lai đặt nhanh 3 bước** (`user_id NULL`, không cần OTP SMS/Email ở bước giữ chỗ), tách `GUEST_INQUIRY` không khóa kho, thêm `Date-Range Overlap`, bảo mật `my-orders` (`401`) & tra cứu `orderCode + phone`, và đồng bộ hàng đợi POS duyệt đơn + cảnh báo KYC khách vãng lai |
