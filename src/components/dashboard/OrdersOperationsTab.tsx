@@ -133,26 +133,28 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#14171f]/[0.05] border border-[#14171f]/10 text-[11px] font-medium uppercase tracking-wider text-[#383e4e] mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#14171f]/80 radar-pulse-white" />
-            <span>Hàng Đợi POS &amp; Giao Nhận</span>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="font-serif text-2xl sm:text-3xl text-[#14171f]">
+              Quản Lý Đơn Thuê &amp; Bàn Giao
+            </h2>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#14171f]/[0.05] border border-[#14171f]/10 text-[11px] font-medium uppercase tracking-wider text-[#383e4e]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#14171f]/80 radar-pulse-white" />
+              <span>Hàng Đợi POS ({orders.length})</span>
+            </div>
           </div>
-          <h2 className="font-serif text-3xl text-[#14171f]">
-            Quản Lý Đơn Thuê &amp; Bàn Giao
-          </h2>
-          <p className="text-xs sm:text-sm text-[#5a6072] mt-1">
-            Duyệt yêu cầu tại quầy, thực hiện Check-out đối chứng KYC + ảnh, và Check-in quyết toán cọc.
+          <p className="text-xs text-[#5a6072] mt-0.5">
+            Duyệt tại quầy, Check-out đối chứng KYC và Check-in quyết toán cọc.
           </p>
         </div>
 
         <button
           type="button"
           onClick={() => void loadOrders(true)}
-          className="glass-button px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+          className="glass-button px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shrink-0"
         >
           <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
           <span>Làm mới danh sách</span>
@@ -180,24 +182,24 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
       )}
 
       {/* Filter Bar */}
-      <div className="liquid-glass rounded-3xl p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="liquid-glass rounded-2xl sm:rounded-3xl p-3 sm:p-4 space-y-2.5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           {/* Search Input */}
           <div className="relative flex-1 max-w-md">
-            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-[#62687a]" />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-[#62687a]" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Tìm mã đơn (#ORD...), tên khách, số điện thoại..."
-              className="w-full pl-10 pr-9 py-2.5 rounded-full crystal-liquid-lens text-xs sm:text-sm text-[#14171f] placeholder:text-[#8c93a4] focus:outline-none"
+              className="w-full pl-9 pr-8 py-2 rounded-full crystal-liquid-lens text-xs sm:text-sm text-[#14171f] placeholder:text-[#8c93a4] focus:outline-none"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
                 aria-label="Xóa từ khóa tìm kiếm"
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#14171f]/10 hover:bg-[#14171f]/20 text-[#14171f] flex items-center justify-center cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#14171f]/10 hover:bg-[#14171f]/20 text-[#14171f] flex items-center justify-center cursor-pointer"
               >
                 <X size={11} />
               </button>
@@ -205,7 +207,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
           </div>
 
           {/* Customer Type Toggle */}
-          <div className="flex items-center gap-1.5 bg-[#f5f6f8] p-1 rounded-full border border-[#14171f]/10 self-start md:self-auto">
+          <div className="flex items-center gap-1 bg-[#f5f6f8] p-1 rounded-full border border-[#14171f]/10 self-start md:self-auto shrink-0">
             {[
               { id: 'all', label: 'Tất cả khách' },
               { id: 'member', label: 'Thành viên' },
@@ -215,7 +217,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                 key={item.id}
                 type="button"
                 onClick={() => setCustomerType(item.id as 'all' | 'member' | 'guest')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   customerType === item.id
                     ? 'bg-[#14171f] text-white shadow-xs'
                     : 'text-[#5a6072] hover:text-[#14171f]'
@@ -228,13 +230,13 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
         </div>
 
         {/* Status Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.id}
               type="button"
               onClick={() => setStatusFilter(f.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 border transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 border transition-all cursor-pointer ${
                 statusFilter === f.id
                   ? 'bg-[#14171f] text-white border-[#14171f] shadow-xs'
                   : 'bg-white text-[#5a6072] border-[#14171f]/10 hover:border-[#14171f]/25 hover:text-[#14171f]'
@@ -257,18 +259,18 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
           Không tìm thấy đơn hàng nào phù hợp với bộ lọc hiện tại.
         </div>
       ) : (
-        <div className="liquid-glass rounded-3xl overflow-hidden">
+        <div className="liquid-glass rounded-2xl sm:rounded-3xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1080px] text-left border-collapse">
+            <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-[#14171f]/10 bg-[#f7f8fa] text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
-                  <th className="py-3.5 px-5">Mã đơn &amp; Thời gian</th>
-                  <th className="py-3.5 px-4">Khách hàng &amp; KYC</th>
-                  <th className="py-3.5 px-4">Thiết bị &amp; Serial kho</th>
-                  <th className="py-3.5 px-4">Lịch thuê</th>
-                  <th className="py-3.5 px-4 text-right">Tài chính</th>
-                  <th className="py-3.5 px-4">Trạng thái</th>
-                  <th className="py-3.5 px-6 text-right whitespace-nowrap min-w-[210px]">Nghiệp vụ POS</th>
+                  <th className="py-3 px-3 sm:px-4 whitespace-nowrap w-[115px]">Mã đơn</th>
+                  <th className="py-3 px-3 sm:px-3.5 min-w-[130px]">Khách hàng &amp; KYC</th>
+                  <th className="py-3 px-3 sm:px-3.5 min-w-[140px] max-w-[210px]">Thiết bị &amp; Serial</th>
+                  <th className="py-3 px-3 sm:px-3.5 whitespace-nowrap w-[110px]">Lịch thuê</th>
+                  <th className="py-3 px-3 sm:px-3.5 whitespace-nowrap text-right w-[125px]">Tài chính</th>
+                  <th className="py-3 px-3 sm:px-3.5 whitespace-nowrap w-[115px]">Trạng thái</th>
+                  <th className="py-3 px-3 sm:px-4 text-right whitespace-nowrap w-[170px]">Nghiệp vụ POS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#14171f]/8 text-xs">
@@ -297,7 +299,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                   return (
                     <tr key={order.id} className="hover:bg-[#f7f8fa]/70 transition-colors">
                       {/* Order Code */}
-                      <td className="py-4 px-5 align-top">
+                      <td className="py-3 px-3 sm:px-4 align-top whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => onOpenDossier(order.order_code)}
@@ -311,7 +313,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                       </td>
 
                       {/* Customer */}
-                      <td className="py-4 px-4 align-top">
+                      <td className="py-3 px-3 sm:px-3.5 align-top">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-semibold text-[#14171f]">{order.customer_name}</span>
                           {order.is_guest ? (
@@ -324,10 +326,10 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-[#5a6072] num mt-0.5">
-                          {order.customer_phone || '—'}
+                        <div className="text-[11px] text-[#5a6072] num mt-0.5 flex items-center gap-1.5 flex-wrap">
+                          <span>{order.customer_phone || '—'}</span>
                           {!order.is_guest && order.id_card_last4 && (
-                            <span className="ml-2 text-emerald-700 font-medium">
+                            <span className="text-emerald-700 font-medium">
                               CCCD ****{order.id_card_last4}
                             </span>
                           )}
@@ -335,7 +337,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                       </td>
 
                       {/* Equipment & Serial */}
-                      <td className="py-4 px-4 align-top max-w-[230px]">
+                      <td className="py-3 px-3 sm:px-3.5 align-top max-w-[210px]">
                         <p className="font-semibold text-[#14171f] truncate" title={order.model_name}>
                           {order.model_name}
                         </p>
@@ -358,13 +360,13 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                       </td>
 
                       {/* Dates */}
-                      <td className="py-4 px-4 align-top num whitespace-nowrap text-[#4b5262]">
+                      <td className="py-3 px-3 sm:px-3.5 align-top num whitespace-nowrap text-[#4b5262]">
                         <div>Nhận: <strong className="text-[#14171f]">{formatShortDate(order.start_date)}</strong></div>
                         <div className="mt-0.5">Trả: <strong className="text-[#14171f]">{formatShortDate(order.expected_return_date)}</strong></div>
                       </td>
 
                       {/* Finance */}
-                      <td className="py-4 px-4 align-top text-right num whitespace-nowrap">
+                      <td className="py-3 px-3 sm:px-3.5 align-top text-right num whitespace-nowrap">
                         <div className="font-bold text-[#14171f]">{formatVnd(order.total_rent)}</div>
                         <div className="text-[11px] text-[#5a6072]">
                           Cọc: {formatVnd(order.deposit_amount)}
@@ -400,7 +402,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                       </td>
 
                       {/* Order Status */}
-                      <td className="py-4 px-4 align-top">
+                      <td className="py-3 px-3 sm:px-3.5 align-top">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-semibold border whitespace-nowrap ${stMeta.bg} ${stMeta.text} ${stMeta.border}`}
                         >
@@ -410,17 +412,18 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-6 align-top text-right">
+                      <td className="py-3 px-3 sm:px-4 align-top text-right">
                         <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                           {needsApprove && (
                             <button
                               type="button"
                               disabled={isBusy}
                               onClick={() => handleApprove(order.order_code)}
-                              className="px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-2.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap shadow-xs active:scale-95 transition-all"
+                              title="Duyệt đơn & Khóa Serial kho"
                             >
                               {isBusy ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                              <span>Duyệt &amp; Khóa Serial</span>
+                              <span>Duyệt</span>
                             </button>
                           )}
 
@@ -429,7 +432,8 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                               type="button"
                               disabled={isBusy}
                               onClick={() => onOpenCheckout(order.order_code)}
-                              className="px-3 py-1.5 rounded-full bg-[#14171f] hover:bg-[#262c3a] text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                              className="px-2.5 py-1.5 rounded-full bg-[#14171f] hover:bg-[#262c3a] text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap shadow-xs active:scale-95 transition-all"
+                              title="Thực hiện giao máy & kiểm tra đối chứng KYC"
                             >
                               <ArrowRightLeft size={12} />
                               <span>Check-out</span>
@@ -441,10 +445,11 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                               type="button"
                               disabled={isBusy}
                               onClick={() => onOpenCheckin(order.order_code)}
-                              className="px-3 py-1.5 rounded-full bg-[#14171f] hover:bg-[#262c3a] text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                              className="px-2.5 py-1.5 rounded-full bg-[#14171f] hover:bg-[#262c3a] text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap shadow-xs active:scale-95 transition-all"
+                              title="Nhận lại máy, kiểm tra ngoại quan và quyết toán cọc"
                             >
                               <Check size={12} />
-                              <span>Check-in Quyết toán</span>
+                              <span>Quyết toán</span>
                             </button>
                           )}
 
@@ -455,9 +460,9 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                               onClick={() =>
                                 handleReject(order.order_code, order.order_status === 'CONFIRMED')
                               }
-                              className={`px-2.5 py-1.5 rounded-full border text-[11px] font-semibold cursor-pointer whitespace-nowrap flex items-center gap-1 transition-all ${
+                              className={`p-1.5 rounded-full border text-[11px] font-semibold cursor-pointer whitespace-nowrap flex items-center justify-center transition-all ${
                                 confirmRejectCode === order.order_code
-                                  ? 'border-rose-600 bg-rose-600 text-white'
+                                  ? 'border-rose-600 bg-rose-600 text-white px-2.5'
                                   : 'border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700'
                               }`}
                               title={
@@ -468,7 +473,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                             >
                               <X size={12} />
                               {confirmRejectCode === order.order_code && (
-                                <span>Xác nhận hủy?</span>
+                                <span>Hủy đơn?</span>
                               )}
                             </button>
                           )}
@@ -476,7 +481,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                           <button
                             type="button"
                             onClick={() => onOpenDossier(order.order_code)}
-                            className="glass-button px-2.5 py-1.5 rounded-full text-[11px] font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                            className="glass-button px-2.5 py-1.5 rounded-full text-[11px] font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap active:scale-95 transition-all"
                             title="Xem hồ sơ & In biên bản"
                           >
                             <FileText size={12} />

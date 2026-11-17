@@ -220,8 +220,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
       <div className="fixed inset-x-0 top-0 h-[460px] bg-gradient-to-b from-white/55 via-white/90 to-white z-0 pointer-events-none no-print" />
 
       {/* Top Floating Dashboard Navbar with Frosted Glass Backdrop to prevent content bleed */}
-      <header className="no-print sticky top-0 z-40 w-full bg-white/92 backdrop-blur-xl border-b border-[#14171f]/8 shadow-[0_2px_12px_rgba(20,24,32,0.03)] transition-all">
-        <div className="w-full h-[84px] px-4 sm:px-6 lg:px-8 min-[1420px]:px-12 2xl:px-14 flex items-center justify-between gap-2.5 lg:gap-3 min-[1420px]:gap-4">
+      <header className="no-print sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#14171f]/10 shadow-[0_2px_10px_rgba(20,24,32,0.03)] transition-all">
+        <div className="w-full h-[76px] sm:h-[80px] px-4 sm:px-6 lg:px-8 min-[1420px]:px-12 2xl:px-14 flex items-center justify-between gap-2.5 lg:gap-3 min-[1420px]:gap-4">
             {/* Left: Brand Wordmark matching Home LiquidNavbar */}
             <div className="flex items-center shrink-0 pointer-events-auto">
               <button
@@ -394,8 +394,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
         />
       </div>
 
-      {/* Main Content Container (Exact Home Storefront max-w-6xl Width & Spacing) */}
-      <main className="no-print relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-8 pt-6 sm:pt-8">
+      {/* Main Content Container - Expanded for Enterprise POS & Operational Tables */}
+      <main className="no-print relative z-10 w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 pt-5 sm:pt-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

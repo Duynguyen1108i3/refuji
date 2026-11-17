@@ -325,17 +325,17 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
       </div>
 
       {/* Ledger Table */}
-      <div className="liquid-glass rounded-3xl overflow-hidden">
+      <div className="liquid-glass rounded-2xl sm:rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[960px] text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-[#14171f]/10 bg-[#f7f8fa] text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
-                <th className="py-3.5 px-5">Mã giao dịch</th>
-                <th className="py-3.5 px-4">Đơn hàng &amp; Khách</th>
-                <th className="py-3.5 px-4">Loại &amp; Kênh</th>
-                <th className="py-3.5 px-4">Diễn giải</th>
-                <th className="py-3.5 px-4 text-right">Số tiền</th>
-                <th className="py-3.5 px-5 text-right">Thời gian</th>
+                <th className="py-3 px-3 sm:px-4">Mã giao dịch</th>
+                <th className="py-3 px-3 sm:px-4">Đơn hàng &amp; Khách</th>
+                <th className="py-3 px-3 sm:px-4">Loại &amp; Kênh</th>
+                <th className="py-3 px-3 sm:px-4">Diễn giải</th>
+                <th className="py-3 px-3 sm:px-4 text-right">Số tiền</th>
+                <th className="py-3 px-3 sm:px-4 text-right">Thời gian</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#14171f]/8">
