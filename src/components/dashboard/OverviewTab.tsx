@@ -16,6 +16,10 @@ import {
   CalendarDays,
   CalendarRange,
   BarChart3,
+  ClipboardList,
+  ShieldCheck,
+  Check,
+  FileText,
 } from 'lucide-react';
 import { triggerOperationalSweep } from '../../services/dashboardApi';
 import {
@@ -33,6 +37,7 @@ import {
 
 interface OverviewTabProps {
   data: DashboardOverviewData | null;
+  userRole?: 'ADMIN' | 'STAFF' | 'CUSTOMER';
   isLoading: boolean;
   onRefresh: () => void;
   onNavigateTab: (tab: DashboardTabId) => void;
@@ -44,6 +49,7 @@ interface OverviewTabProps {
 
 export const OverviewTab: React.FC<OverviewTabProps> = ({
   data,
+  userRole,
   isLoading,
   onRefresh,
   onNavigateTab,
@@ -94,6 +100,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   }
 
   const { kpis, trendSeries, categoryBreakdown, topModels, pickupToday, returnToday, maintenanceDueItems, recentAuditLogs } = data;
+  const isStaff = userRole === 'STAFF' || data.role === 'STAFF';
   const totalCatRev = Math.max(1, categoryBreakdown.reduce((acc, c) => acc + c.revenue, 0));
 
   const guestInqCount = kpis.statusCounts?.GUEST_INQUIRY || 0;
@@ -124,13 +131,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#14171f]/[0.05] border border-[#14171f]/10 text-[11px] font-medium uppercase tracking-wider text-[#383e4e] mb-3">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 radar-pulse-white" />
-            <span>Điều Hành Studio Thời Gian Thực</span>
+            <span>{isStaff ? 'Bảng Điều Phối Ca Quầy POS · Vận Hành Thực Tế' : 'Điều Hành Studio Thời Gian Thực'}</span>
           </div>
           <h1 className="font-serif text-2xl sm:text-4xl lg:text-[42px] xl:text-5xl font-normal text-[#14171f] uppercase tracking-tight">
-            TỔNG QUAN VẬN HÀNH REFUJI
+            {isStaff ? 'TỔNG QUAN VẬN HÀNH CA QUẦY' : 'TỔNG QUAN VẬN HÀNH REFUJI'}
           </h1>
           <p className="text-xs sm:text-sm text-[#5a6072] mt-1.5 num">
-            Đồng bộ trực tiếp từ cơ sở dữ liệu lúc {formatDateTimeWithSeconds(data.updatedAt)}
+            {isStaff
+              ? `Chỉ số thiết bị, hàng đợi giao nhận & tiền mặt tại quầy · Đồng bộ lúc ${formatDateTimeWithSeconds(data.updatedAt)}`
+              : `Đồng bộ trực tiếp từ cơ sở dữ liệu lúc ${formatDateTimeWithSeconds(data.updatedAt)}`}
           </p>
         </div>
 
@@ -168,170 +177,229 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </div>
 
-      {/* Doanh Thu Theo Kỳ: Ngày, Tuần, Tháng, Năm Selector & Quick Glance Cards */}
-      <div className="space-y-3.5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#f7f8fa] p-2.5 sm:px-4 sm:py-2.5 rounded-3xl border border-[#14171f]/8">
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#14171f]">
-            <CalendarRange size={16} className="text-[#14171f]" />
-            <span>Kỳ thống kê doanh thu:</span>
+      {/* Doanh Thu Theo Kỳ: Ngày, Tuần, Tháng, Năm Selector & Quick Glance Cards (Chỉ dành cho ADMIN) */}
+      {!isStaff && (
+        <div className="space-y-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#f7f8fa] p-2.5 sm:px-4 sm:py-2.5 rounded-3xl border border-[#14171f]/8">
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#14171f]">
+              <CalendarRange size={16} className="text-[#14171f]" />
+              <span>Kỳ thống kê doanh thu:</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+              {[
+                { key: 'day', label: 'Hôm nay (Ngày)' },
+                { key: 'week', label: 'Tuần này' },
+                { key: 'month', label: 'Tháng này' },
+                { key: 'year', label: 'Năm nay' },
+                { key: 'all', label: 'Toàn bộ' },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPeriod(item.key as RevenuePeriodKey);
+                    if (item.key !== 'all') {
+                      setChartPeriod(item.key as 'day' | 'week' | 'month' | 'year');
+                    }
+                  }}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    selectedPeriod === item.key
+                      ? 'bg-[#14171f] text-white shadow-xs'
+                      : 'bg-white hover:bg-neutral-100 text-[#5a6072] border border-[#14171f]/10'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+          {/* 4 Cards Hiện Doanh Thu: Ngày, Tuần, Tháng, Năm */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { key: 'day', label: 'Hôm nay (Ngày)' },
-              { key: 'week', label: 'Tuần này' },
-              { key: 'month', label: 'Tháng này' },
-              { key: 'year', label: 'Năm nay' },
-              { key: 'all', label: 'Toàn bộ' },
-            ].map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => {
-                  setSelectedPeriod(item.key as RevenuePeriodKey);
-                  if (item.key !== 'all') {
+              {
+                key: 'day',
+                label: 'Hôm nay',
+                icon: <Calendar size={14} />,
+                data: data.revenueByPeriod?.day,
+              },
+              {
+                key: 'week',
+                label: 'Tuần này',
+                icon: <CalendarDays size={14} />,
+                data: data.revenueByPeriod?.week,
+              },
+              {
+                key: 'month',
+                label: 'Tháng này',
+                icon: <CalendarRange size={14} />,
+                data: data.revenueByPeriod?.month,
+              },
+              {
+                key: 'year',
+                label: 'Năm nay',
+                icon: <BarChart3 size={14} />,
+                data: data.revenueByPeriod?.year,
+              },
+            ].map((item) => {
+              const isSelected = selectedPeriod === item.key;
+              const rev = item.data?.grossRevenue || 0;
+              const orders = item.data?.ordersCount || 0;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    setSelectedPeriod(item.key as RevenuePeriodKey);
                     setChartPeriod(item.key as 'day' | 'week' | 'month' | 'year');
-                  }
-                }}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                  selectedPeriod === item.key
-                    ? 'bg-[#14171f] text-white shadow-xs'
-                    : 'bg-white hover:bg-neutral-100 text-[#5a6072] border border-[#14171f]/10'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+                  }}
+                  className={`p-4 rounded-2xl text-left transition-all cursor-pointer border flex flex-col justify-between gap-2.5 ${
+                    isSelected
+                      ? 'bg-[#14171f] text-white border-[#14171f] shadow-md scale-[1.01]'
+                      : 'bg-white hover:bg-neutral-50 text-[#14171f] border-[#14171f]/10 hover:border-[#14171f]/25'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span
+                      className={`font-semibold flex items-center gap-1.5 ${
+                        isSelected ? 'text-white' : 'text-[#5a6072]'
+                      }`}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </span>
+                    <span
+                      className={`text-[10px] num px-2 py-0.5 rounded-full font-bold ${
+                        isSelected ? 'bg-white/20 text-white' : 'bg-[#14171f]/[0.06] text-[#14171f]'
+                      }`}
+                    >
+                      {orders} đơn
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-base sm:text-xl font-bold num whitespace-nowrap">
+                      {formatVnd(rev)}
+                    </div>
+                    <p
+                      className={`text-[10.5px] num mt-0.5 truncate ${
+                        isSelected ? 'text-white/70' : 'text-[#7e8596]'
+                      }`}
+                    >
+                      {item.data?.subLabel || '—'}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
-
-        {/* 4 Cards Hiện Doanh Thu: Ngày, Tuần, Tháng, Năm */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {[
-            {
-              key: 'day',
-              label: 'Hôm nay',
-              icon: <Calendar size={14} />,
-              data: data.revenueByPeriod?.day,
-            },
-            {
-              key: 'week',
-              label: 'Tuần này',
-              icon: <CalendarDays size={14} />,
-              data: data.revenueByPeriod?.week,
-            },
-            {
-              key: 'month',
-              label: 'Tháng này',
-              icon: <CalendarRange size={14} />,
-              data: data.revenueByPeriod?.month,
-            },
-            {
-              key: 'year',
-              label: 'Năm nay',
-              icon: <BarChart3 size={14} />,
-              data: data.revenueByPeriod?.year,
-            },
-          ].map((item) => {
-            const isSelected = selectedPeriod === item.key;
-            const rev = item.data?.grossRevenue || 0;
-            const orders = item.data?.ordersCount || 0;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => {
-                  setSelectedPeriod(item.key as RevenuePeriodKey);
-                  setChartPeriod(item.key as 'day' | 'week' | 'month' | 'year');
-                }}
-                className={`p-4 rounded-2xl text-left transition-all cursor-pointer border flex flex-col justify-between gap-2.5 ${
-                  isSelected
-                    ? 'bg-[#14171f] text-white border-[#14171f] shadow-md scale-[1.01]'
-                    : 'bg-white hover:bg-neutral-50 text-[#14171f] border-[#14171f]/10 hover:border-[#14171f]/25'
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span
-                    className={`font-semibold flex items-center gap-1.5 ${
-                      isSelected ? 'text-white' : 'text-[#5a6072]'
-                    }`}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </span>
-                  <span
-                    className={`text-[10px] num px-2 py-0.5 rounded-full font-bold ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-[#14171f]/[0.06] text-[#14171f]'
-                    }`}
-                  >
-                    {orders} đơn
-                  </span>
-                </div>
-                <div>
-                  <div className="text-base sm:text-xl font-bold num whitespace-nowrap">
-                    {formatVnd(rev)}
-                  </div>
-                  <p
-                    className={`text-[10.5px] num mt-0.5 truncate ${
-                      isSelected ? 'text-white/70' : 'text-[#7e8596]'
-                    }`}
-                  >
-                    {item.data?.subLabel || '—'}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      )}
 
       {/* 4 Editorial KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
-        {/* KPI 1: Revenue (Thích ứng theo kỳ đã chọn) */}
-        <div className="liquid-glass rounded-3xl p-6 flex flex-col justify-between gap-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
-              Doanh thu ({activePeriodSummary.label})
-            </span>
-            <div className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] flex items-center justify-center text-[#14171f]">
-              <TrendingUp size={16} />
+        {/* KPI 1: Revenue for Admin VS Cash Collected for Staff */}
+        {isStaff ? (
+          <div className="liquid-glass rounded-3xl p-6 flex flex-col justify-between gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
+                Tiền mặt thu quầy hôm nay
+              </span>
+              <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700 border border-emerald-200">
+                <Wallet size={16} />
+              </div>
+            </div>
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-700 num whitespace-nowrap">
+                {formatVnd(kpis.todayCashCollected || 0)}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5a6072] num">
+                Chốt két đối soát bàn giao ca trực
+              </div>
+              <div className="mt-1 text-[10.5px] text-[#7e8596]">
+                Tiền mặt thực nhận từ khách tại quầy trong ngày
+              </div>
             </div>
           </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-bold text-[#14171f] num whitespace-nowrap">
-              {formatVnd(activePeriodSummary.grossRevenue)}
+        ) : (
+          <div className="liquid-glass rounded-3xl p-6 flex flex-col justify-between gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
+                Doanh thu ({activePeriodSummary.label})
+              </span>
+              <div className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] flex items-center justify-center text-[#14171f]">
+                <TrendingUp size={16} />
+              </div>
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#5a6072] num">
-              <span>Ròng sau bảo dưỡng: <strong className="text-[#14171f]">{formatVnd(activePeriodSummary.netRevenue)}</strong></span>
-              {activePeriodSummary.penaltyRevenue > 0 && (
-                <span className="text-amber-700 font-medium">Phạt: +{formatVnd(activePeriodSummary.penaltyRevenue)}</span>
-              )}
-            </div>
-            <div className="mt-1 text-[10.5px] text-[#7e8596] num">
-              {activePeriodSummary.subLabel} · {activePeriodSummary.ordersCount} đơn phát sinh
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-[#14171f] num whitespace-nowrap">
+                {formatVnd(activePeriodSummary.grossRevenue)}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#5a6072] num">
+                <span>Ròng sau bảo dưỡng: <strong className="text-[#14171f]">{formatVnd(activePeriodSummary.netRevenue)}</strong></span>
+                {activePeriodSummary.penaltyRevenue > 0 && (
+                  <span className="text-amber-700 font-medium">Phạt: +{formatVnd(activePeriodSummary.penaltyRevenue)}</span>
+                )}
+              </div>
+              <div className="mt-1 text-[10.5px] text-[#7e8596] num">
+                {activePeriodSummary.subLabel} · {activePeriodSummary.ordersCount} đơn phát sinh
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* KPI 2: Deposit Held */}
-        <div className="liquid-glass rounded-3xl p-6 flex flex-col justify-between gap-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
-              Tiền cọc đang nắm giữ
-            </span>
-            <div className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] flex items-center justify-center text-[#14171f]">
-              <Wallet size={16} />
+        {/* KPI 2: Deposit Held for Admin VS Pickups & Returns for Staff */}
+        {isStaff ? (
+          <div className="liquid-glass rounded-3xl p-6 flex flex-col justify-between gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
+                Hàng đợi giao nhận hôm nay
+              </span>
+              <div className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] flex items-center justify-center text-[#14171f]">
+                <ClipboardList size={16} />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl sm:text-3xl font-bold text-[#14171f] num">
+                  {pickupToday.length}
+                </span>
+                <span className="text-xs text-[#5a6072]">nhận · <strong className="text-rose-600 num">{returnToday.length}</strong> trả</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[11px] text-[#5a6072] num">
+                <span>Chờ giao: <strong className="text-[#14171f]">{pickupToday.length}</strong></span>
+                <span>Chờ thu máy: <strong className="text-rose-600">{returnToday.length}</strong></span>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('orders')}
+                className="mt-2 text-[11px] font-semibold text-[#14171f] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>Mở hàng đợi Đơn &amp; POS</span>
+                <ArrowUpRight size={12} />
+              </button>
             </div>
           </div>
-          <div>
-            <div className="text-2xl sm:text-3xl font-bold text-emerald-700 num whitespace-nowrap">
-              {formatVnd(kpis.activeDepositHeld)}
+        ) : (
+          <div className="liquid-glass rounded-3xl p-6 flex flex-col justify-between gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
+                Tiền cọc đang nắm giữ
+              </span>
+              <div className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] flex items-center justify-center text-[#14171f]">
+                <Wallet size={16} />
+              </div>
             </div>
-            <div className="mt-2 text-[11px] text-[#5a6072] num whitespace-nowrap truncate">
-              Hoàn cọc tức thì khi Check-in
+            <div>
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-700 num whitespace-nowrap">
+                {formatVnd(kpis.activeDepositHeld)}
+              </div>
+              <div className="mt-2 text-[11px] text-[#5a6072] num whitespace-nowrap truncate">
+                Hoàn cọc tức thì khi Check-in
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* KPI 3: Fleet Occupancy */}
         <div className="liquid-glass rounded-3xl p-6 flex flex-col justify-between gap-4">
@@ -404,9 +472,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </div>
 
-      {/* Charts & Breakdown Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left 2 cols: Revenue & Orders SVG Chart */}
+      {/* Charts & Breakdown Row (Chỉ hiển thị biểu đồ doanh thu cho ADMIN, nhân viên quầy hiển thị Trạng thái tồn kho) */}
+      {!isStaff ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Left 2 cols: Revenue & Orders SVG Chart */}
         <div className="lg:col-span-2 liquid-glass rounded-3xl p-6 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -597,6 +666,128 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         </div>
       </div>
+    ) : (
+        /* Giao diện dành riêng cho STAFF: Phân bổ tồn kho thực tế & Tình trạng thiết bị sẵn sàng */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Left 2 cols: Trạng thái kho sẵn sàng */}
+          <div className="lg:col-span-2 liquid-glass rounded-3xl p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-serif text-xl sm:text-2xl text-[#14171f]">
+                  Trạng Thái Kho Thiết Bị Sẵn Sàng
+                </h3>
+                <p className="text-xs text-[#5a6072]">
+                  Phân bổ máy ảnh &amp; ống kính khả dụng phục vụ khách quầy ngay trong ngày
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('orders')}
+                  className="px-3.5 py-1.5 rounded-full bg-[#14171f] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <ClipboardList size={13} />
+                  <span>Xử lý Đơn POS</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('inventory')}
+                  className="glass-button px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Package size={13} />
+                  <span>Mở Kho Serial</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+                <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider block">Sẵn sàng thuê</span>
+                <span className="text-2xl font-bold text-emerald-900 num mt-1 block">{kpis.availableSerials}</span>
+                <span className="text-[10.5px] text-emerald-700 mt-0.5 block">Máy có sẵn tại quầy</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-sky-50/70 border border-sky-200">
+                <span className="text-[11px] font-semibold text-sky-800 uppercase tracking-wider block">Đang giao khách</span>
+                <span className="text-2xl font-bold text-sky-900 num mt-1 block">{kpis.rentedSerials}</span>
+                <span className="text-[10.5px] text-sky-700 mt-0.5 block">Đang lưu hành ngoài</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200">
+                <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider block">Đang giữ chỗ</span>
+                <span className="text-2xl font-bold text-amber-900 num mt-1 block">{kpis.reservedSerials || 0}</span>
+                <span className="text-[10.5px] text-amber-700 mt-0.5 block">Chờ khách Check-out</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-orange-50/70 border border-orange-200">
+                <span className="text-[11px] font-semibold text-orange-800 uppercase tracking-wider block">Đang bảo dưỡng</span>
+                <span className="text-2xl font-bold text-orange-900 num mt-1 block">{kpis.maintenanceSerials}</span>
+                <span className="text-[10.5px] text-orange-700 mt-0.5 block">Tạm ngừng cho thuê</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#f7f8fa] border border-[#14171f]/8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck size={18} className="text-emerald-700 shrink-0" />
+                <div>
+                  <p className="font-semibold text-[#14171f]">Nguyên tắc kiểm định khi Bàn giao (Check-out):</p>
+                  <p className="text-[11px] text-[#5a6072] mt-0.5">
+                    Bắt buộc đối chứng CCCD trùng khớp, chụp 4 góc ngoại quan máy và xác nhận tình trạng pin/sạc trước khi đưa khách.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('orders')}
+                className="glass-button px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 cursor-pointer self-start sm:self-auto"
+              >
+                Vào hàng đợi Check-out
+              </button>
+            </div>
+          </div>
+
+          {/* Right col: Top models in stock for staff */}
+          <div className="liquid-glass rounded-3xl p-6 space-y-4 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-serif text-xl text-[#14171f]">Tồn Kho Dòng Máy Hot</h3>
+                  <p className="text-xs text-[#5a6072]">Khả dụng tư vấn cho khách đến quầy</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('catalog')}
+                  className="text-[11px] font-semibold text-[#14171f] hover:underline flex items-center gap-0.5 cursor-pointer"
+                >
+                  <span>Mẫu</span>
+                  <ArrowUpRight size={12} />
+                </button>
+              </div>
+
+              <div className="space-y-3 mt-4">
+                {topModels.slice(0, 5).map((m) => (
+                  <div key={m.id} className="p-2.5 rounded-xl bg-[#f7f8fa] border border-[#14171f]/8 flex items-center justify-between gap-2 text-xs">
+                    <div className="min-w-0">
+                      <span className="font-semibold text-[#14171f] truncate block">{m.model_name}</span>
+                      <span className="text-[10.5px] text-[#7e8596] num block">Giá ngày: {formatVnd(m.base_rental_price_per_day)}</span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-[10.5px] font-bold num ${
+                        m.available_count > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                      }`}>
+                        {m.available_count > 0 ? `Còn ${m.available_count} máy` : 'Hết máy'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-[#14171f]/10 text-[11px] text-[#7e8596] flex items-center justify-between">
+              <span>Tổng mẫu đăng ký: {topModels.length}</span>
+              <span className="font-medium text-[#14171f]">Cập nhật liên tục</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Today Operations: Pickups & Returns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -784,45 +975,85 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           )}
         </div>
 
-        {/* Audit Snapshot */}
-        <div className="liquid-glass rounded-3xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-serif text-xl text-[#14171f]">Nhật Ký Hoạt Động Gần Đây</h3>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('audit')}
-              className="glass-button px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
-            >
-              Xem Nhật ký Audit
-            </button>
-          </div>
-          {recentAuditLogs.length === 0 ? (
-            <div className="py-6 text-center text-xs text-[#7e8596] bg-[#f7f8fa] rounded-2xl border border-[#14171f]/8">
-              Chưa có nhật ký kiểm toán gần đây.
+        {/* Right col: Audit Snapshot for Admin OR Operational Guide for Staff */}
+        {!isStaff ? (
+          <div className="liquid-glass rounded-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-xl text-[#14171f]">Nhật Ký Hoạt Động Gần Đây</h3>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('audit')}
+                className="glass-button px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
+              >
+                Xem Nhật ký Audit
+              </button>
             </div>
-          ) : (
-            <div className="divide-y divide-[#14171f]/8">
-              {recentAuditLogs.slice(0, 5).map((log) => (
-                <div key={log.id} className="py-2.5 flex items-start justify-between gap-3 text-xs">
-                  <div className="min-w-0 space-y-0.5">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-[#14171f]">{log.action}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-100 text-[#4b5262] num">
-                        {log.entity_type} #{log.entity_id}
-                      </span>
+            {recentAuditLogs.length === 0 ? (
+              <div className="py-6 text-center text-xs text-[#7e8596] bg-[#f7f8fa] rounded-2xl border border-[#14171f]/8">
+                Chưa có nhật ký kiểm toán gần đây.
+              </div>
+            ) : (
+              <div className="divide-y divide-[#14171f]/8">
+                {recentAuditLogs.slice(0, 5).map((log) => (
+                  <div key={log.id} className="py-2.5 flex items-start justify-between gap-3 text-xs">
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-[#14171f]">{log.action}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-100 text-[#4b5262] num">
+                          {log.entity_type} #{log.entity_id}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#5a6072] line-clamp-1">
+                        {log.description || log.actor_label}
+                      </p>
                     </div>
-                    <p className="text-[11px] text-[#5a6072] line-clamp-1">
-                      {log.description || log.actor_label}
-                    </p>
+                    <span className="text-[10.5px] text-[#7e8596] num whitespace-nowrap shrink-0">
+                      {formatDateTime(log.created_at)}
+                    </span>
                   </div>
-                  <span className="text-[10.5px] text-[#7e8596] num whitespace-nowrap shrink-0">
-                    {formatDateTime(log.created_at)}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="liquid-glass rounded-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-xl text-[#14171f]">Quy Chuẩn Bàn Giao Quầy POS</h3>
+                <p className="text-xs text-[#5a6072]">3 nguyên tắc an toàn khi giao &amp; thu máy</p>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#14171f] text-white uppercase tracking-wider">
+                POS Standard
+              </span>
             </div>
-          )}
-        </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-2xl bg-[#f7f8fa] border border-[#14171f]/8 flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#14171f] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <div>
+                  <p className="font-semibold text-[#14171f]">Đối chứng CCCD gốc &amp; KYC</p>
+                  <p className="text-[11px] text-[#5a6072] mt-0.5">So khớp CCCD chip bản gốc của khách với ảnh tải lên. Khách vãng lai bắt buộc giữ CCCD hoặc cọc 100%.</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-[#f7f8fa] border border-[#14171f]/8 flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#14171f] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <div>
+                  <p className="font-semibold text-[#14171f]">Chụp 4 góc ngoại quan &amp; Số shot</p>
+                  <p className="text-[11px] text-[#5a6072] mt-0.5">Chụp rõ serial đáy máy, màn hình LCD, kính ống kính và test shutter count trước khi khách rời quầy.</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-[#f7f8fa] border border-[#14171f]/8 flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#14171f] text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <div>
+                  <p className="font-semibold text-[#14171f]">Bàn giao đủ phụ kiện &amp; Ký biên bản</p>
+                  <p className="text-[11px] text-[#5a6072] mt-0.5">Kiểm tra pin, sạc, nắp cáp, thẻ nhớ SD và in biên bản bàn giao có chữ ký xác nhận của hai bên.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

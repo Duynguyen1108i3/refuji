@@ -212,6 +212,7 @@ export interface PeriodTrendPoint {
 }
 
 export interface DashboardOverviewData {
+  role?: 'ADMIN' | 'STAFF';
   kpis: {
     grossRevenue: number;
     netRevenue: number;
@@ -219,6 +220,7 @@ export interface DashboardOverviewData {
     penaltyRevenue: number;
     maintenanceCostTotal: number;
     activeDepositHeld: number;
+    todayCashCollected?: number;
     totalOrders: number;
     guestOrdersCount: number;
     memberOrdersCount: number;
@@ -232,13 +234,13 @@ export interface DashboardOverviewData {
     statusCounts: Record<string, number>;
     openMaintenanceCount: number;
   };
-  revenueByPeriod?: Record<RevenuePeriodKey, PeriodRevenueSummary>;
+  revenueByPeriod?: Record<RevenuePeriodKey, PeriodRevenueSummary> | null;
   trendSeriesByPeriod?: {
     day: PeriodTrendPoint[];
     week: PeriodTrendPoint[];
     month: PeriodTrendPoint[];
     year: PeriodTrendPoint[];
-  };
+  } | null;
   trendSeries: Array<{ date: string; revenue: number; orders: number; guestOrders: number }>;
   categoryBreakdown: Array<{ category: string; orders: number; revenue: number }>;
   topModels: Array<{

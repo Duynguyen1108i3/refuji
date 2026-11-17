@@ -101,12 +101,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
     }
   }, [isAuthorized]);
 
-  // Tự động chuyển về tab 'overview' nếu tài khoản là STAFF mà đang cố truy cập tab 'audit'
+  // Phân quyền bảo mật: STAFF không được truy cập tab 'finance' hoặc 'audit' -> tự động chuyển về 'orders' (Workspace tác nghiệp quầy)
   useEffect(() => {
-    if (user?.role === 'STAFF' && activeTab === 'audit') {
-      setActiveTab('overview');
+    if (user?.role === 'STAFF' && (activeTab === 'audit' || activeTab === 'finance')) {
+      setActiveTab('orders');
     }
   }, [user, activeTab, setActiveTab]);
+
+  // Đối với tài khoản STAFF, ưu tiên mở ngay tab 'orders' khi vào phiên làm việc
+  useEffect(() => {
+    if (user?.role === 'STAFF') {
+      const saved = sessionStorage.getItem(DASHBOARD_TAB_STORAGE_KEY);
+      if (!saved || saved === 'overview' || saved === 'finance' || saved === 'audit') {
+        setActiveTab('orders');
+      }
+    }
+  }, [user, setActiveTab]);
 
   // Đóng popover tài khoản quản trị khi click ra ngoài
   useEffect(() => {
@@ -193,9 +203,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
     { id: 'inventory', label: 'Kho Serial', shortLabel: 'Kho', icon: <Wrench size={15} /> },
     { id: 'catalog', label: 'Danh mục', shortLabel: 'Mẫu', icon: <Camera size={15} /> },
     { id: 'customers', label: 'Khách & KYC', shortLabel: 'Khách', icon: <Users size={15} /> },
-    { id: 'finance', label: 'Tài chính', shortLabel: 'Sổ cái', icon: <Wallet size={15} /> },
     ...(user?.role === 'ADMIN'
-      ? [{ id: 'audit' as const, label: 'Audit Logs', shortLabel: 'Audit', icon: <ShieldAlert size={15} /> }]
+      ? [
+          { id: 'finance' as const, label: 'Tài chính', shortLabel: 'Sổ cái', icon: <Wallet size={15} /> },
+          { id: 'audit' as const, label: 'Audit Logs', shortLabel: 'Audit', icon: <ShieldAlert size={15} /> },
+        ]
       : []),
   ];
 
@@ -407,6 +419,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
             {activeTab === 'overview' && (
               <OverviewTab
                 data={overviewData}
+                userRole={user?.role}
                 isLoading={isLoadingOverview || isSyncSpinning}
                 onRefresh={() => void handleGlobalRefresh()}
                 onNavigateTab={setActiveTab}

@@ -2,12 +2,12 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../../db.js';
 import { recordAuditLog } from '../audit/audit.service.js';
-import { AdminActor, normalizeOrderCode } from './admin.middleware.js';
+import { AdminActor, normalizeOrderCode, requireAdminOnly } from './admin.middleware.js';
 
 export const adminFinanceRouter = Router();
 
-// GET /api/admin/payments — Danh sách sổ cái giao dịch & tổng hợp dòng tiền
-adminFinanceRouter.get('/payments', (req: Request, res: Response) => {
+// GET /api/admin/payments — Danh sách sổ cái giao dịch & tổng hợp dòng tiền (Chỉ dành riêng cho ADMIN)
+adminFinanceRouter.get('/payments', requireAdminOnly, (req: Request, res: Response) => {
   try {
     const typeFilter = typeof req.query.type === 'string' ? req.query.type.toUpperCase() : 'ALL';
     const methodFilter = typeof req.query.method === 'string' ? req.query.method.toUpperCase() : 'ALL';

@@ -20,7 +20,7 @@ function getIsoWeekNumber(d: Date): number {
 export const adminReportsRouter = Router();
 
 // GET /api/admin/reports/dashboard
-adminReportsRouter.get('/reports/dashboard', (_req: Request, res: Response) => {
+adminReportsRouter.get('/reports/dashboard', (req: Request, res: Response) => {
   try {
     releaseExpiredPendingHolds();
     reconcileActiveOrderItemStatuses();
@@ -417,14 +417,32 @@ adminReportsRouter.get('/reports/dashboard', (_req: Request, res: Response) => {
       };
     });
 
+    const actor = (req as any).actor as AdminActor | undefined;
+    const isStaff = actor?.role === 'STAFF';
+
+    // Tiền mặt thực thu trong ngày tại quầy (phục vụ đối soát bàn giao két cho nhân viên ca quầy)
+    const todayCashCollected = txRows
+      .filter(
+        (t) =>
+          t.status === 'SUCCESS' &&
+          t.payment_method === 'CASH' &&
+          String(t.created_at || '').slice(0, 10) === todayStr
+      )
+      .reduce(
+        (acc, t) => acc + (t.transaction_type === 'REFUND' ? -Number(t.amount) : Number(t.amount)),
+        0
+      );
+
     return res.json({
+      role: actor?.role || 'ADMIN',
       kpis: {
-        grossRevenue,
-        netRevenue,
-        baseRentalRevenue,
-        penaltyRevenue,
-        maintenanceCostTotal,
-        activeDepositHeld,
+        grossRevenue: isStaff ? 0 : grossRevenue,
+        netRevenue: isStaff ? 0 : netRevenue,
+        baseRentalRevenue: isStaff ? 0 : baseRentalRevenue,
+        penaltyRevenue: isStaff ? 0 : penaltyRevenue,
+        maintenanceCostTotal: isStaff ? 0 : maintenanceCostTotal,
+        activeDepositHeld: isStaff ? 0 : activeDepositHeld,
+        todayCashCollected: Math.max(0, todayCashCollected),
         totalOrders: orders.length,
         guestOrdersCount,
         memberOrdersCount,
@@ -438,21 +456,23 @@ adminReportsRouter.get('/reports/dashboard', (_req: Request, res: Response) => {
         statusCounts,
         openMaintenanceCount: maintRows.filter((m) => !m.completed_at).length,
       },
-      revenueByPeriod,
-      trendSeriesByPeriod: {
-        day: trendDaySeries,
-        week: trendWeekSeries,
-        month: trendMonthSeries,
-        year: trendYearSeries,
-      },
-      trendSeries,
-      categoryBreakdown: Object.values(categoryStats),
+      revenueByPeriod: isStaff ? null : revenueByPeriod,
+      trendSeriesByPeriod: isStaff
+        ? null
+        : {
+            day: trendDaySeries,
+            week: trendWeekSeries,
+            month: trendMonthSeries,
+            year: trendYearSeries,
+          },
+      trendSeries: isStaff ? [] : trendSeries,
+      categoryBreakdown: isStaff ? [] : Object.values(categoryStats),
       topModels,
       pickupToday: pickupToday.slice(0, 6),
       returnToday: returnToday.slice(0, 6),
       maintenanceDueItems,
-      recentTransactions: txRows.slice(0, 6),
-      recentAuditLogs: queryAuditLogs({ limit: 6 }),
+      recentTransactions: isStaff ? [] : txRows.slice(0, 6),
+      recentAuditLogs: isStaff ? [] : queryAuditLogs({ limit: 6 }),
       updatedAt: new Date().toISOString(),
     });
   } catch (err: any) {
