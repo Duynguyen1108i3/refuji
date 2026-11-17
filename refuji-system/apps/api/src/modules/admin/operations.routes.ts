@@ -195,6 +195,8 @@ adminOperationsRouter.post('/orders/:orderCode/checkout', (req: Request, res: Re
     const {
       kyc_verification_method,
       kyc_document_last4,
+      kyc_document_number,
+      kyc_photo,
       contract_signed,
       assigned_serials,
       accessories,
@@ -210,10 +212,12 @@ adminOperationsRouter.post('/orders/:orderCode/checkout', (req: Request, res: Re
       return res.status(400).json({ error: 'Phương thức đối chiếu KYC không hợp lệ.' });
     }
 
-    const cleanLast4 = String(kyc_document_last4 || '').trim();
-    if (!/^\d{4}$/.test(cleanLast4)) {
-      return res.status(400).json({ error: 'Bắt buộc nhập đủ 4 chữ số cuối CCCD / VNeID đã đối chiếu trực tiếp.' });
+    const cleanDocNumber = String(kyc_document_number || kyc_document_last4 || '').trim();
+    if (!/^\d{4,12}$/.test(cleanDocNumber)) {
+      return res.status(400).json({ error: 'Bắt buộc nhập số CCCD / VNeID hợp lệ (từ 4 đến 12 chữ số).' });
     }
+    const cleanLast4 = cleanDocNumber.slice(-4);
+    const cleanKycPhoto = typeof kyc_photo === 'string' && kyc_photo.length > 20 ? kyc_photo : null;
 
     if (!contract_signed) {
       return res.status(400).json({ error: 'Khách hàng phải xác nhận ký biên bản bàn giao thiết bị.' });
@@ -355,9 +359,9 @@ adminOperationsRouter.post('/orders/:orderCode/checkout', (req: Request, res: Re
       db.prepare(`
         INSERT INTO checkout_records (
           order_id, order_code, staff_id, staff_name, checkout_date,
-          kyc_verification_method, kyc_document_last4, contract_signed,
+          kyc_verification_method, kyc_document_last4, kyc_document_number, kyc_photo, contract_signed,
           accessories_json, shutter_snapshots_json, condition_notes, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)
       `).run(
         order.id,
         orderCode,
@@ -366,11 +370,22 @@ adminOperationsRouter.post('/orders/:orderCode/checkout', (req: Request, res: Re
         nowIso,
         String(kyc_verification_method).toUpperCase(),
         cleanLast4,
+        cleanDocNumber,
+        cleanKycPhoto,
         JSON.stringify(accessories || {}),
         JSON.stringify(shutter_snapshots || {}),
         (condition_notes || '').trim(),
         nowIso
       );
+
+      // Nếu có ảnh đối chiếu VNeID / CCCD, đồng thời lưu vào inspection_photos để xem lại dễ dàng
+      if (cleanKycPhoto) {
+        db.prepare(`
+          INSERT INTO inspection_photos (
+            order_id, order_code, serial_number, phase, photo_data, caption, uploaded_by, uploaded_at
+          ) VALUES (?, ?, NULL, 'KYC_DOCUMENT', ?, 'Ảnh đối chiếu CCCD / VNeID lúc bàn giao', ?, ?)
+        `).run(order.id, orderCode, cleanKycPhoto, actor.userId, nowIso);
+      }
 
       // Lưu ảnh đối chứng Check-out
       const insPhoto = db.prepare(`

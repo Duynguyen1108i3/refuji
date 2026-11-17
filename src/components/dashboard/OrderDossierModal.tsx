@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { X, Printer, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, Printer, Loader2, ShieldCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { fetchOrderDossier } from '../../services/dashboardApi';
 import {
   ACCESSORY_CHECKLIST_ITEMS,
@@ -124,7 +124,7 @@ export const OrderDossierModal: React.FC<OrderDossierModalProps> = ({ orderCode,
                     </span>
                     {dossier.checkout_record && (
                       <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] font-semibold num">
-                        KYC: ****{dossier.checkout_record.kyc_document_last4}
+                        KYC: {dossier.checkout_record.kyc_document_number || `****${dossier.checkout_record.kyc_document_last4}`}
                       </span>
                     )}
                   </div>
@@ -150,6 +150,18 @@ export const OrderDossierModal: React.FC<OrderDossierModalProps> = ({ orderCode,
                   <p>Hẹn trả: <strong className="text-[#14171f]">{formatShortDate(dossier.order.expected_return_date)}</strong></p>
                   <p>Tiền thuê: <strong className="text-[#14171f]">{formatVnd(dossier.order.total_rent)}</strong> • Cọc: <strong className="text-[#14171f]">{formatVnd(dossier.order.deposit_amount)}</strong></p>
                 </div>
+
+                {dossier.order.order_status === 'CANCELLED' && (
+                  <div className="p-3.5 rounded-3xl bg-rose-50 border border-rose-200 text-rose-950 text-xs sm:col-span-2 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-rose-700">
+                      <AlertTriangle size={14} />
+                      <span>Thông tin Quyết toán Hủy đơn (Chính sách tỷ lệ động)</span>
+                    </div>
+                    <p className="text-[11.5px] leading-relaxed font-medium text-rose-900">
+                      {dossier.order.cancellation_reason || 'Đơn hàng đã được hủy.'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Equipment & Serials */}
@@ -202,6 +214,31 @@ export const OrderDossierModal: React.FC<OrderDossierModalProps> = ({ orderCode,
                     <p className="text-[#4b5262] bg-[#f7f8fa] p-2.5 rounded-2xl">
                       Ghi chú ban đầu: {dossier.checkout_record.condition_notes}
                     </p>
+                  )}
+                  {dossier.checkout_record.kyc_photo && (
+                    <div className="p-3 rounded-2xl bg-[#f7f8fa] border border-[#14171f]/10 flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-2.5">
+                        <img
+                          src={dossier.checkout_record.kyc_photo}
+                          alt="Ảnh VNeID/CCCD"
+                          className="w-14 h-10 object-cover rounded-xl border border-[#14171f]/15 bg-white shrink-0"
+                        />
+                        <div>
+                          <div className="text-[11px] font-bold text-[#14171f]">Ảnh đối chiếu VNeID / CCCD</div>
+                          <div className="text-[10px] text-[#5a6072] num">
+                            Số: {dossier.checkout_record.kyc_document_number || `****${dossier.checkout_record.kyc_document_last4}`}
+                          </div>
+                        </div>
+                      </div>
+                      <a
+                        href={dossier.checkout_record.kyc_photo}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1 text-[11px] font-semibold rounded-full bg-white border border-[#14171f]/15 text-[#14171f] hover:bg-neutral-50 shadow-xs cursor-pointer"
+                      >
+                        Mở xem ảnh lớn
+                      </a>
+                    </div>
                   )}
                 </div>
               )}

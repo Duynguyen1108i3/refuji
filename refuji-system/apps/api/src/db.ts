@@ -208,6 +208,8 @@ export function initDatabase() {
     'ALTER TABLE rental_orders ADD COLUMN cancelled_at TEXT',
     'ALTER TABLE rental_orders ADD COLUMN privacy_consent_at TEXT',
     'ALTER TABLE rental_orders ADD COLUMN ip_address VARCHAR(50)',
+    'ALTER TABLE checkout_records ADD COLUMN kyc_photo TEXT',
+    'ALTER TABLE checkout_records ADD COLUMN kyc_document_number VARCHAR(20)',
   ];
   for (const sql of alterColumns) {
     try {
@@ -230,6 +232,8 @@ export function initDatabase() {
       checkout_date TEXT NOT NULL,
       kyc_verification_method VARCHAR(50) NOT NULL,
       kyc_document_last4 VARCHAR(4) NOT NULL,
+      kyc_document_number VARCHAR(20),
+      kyc_photo TEXT,
       contract_signed INTEGER NOT NULL DEFAULT 1,
       accessories_json TEXT NOT NULL,
       shutter_snapshots_json TEXT,

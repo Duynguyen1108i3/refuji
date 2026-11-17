@@ -230,3 +230,87 @@ export function calculateCheckinSettlement(input: SettlementCalculationInput): S
     computedItems,
   };
 }
+
+/**
+ * Công thức tính phí hủy đơn động trải dài theo ngày (Continuous Pro-rata Cancellation):
+ * - N: Tổng số ngày thuê của đơn hàng (làm tròn lên, tối thiểu 1 ngày).
+ * - D: Số ngày báo trước khi nhận máy (tính chính xác theo ngày số thực).
+ * - S(D): Số ngày tiền thuê bị phạt = max(0, 0.2 * N - 0.4 * D)
+ * - Mức phạt tối đa (khi D=0): 20% tổng tiền thuê của đơn.
+ * - Ngưỡng an toàn (miễn phạt): D >= 0.5 * N (báo trước ít nhất nửa khoảng thời gian thuê).
+ * - Tiền thuê đã đóng: Luôn hoàn lại 100% (do dịch vụ chưa diễn ra).
+ * - Tiền cọc: Khấu trừ phí hủy S(D) * dailyRentSum, phần cọc còn lại hoàn trả 100%.
+ */
+export interface CancellationSettlementInput {
+  startDateStr: string;
+  expectedReturnDateStr: string;
+  dailyRentSum: number;
+  depositAmount: number;
+  paidRentAmount?: number;
+  paidDepositAmount?: number;
+  cancelledAtIso?: string;
+}
+
+export interface CancellationSettlementResult {
+  totalRentalDays: number;
+  daysInAdvance: number;
+  dailyRentSum: number;
+  penaltyDays: number;
+  rawPenaltyFee: number;
+  cancellationPenaltyFee: number;
+  refundRentAmount: number;
+  refundDepositAmount: number;
+  totalRefundAmount: number;
+  explanation: string;
+}
+
+export function calculateCancellationSettlement(
+  input: CancellationSettlementInput
+): CancellationSettlementResult {
+  const start = new Date(input.startDateStr);
+  const end = new Date(input.expectedReturnDateStr);
+  const cancelTime = input.cancelledAtIso ? new Date(input.cancelledAtIso) : new Date();
+
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const rawDiff = (end.getTime() - start.getTime()) / msPerDay;
+  const N = Math.max(1, Math.round(isNaN(rawDiff) ? 1 : rawDiff));
+
+  const diffAdvanceMs = start.getTime() - cancelTime.getTime();
+  const rawAdvance = diffAdvanceMs / msPerDay;
+  const D = Math.max(0, Number((isNaN(rawAdvance) ? 0 : rawAdvance).toFixed(1)));
+
+  // Công thức động trải dài theo ngày: S(D) = max(0, 0.2 * N - 0.4 * D)
+  const rawPenaltyDays = 0.2 * N - 0.4 * D;
+  const penaltyDays = Math.max(0, Number(rawPenaltyDays.toFixed(2)));
+
+  const dailyRate = Math.max(0, input.dailyRentSum);
+  const rawPenaltyFee = Math.round(penaltyDays * dailyRate);
+
+  const depositHeld = Math.max(0, input.paidDepositAmount ?? input.depositAmount);
+  const paidRent = Math.max(0, input.paidRentAmount ?? 0);
+
+  // Phạt tối đa không quá tiền cọc đang giữ
+  const penaltyFee = Math.min(depositHeld, rawPenaltyFee);
+
+  // Hoàn 100% tiền thuê đã đóng trước
+  const refundRentAmount = paidRent;
+
+  // Tiền cọc hoàn trả = Cọc đang giữ - Phí phạt
+  const refundDepositAmount = Math.max(0, depositHeld - penaltyFee);
+
+  // Tổng tiền hoàn trả khách
+  const totalRefundAmount = refundRentAmount + refundDepositAmount;
+
+  return {
+    totalRentalDays: N,
+    daysInAdvance: D,
+    dailyRentSum: dailyRate,
+    penaltyDays,
+    rawPenaltyFee,
+    cancellationPenaltyFee: penaltyFee,
+    refundRentAmount,
+    refundDepositAmount,
+    totalRefundAmount,
+    explanation: `Đơn ${N} ngày, báo trước ${D} ngày -> Phạt ${penaltyDays} ngày tiền thuê (${penaltyFee.toLocaleString('vi-VN')}₫). Hoàn trả: ${totalRefundAmount.toLocaleString('vi-VN')}₫.`,
+  };
+}

@@ -54,7 +54,9 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
   const [selectedSerials, setSelectedSerials] = useState<string[]>([]);
   const [shutterMap, setShutterMap] = useState<Record<string, number>>({});
   const [kycMethod, setKycMethod] = useState<string>('CITIZEN_ID_CARD');
-  const [kycLast4, setKycLast4] = useState<string>('');
+  const [kycNumber, setKycNumber] = useState<string>('');
+  const [kycPhoto, setKycPhoto] = useState<string | null>(null);
+  const [isUploadingKyc, setIsUploadingKyc] = useState<boolean>(false);
   const [contractSigned, setContractSigned] = useState<boolean>(false);
   const [accessories, setAccessories] = useState<Record<string, boolean>>({
     battery: true,
@@ -74,6 +76,7 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
     setIsLoading(true);
     setErrorMsg(null);
     setPhotos([]);
+    setKycPhoto(null);
     setContractSigned(false);
     setCollectRemaining(false);
     setConditionNotes('');
@@ -103,9 +106,9 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
           setKycMethod('CITIZEN_ID_CARD');
         }
         if (!res.order.is_guest && res.order.id_card_last4 && res.order.id_card_last4 !== '0000') {
-          setKycLast4(res.order.id_card_last4);
+          setKycNumber(res.order.id_card_last4);
         } else {
-          setKycLast4('');
+          setKycNumber('');
         }
         if (res.order.remaining_due === 0 || res.order.payment_status === 'PAID_FULL') {
           setCollectRemaining(true);
@@ -144,6 +147,22 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
     }
   };
 
+  const handleKycPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingKyc(true);
+    try {
+      const compressed = await compressInspectionPhoto(file);
+      setKycPhoto(compressed);
+      onNotify('Đã lưu ảnh đối chiếu CCCD / VNeID thành công.', 'success');
+    } catch (err: any) {
+      onNotify(err?.message || 'Không thể xử lý ảnh CCCD/VNeID.', 'error');
+    } finally {
+      setIsUploadingKyc(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!dossier) return;
@@ -153,8 +172,9 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
       setErrorMsg('Vui lòng chọn ít nhất 1 mã Serial vật lý để xuất kho bàn giao.');
       return;
     }
-    if (!/^\d{4}$/.test(kycLast4.trim())) {
-      setErrorMsg('Vui lòng nhập chính xác 4 chữ số cuối CCCD / Hộ chiếu đã đối chiếu.');
+    const cleanKyc = kycNumber.trim();
+    if (!/^\d{4,12}$/.test(cleanKyc)) {
+      setErrorMsg('Vui lòng nhập từ 4 đến 12 chữ số CCCD / VNeID đã đối chiếu.');
       return;
     }
     if (!contractSigned) {
@@ -162,7 +182,7 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
       return;
     }
     if (photos.length < 2) {
-      setErrorMsg('Quy định bắt buộc: Phải tải lên tối thiểu 2 ảnh chụp thực tế ngoại quan / cảm biến.');
+      setErrorMsg('Quy định bắt buộc: Phải tải lên tối thiểu 2 ảnh chụp thực tế ngoại quan / cảm biến thiết bị.');
       return;
     }
     if (dossier.order.remaining_due > 0 && !collectRemaining) {
@@ -181,7 +201,9 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
 
       const res = await submitOrderCheckout(orderCode, {
         kyc_verification_method: kycMethod,
-        kyc_document_last4: kycLast4.trim(),
+        kyc_document_last4: cleanKyc.slice(-4),
+        kyc_document_number: cleanKyc,
+        kyc_photo: kycPhoto,
         contract_signed: contractSigned,
         assigned_serials: selectedSerials,
         accessories,
@@ -371,9 +393,16 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
 
                 {/* Step 2: KYC Verification & Contract */}
                 <div className="p-4 rounded-3xl bg-[#f7f8fa] border border-[#14171f]/10 space-y-3.5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#14171f]">
-                    2. Đối chiếu Căn cước (KYC) &amp; Ký Biên bản
-                  </h4>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#14171f]">
+                      2. Đối chiếu Căn cước (KYC) &amp; Ký Biên bản
+                    </h4>
+                    {dossier.order.is_guest && (
+                      <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 font-semibold border border-amber-200">
+                        Khách vãng lai: Khuyên dùng tải ảnh VNeID/CCCD
+                      </span>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-semibold text-[#4b5262] mb-1">
@@ -420,17 +449,82 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-[#4b5262] mb-1">
-                        4 chữ số cuối giấy tờ *
+                        Số CCCD / VNeID đối chiếu (4 - 12 chữ số) *
                       </label>
                       <input
                         type="text"
-                        maxLength={4}
-                        value={kycLast4}
-                        onChange={(e) => setKycLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                        placeholder="Ví dụ: 6789"
-                        className="w-full px-4 py-2.5 rounded-full bg-white border border-[#14171f]/15 text-xs font-bold text-[#14171f] tracking-widest num focus:outline-none focus:border-[#14171f]"
+                        maxLength={12}
+                        value={kycNumber}
+                        onChange={(e) => setKycNumber(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                        placeholder={dossier.order.is_guest ? 'Ví dụ: 001201012345 (khuyên nhập 12 số)' : 'Ví dụ: 6789 hoặc 12 số'}
+                        className="w-full px-4 py-2.5 rounded-full bg-white border border-[#14171f]/15 text-xs font-bold text-[#14171f] tracking-wider num focus:outline-none focus:border-[#14171f]"
                       />
+                      <div className="flex items-center justify-between text-[10px] text-[#5a6072] mt-1 px-1">
+                        <span>
+                          {kycNumber.length >= 12
+                            ? '✓ Đầy đủ 12 số CCCD'
+                            : kycNumber.length >= 4
+                            ? `Đã nhập ${kycNumber.length} số (đuôi ****${kycNumber.slice(-4)})`
+                            : 'Nhập từ 4 đến 12 số'}
+                        </span>
+                        <span className="num font-semibold">{kycNumber.length}/12</span>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Mục tải 1 ảnh VNeID / CCCD */}
+                  <div className="p-3.5 rounded-2xl bg-white border border-[#14171f]/12 space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <Camera size={14} className="text-[#14171f]" />
+                        <span className="text-xs font-bold text-[#14171f]">
+                          Ảnh đối chiếu CCCD / Màn hình VNeID
+                        </span>
+                        <span className="text-[10px] text-[#5a6072]">
+                          ({kycPhoto ? 'Đã có 1 ảnh' : 'Tùy chọn tải 1 ảnh'})
+                        </span>
+                      </div>
+                      <label className="px-3 py-1.5 rounded-full bg-[#14171f] hover:bg-[#262c3a] text-white text-[11px] font-semibold flex items-center gap-1.5 cursor-pointer transition-colors">
+                        {isUploadingKyc ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                        <span>{kycPhoto ? 'Đổi ảnh khác' : 'Tải / Chụp ảnh VNeID'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleKycPhotoUpload}
+                          disabled={isUploadingKyc}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    {kycPhoto ? (
+                      <div className="flex items-center gap-3 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                        <div className="w-16 h-12 rounded-lg overflow-hidden border border-emerald-300 bg-white shrink-0 relative">
+                          <img src={kycPhoto} alt="CCCD / VNeID" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0 text-xs">
+                          <p className="font-bold text-emerald-950 truncate flex items-center gap-1">
+                            <Check size={13} className="text-emerald-700" />
+                            <span>Đã lưu ảnh đối chiếu định danh</span>
+                          </p>
+                          <p className="text-[11px] text-emerald-800">
+                            Ảnh được đính kèm vào hồ sơ bàn giao điện tử của đơn hàng.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setKycPhoto(null)}
+                          className="p-1.5 rounded-full text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                          title="Gỡ ảnh CCCD / VNeID"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-[#7e8596] leading-relaxed">
+                        Chụp ảnh màn hình app VNeID hoặc mặt trước CCCD của khách tại quầy để hệ thống lưu hồ sơ số hóa bảo vệ tài sản, phòng ngừa rủi ro mất máy mà không cần ký thêm giấy bên ngoài.
+                      </p>
+                    )}
                   </div>
 
                   <label className="flex items-start gap-2.5 p-3 rounded-2xl bg-white border border-[#14171f]/12 cursor-pointer text-xs text-[#14171f]">
@@ -441,7 +535,7 @@ export const CheckoutWizardModal: React.FC<CheckoutWizardModalProps> = ({
                       className="w-4 h-4 mt-0.5 accent-[#14171f] cursor-pointer"
                     />
                     <span className="leading-relaxed">
-                      Khách hàng đã kiểm tra ngoại hình máy thực tế, đồng ý quy định phạt trễ hạn/hư hỏng và đã ký Biên bản bàn giao điện tử (ReFuji chỉ đối chiếu, <strong>KHÔNG giữ CCCD gốc</strong>).
+                      Khách hàng đã kiểm tra ngoại hình máy thực tế, đồng ý quy định phạt trễ hạn/hư hỏng, đã ký Biên bản bàn giao điện tử và đồng ý để ReFuji lưu vết thông tin đối chiếu giấy tờ phục vụ hợp đồng thuê máy (ReFuji cam kết <strong>KHÔNG giữ giấy tờ gốc</strong>).
                     </span>
                   </label>
                 </div>

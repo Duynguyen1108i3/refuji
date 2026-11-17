@@ -150,6 +150,8 @@ export function submitOrderCheckout(
   payload: {
     kyc_verification_method: string;
     kyc_document_last4: string;
+    kyc_document_number?: string;
+    kyc_photo?: string | null;
     contract_signed: boolean;
     assigned_serials: string[];
     accessories: Record<string, boolean>;

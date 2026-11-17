@@ -6,6 +6,7 @@ import { syncAndEvaluateUserTier } from '../auth/auth.routes.js';
 import { recordAuditLog } from '../audit/audit.service.js';
 import { extractAuthUser } from '../../utils/auth-context.js';
 import { requireStaffOrAdmin, normalizeOrderCode } from '../admin/admin.middleware.js';
+import { calculateCancellationSettlement } from '../admin/settlement.helper.js';
 import {
   checkAndAllocateModelsForRange,
   getTodayLocalStr,
@@ -18,6 +19,64 @@ import {
 
 export const ordersRouter = Router();
 export const adminOrdersRouter = Router();
+
+// Helper tính tổng đơn giá thuê/ngày từ order
+function computeDailyRentSum(order: any): number {
+  let items: any[] = [];
+  try {
+    items = order.items_detail ? JSON.parse(order.items_detail) : [];
+  } catch (_) {}
+  if (items.length > 0) {
+    const sum = items.reduce(
+      (acc: number, it: any) => acc + (Number(it.daily_rate) || 0) * Math.max(1, Number(it.quantity) || 1),
+      0
+    );
+    if (sum > 0) return sum;
+  }
+  const start = new Date(order.start_date);
+  const end = new Date(order.expected_return_date);
+  const msPerDay = 24 * 3600 * 1000;
+  const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / msPerDay));
+  return Math.round((Number(order.total_rent) || 0) / days);
+}
+
+// Helper giải phóng toàn bộ Serial vật lý khi hủy đơn
+function freeOrderSerials(orderId: number, assignedSerials: string | null) {
+  if (!assignedSerials) return;
+  const serialList = String(assignedSerials)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (serialList.length === 0) return;
+
+  const remainingDelivered = db
+    .prepare(`
+      SELECT assigned_serials
+      FROM rental_orders
+      WHERE id != ?
+        AND order_status IN ('DELIVERED', 'OVERDUE', 'OVERDUE_CRITICAL')
+        AND assigned_serials IS NOT NULL
+    `)
+    .all(orderId) as Array<{ assigned_serials: string | null }>;
+
+  const stillHeldSet = new Set<string>();
+  for (const rem of remainingDelivered) {
+    String(rem.assigned_serials || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((s) => stillHeldSet.add(s));
+  }
+
+  const markAvail = db.prepare(
+    "UPDATE product_items SET status = 'AVAILABLE' WHERE serial_number = ? AND status = 'RENTED'"
+  );
+  for (const sn of serialList) {
+    if (!stillHeldSet.has(sn)) {
+      markAvail.run(sn);
+    }
+  }
+}
 
 const VN_PHONE_REGEX = /^(03|05|07|08|09)\d{8}$/;
 const RFC_5322_EMAIL_REGEX =
@@ -384,21 +443,86 @@ ordersRouter.post('/:orderCode/guest-cancel', (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Đơn hàng này đã được hủy trước đó.' });
     }
 
-    if (order.order_status !== 'PENDING_PAYMENT' && order.order_status !== 'GUEST_INQUIRY') {
+    if (['DELIVERED', 'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL'].includes(order.order_status)) {
       return res.status(400).json({
-        error: 'Đơn hàng đã xác nhận hoặc đang bàn giao. Vui lòng liên hệ trực tiếp quầy ReFuji để xử lý theo chính sách hoàn cọc.',
+        error: 'Thiết bị đã bàn giao cho khách hoặc đã hoàn tất, không thể tự hủy đơn.',
       });
     }
+
+    const paidDep = db
+      .prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payment_transactions WHERE order_id = ? AND transaction_type = 'DEPOSIT' AND status = 'SUCCESS'")
+      .get(order.id) as { s: number } | undefined;
+    const paidRent = db
+      .prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payment_transactions WHERE order_id = ? AND transaction_type = 'RENTAL_PAYMENT' AND status = 'SUCCESS'")
+      .get(order.id) as { s: number } | undefined;
+
+    const effectivePaidDep = (paidDep?.s || 0) > 0 ? (paidDep?.s || 0) : (order.payment_status === 'PAID_FULL' || order.payment_status === 'DEPOSITED' ? Number(order.deposit_amount) || 0 : 0);
+    const effectivePaidRent = (paidRent?.s || 0) > 0 ? (paidRent?.s || 0) : (order.payment_status === 'PAID_FULL' ? Number(order.total_rent) || 0 : 0);
+
+    const calc = calculateCancellationSettlement({
+      startDateStr: order.start_date,
+      expectedReturnDateStr: order.expected_return_date,
+      dailyRentSum: computeDailyRentSum(order),
+      depositAmount: Number(order.deposit_amount) || 0,
+      paidRentAmount: effectivePaidRent,
+      paidDepositAmount: effectivePaidDep,
+    });
+
+    const nowIso = new Date().toISOString();
+    const reasonText = `Khách vãng lai tự hủy đơn [${calc.explanation}]`;
+
+    if (effectivePaidDep > 0 || effectivePaidRent > 0) {
+      if (calc.cancellationPenaltyFee > 0) {
+        db.prepare(`
+          INSERT INTO payment_transactions (
+            order_id, order_code, transaction_code, amount, payment_method,
+            transaction_type, status, note, created_at
+          ) VALUES (?, ?, ?, ?, ?, 'PENALTY_FEE', 'SUCCESS', ?, ?)
+        `).run(
+          order.id,
+          order.order_code,
+          `TX-GUEST-PENALTY-${Date.now()}`,
+          calc.cancellationPenaltyFee,
+          order.payment_method || 'VIETQR',
+          `Khấu trừ phí hủy đơn (${calc.penaltyDays} ngày thuê)`,
+          nowIso
+        );
+      }
+
+      if (calc.totalRefundAmount > 0) {
+        db.prepare(`
+          INSERT INTO payment_transactions (
+            order_id, order_code, transaction_code, amount, payment_method,
+            transaction_type, status, note, created_at
+          ) VALUES (?, ?, ?, ?, ?, 'REFUND', 'SUCCESS', ?, ?)
+        `).run(
+          order.id,
+          order.order_code,
+          `TX-GUEST-REFUND-${Date.now()}`,
+          calc.totalRefundAmount,
+          order.payment_method || 'VIETQR',
+          `Hoàn tiền hủy đơn (Cọc hoàn ${calc.refundDepositAmount.toLocaleString('vi-VN')}₫ + Thuê hoàn ${calc.refundRentAmount.toLocaleString('vi-VN')}₫)`,
+          nowIso
+        );
+      }
+    }
+
+    const nextPaymentStatus = (effectivePaidDep > 0 || effectivePaidRent > 0)
+      ? (calc.cancellationPenaltyFee > 0 ? 'PARTIALLY_REFUNDED' : 'REFUNDED')
+      : order.payment_status;
 
     db.prepare(`
       UPDATE rental_orders
       SET order_status = 'CANCELLED',
+          payment_status = ?,
           assigned_serials = NULL,
-          cancellation_reason = 'Khách vãng lai tự hủy đơn',
+          cancellation_reason = ?,
           cancelled_by = 'GUEST',
           cancelled_at = ?
       WHERE id = ?
-    `).run(new Date().toISOString(), order.id);
+    `).run(nextPaymentStatus, reasonText, nowIso, order.id);
+
+    freeOrderSerials(order.id, order.assigned_serials);
 
     recordAuditLog({
       actorType: 'USER',
@@ -408,16 +532,18 @@ ordersRouter.post('/:orderCode/guest-cancel', (req: Request, res: Response) => {
       entityId: order.order_code,
       oldValue: { order_status: order.order_status },
       newValue: { order_status: 'CANCELLED' },
-      description: `Khách vãng lai tự hủy đơn #${order.order_code}.`,
+      description: `Khách vãng lai tự hủy đơn #${order.order_code}. ${calc.explanation}`,
     });
 
-    console.log(`🛑 [Guest Cancel] Khách vãng lai đã tự hủy đơn ${order.order_code} (${phone})`);
+    console.log(`🛑 [Guest Cancel] Khách vãng lai đã tự hủy đơn ${order.order_code} (${phone}): ${calc.explanation}`);
 
     return res.json({
       success: true,
       orderCode: order.order_code,
       orderStatus: 'CANCELLED',
-      message: `Đã hủy đơn #${order.order_code} và giải phóng thiết bị về kho.`,
+      paymentStatus: nextPaymentStatus,
+      calculation: calc,
+      message: `Đã hủy đơn #${order.order_code}. ${calc.explanation}`,
     });
   } catch (err) {
     console.error('Lỗi tự hủy đơn vãng lai:', err);
@@ -456,30 +582,87 @@ ordersRouter.post('/:orderCode/cancel', (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Đơn hàng này đã được hủy trước đó.' });
     }
 
-    if (
-      order.order_status !== 'PENDING_PAYMENT' &&
-      order.order_status !== 'PENDING' &&
-      order.order_status !== 'GUEST_INQUIRY'
-    ) {
+    if (['DELIVERED', 'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL'].includes(order.order_status)) {
       return res.status(400).json({
-        error: 'Đơn hàng đã xác nhận hoặc đang bàn giao. Vui lòng liên hệ trực tiếp quầy ReFuji để xử lý theo chính sách hoàn cọc.',
+        error: 'Thiết bị đã bàn giao cho khách hoặc đã hoàn tất, không thể tự hủy đơn.',
       });
     }
+
+    const paidDep = db
+      .prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payment_transactions WHERE order_id = ? AND transaction_type = 'DEPOSIT' AND status = 'SUCCESS'")
+      .get(order.id) as { s: number } | undefined;
+    const paidRent = db
+      .prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payment_transactions WHERE order_id = ? AND transaction_type = 'RENTAL_PAYMENT' AND status = 'SUCCESS'")
+      .get(order.id) as { s: number } | undefined;
+
+    const effectivePaidDep = (paidDep?.s || 0) > 0 ? (paidDep?.s || 0) : (order.payment_status === 'PAID_FULL' || order.payment_status === 'DEPOSITED' ? Number(order.deposit_amount) || 0 : 0);
+    const effectivePaidRent = (paidRent?.s || 0) > 0 ? (paidRent?.s || 0) : (order.payment_status === 'PAID_FULL' ? Number(order.total_rent) || 0 : 0);
+
+    const calc = calculateCancellationSettlement({
+      startDateStr: order.start_date,
+      expectedReturnDateStr: order.expected_return_date,
+      dailyRentSum: computeDailyRentSum(order),
+      depositAmount: Number(order.deposit_amount) || 0,
+      paidRentAmount: effectivePaidRent,
+      paidDepositAmount: effectivePaidDep,
+    });
+
+    const nowIso = new Date().toISOString();
+    const actorLabel = isAdminOrStaff ? 'Nhân viên POS hủy đơn' : 'Thành viên tự hủy đơn';
+    const reasonText = `${actorLabel} [${calc.explanation}]`;
+
+    if (effectivePaidDep > 0 || effectivePaidRent > 0) {
+      if (calc.cancellationPenaltyFee > 0) {
+        db.prepare(`
+          INSERT INTO payment_transactions (
+            order_id, order_code, transaction_code, amount, payment_method,
+            transaction_type, status, note, created_at
+          ) VALUES (?, ?, ?, ?, ?, 'PENALTY_FEE', 'SUCCESS', ?, ?)
+        `).run(
+          order.id,
+          order.order_code,
+          `TX-MEMBER-PENALTY-${Date.now()}`,
+          calc.cancellationPenaltyFee,
+          order.payment_method || 'VIETQR',
+          `Khấu trừ phí hủy đơn (${calc.penaltyDays} ngày thuê)`,
+          nowIso
+        );
+      }
+
+      if (calc.totalRefundAmount > 0) {
+        db.prepare(`
+          INSERT INTO payment_transactions (
+            order_id, order_code, transaction_code, amount, payment_method,
+            transaction_type, status, note, created_at
+          ) VALUES (?, ?, ?, ?, ?, 'REFUND', 'SUCCESS', ?, ?)
+        `).run(
+          order.id,
+          order.order_code,
+          `TX-MEMBER-REFUND-${Date.now()}`,
+          calc.totalRefundAmount,
+          order.payment_method || 'VIETQR',
+          `Hoàn tiền hủy đơn (Cọc hoàn ${calc.refundDepositAmount.toLocaleString('vi-VN')}₫ + Thuê hoàn ${calc.refundRentAmount.toLocaleString('vi-VN')}₫)`,
+          nowIso
+        );
+      }
+    }
+
+    const nextPaymentStatus = (effectivePaidDep > 0 || effectivePaidRent > 0)
+      ? (calc.cancellationPenaltyFee > 0 ? 'PARTIALLY_REFUNDED' : 'REFUNDED')
+      : order.payment_status;
 
     db.prepare(`
       UPDATE rental_orders
       SET order_status = 'CANCELLED',
+          payment_status = ?,
           assigned_serials = NULL,
           cancellation_reason = ?,
           cancelled_by = ?,
           cancelled_at = ?
       WHERE id = ?
-    `).run(
-      isAdminOrStaff ? 'Nhân viên POS hủy giữ chỗ' : 'Thành viên tự hủy giữ chỗ',
-      authUser.email,
-      new Date().toISOString(),
-      order.id
-    );
+    `).run(nextPaymentStatus, reasonText, authUser.email, nowIso, order.id);
+
+    freeOrderSerials(order.id, order.assigned_serials);
 
     recordAuditLog({
       userId: authUser.userId,
@@ -490,16 +673,18 @@ ordersRouter.post('/:orderCode/cancel', (req: Request, res: Response) => {
       entityId: order.order_code,
       oldValue: { order_status: order.order_status },
       newValue: { order_status: 'CANCELLED' },
-      description: `Tài khoản ${authUser.email} hủy giữ chỗ đơn #${order.order_code}.`,
+      description: `Tài khoản ${authUser.email} hủy đơn #${order.order_code}. ${calc.explanation}`,
     });
 
-    console.log(`🛑 [Member Cancel] Tài khoản #${authUser.userId} đã hủy đơn ${order.order_code}`);
+    console.log(`🛑 [Member Cancel] Tài khoản #${authUser.userId} đã hủy đơn ${order.order_code}: ${calc.explanation}`);
 
     return res.json({
       success: true,
       orderCode: order.order_code,
       orderStatus: 'CANCELLED',
-      message: `Đã hủy giữ chỗ đơn #${order.order_code} và trả thiết bị về kho.`,
+      paymentStatus: nextPaymentStatus,
+      calculation: calc,
+      message: `Đã hủy đơn #${order.order_code}. ${calc.explanation}`,
     });
   } catch (err) {
     console.error('Lỗi tự hủy đơn thành viên:', err);
@@ -936,6 +1121,46 @@ adminOrdersRouter.get('/:orderCode', (req: Request, res: Response) => {
   }
 });
 
+// GET /api/admin/orders/:orderCode/cancel-preview — Xem trước quyết toán hủy đơn động theo công thức S(D)
+adminOrdersRouter.get('/:orderCode/cancel-preview', (req: Request, res: Response) => {
+  try {
+    const orderCode = normalizeOrderCode(String(req.params.orderCode));
+    const order = db.prepare('SELECT * FROM rental_orders WHERE UPPER(order_code) = ?').get(orderCode) as any;
+    if (!order) {
+      return res.status(404).json({ error: `Không tìm thấy đơn #${orderCode}` });
+    }
+
+    const paidDep = db
+      .prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payment_transactions WHERE order_id = ? AND transaction_type = 'DEPOSIT' AND status = 'SUCCESS'")
+      .get(order.id) as { s: number } | undefined;
+    const paidRent = db
+      .prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payment_transactions WHERE order_id = ? AND transaction_type = 'RENTAL_PAYMENT' AND status = 'SUCCESS'")
+      .get(order.id) as { s: number } | undefined;
+
+    const effectivePaidDep = (paidDep?.s || 0) > 0 ? (paidDep?.s || 0) : (order.payment_status === 'PAID_FULL' || order.payment_status === 'DEPOSITED' ? Number(order.deposit_amount) || 0 : 0);
+    const effectivePaidRent = (paidRent?.s || 0) > 0 ? (paidRent?.s || 0) : (order.payment_status === 'PAID_FULL' ? Number(order.total_rent) || 0 : 0);
+
+    const calculation = calculateCancellationSettlement({
+      startDateStr: order.start_date,
+      expectedReturnDateStr: order.expected_return_date,
+      dailyRentSum: computeDailyRentSum(order),
+      depositAmount: Number(order.deposit_amount) || 0,
+      paidRentAmount: effectivePaidRent,
+      paidDepositAmount: effectivePaidDep,
+    });
+
+    return res.json({
+      success: true,
+      orderCode,
+      orderStatus: order.order_status,
+      paymentStatus: order.payment_status,
+      calculation,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Không thể tính toán dự toán hủy đơn.' });
+  }
+});
+
 // Tính năng: Hàm xử lý chuyển trạng thái đơn hàng từ Admin POS (Duyệt GUEST_INQUIRY sẽ kiểm tra lại kho & khóa Serial)
 function handleAdminStatusUpdate(req: Request, res: Response, forcedStatus?: string) {
   try {
@@ -1079,61 +1304,91 @@ function handleAdminStatusUpdate(req: Request, res: Response, forcedStatus?: str
         };
       }
 
-      // Tính năng: Giải phóng toàn bộ Serial đang gán khi Admin/Staff hủy đơn
+      // Tính năng: Giải phóng toàn bộ Serial đang gán & Quyết toán hoàn tiền / phí phạt theo công thức động S(D)
       if (nextStatus === 'CANCELLED') {
-        const serialListToFree = new Set<string>();
-        if (order.assigned_serials) {
-          String(order.assigned_serials)
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .forEach((s) => serialListToFree.add(s));
+        const paidDep = db
+          .prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payment_transactions WHERE order_id = ? AND transaction_type = 'DEPOSIT' AND status = 'SUCCESS'")
+          .get(order.id) as { s: number } | undefined;
+        const paidRent = db
+          .prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payment_transactions WHERE order_id = ? AND transaction_type = 'RENTAL_PAYMENT' AND status = 'SUCCESS'")
+          .get(order.id) as { s: number } | undefined;
+
+        const effectivePaidDep = (paidDep?.s || 0) > 0 ? (paidDep?.s || 0) : (order.payment_status === 'PAID_FULL' || order.payment_status === 'DEPOSITED' ? Number(order.deposit_amount) || 0 : 0);
+        const effectivePaidRent = (paidRent?.s || 0) > 0 ? (paidRent?.s || 0) : (order.payment_status === 'PAID_FULL' ? Number(order.total_rent) || 0 : 0);
+
+        const calc = calculateCancellationSettlement({
+          startDateStr: order.start_date,
+          expectedReturnDateStr: order.expected_return_date,
+          dailyRentSum: computeDailyRentSum(order),
+          depositAmount: Number(order.deposit_amount) || 0,
+          paidRentAmount: effectivePaidRent,
+          paidDepositAmount: effectivePaidDep,
+        });
+
+        const nowIso = new Date().toISOString();
+        const baseReason = String(req.body.reason || 'Admin/Staff hủy từ hàng đợi POS');
+        const fullReason = `${baseReason} [${calc.explanation}]`;
+
+        if (effectivePaidDep > 0 || effectivePaidRent > 0) {
+          if (calc.cancellationPenaltyFee > 0) {
+            db.prepare(`
+              INSERT INTO payment_transactions (
+                order_id, order_code, transaction_code, amount, payment_method,
+                transaction_type, status, note, processed_by, created_at
+              ) VALUES (?, ?, ?, ?, ?, 'PENALTY_FEE', 'SUCCESS', ?, ?, ?)
+            `).run(
+              order.id,
+              order.order_code,
+              `TX-ADMIN-CANCEL-PENALTY-${Date.now()}`,
+              calc.cancellationPenaltyFee,
+              order.payment_method || 'VIETQR',
+              `Khấu trừ phí hủy đơn (${calc.penaltyDays} ngày thuê)`,
+              (req as any).actor?.userId || null,
+              nowIso
+            );
+          }
+
+          if (calc.totalRefundAmount > 0) {
+            db.prepare(`
+              INSERT INTO payment_transactions (
+                order_id, order_code, transaction_code, amount, payment_method,
+                transaction_type, status, note, processed_by, created_at
+              ) VALUES (?, ?, ?, ?, ?, 'REFUND', 'SUCCESS', ?, ?, ?)
+            `).run(
+              order.id,
+              order.order_code,
+              `TX-ADMIN-CANCEL-REFUND-${Date.now()}`,
+              calc.totalRefundAmount,
+              order.payment_method || 'VIETQR',
+              `Hoàn tiền hủy đơn (Cọc hoàn ${calc.refundDepositAmount.toLocaleString('vi-VN')}₫ + Thuê hoàn ${calc.refundRentAmount.toLocaleString('vi-VN')}₫)`,
+              (req as any).actor?.userId || null,
+              nowIso
+            );
+          }
         }
+
+        const nextPaymentStatus = (effectivePaidDep > 0 || effectivePaidRent > 0)
+          ? (calc.cancellationPenaltyFee > 0 ? 'PARTIALLY_REFUNDED' : 'REFUNDED')
+          : order.payment_status;
 
         db.prepare(`
           UPDATE rental_orders
           SET order_status = 'CANCELLED',
+              payment_status = ?,
               assigned_serials = NULL,
               cancellation_reason = ?,
               cancelled_by = ?,
               cancelled_at = ?
           WHERE id = ?
         `).run(
-          String(req.body.reason || 'Admin/Staff hủy từ hàng đợi POS'),
+          nextPaymentStatus,
+          fullReason,
           (req as any).actor?.email || 'admin',
-          new Date().toISOString(),
+          nowIso,
           order.id
         );
 
-        if (serialListToFree.size > 0) {
-          const remainingDelivered = db
-            .prepare(`
-              SELECT assigned_serials
-              FROM rental_orders
-              WHERE id != ?
-                AND order_status IN ('DELIVERED', 'OVERDUE', 'OVERDUE_CRITICAL')
-                AND assigned_serials IS NOT NULL
-            `)
-            .all(order.id) as Array<{ assigned_serials: string | null }>;
-
-          const stillHeldSet = new Set<string>();
-          for (const rem of remainingDelivered) {
-            String(rem.assigned_serials || '')
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean)
-              .forEach((s) => stillHeldSet.add(s));
-          }
-
-          const markAvailIfRented = db.prepare(
-            "UPDATE product_items SET status = 'AVAILABLE' WHERE serial_number = ? AND status = 'RENTED'"
-          );
-          for (const sn of serialListToFree) {
-            if (!stillHeldSet.has(sn)) {
-              markAvailIfRented.run(sn);
-            }
-          }
-        }
+        freeOrderSerials(order.id, order.assigned_serials);
       } else {
         db.prepare(`UPDATE rental_orders SET order_status = ? WHERE id = ?`).run(nextStatus, order.id);
       }

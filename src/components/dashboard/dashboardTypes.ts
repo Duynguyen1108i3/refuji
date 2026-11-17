@@ -281,6 +281,8 @@ export interface OrderDossierData {
     checkout_date: string;
     kyc_verification_method: string;
     kyc_document_last4: string;
+    kyc_document_number?: string;
+    kyc_photo?: string | null;
     contract_signed: number;
     accessories: Record<string, boolean>;
     shutter_snapshots: Record<string, number>;
@@ -307,7 +309,7 @@ export interface OrderDossierData {
     id: number;
     order_code: string;
     serial_number: string | null;
-    phase: 'CHECKOUT' | 'CHECKIN';
+    phase: 'CHECKOUT' | 'CHECKIN' | 'KYC_DOCUMENT' | string;
     photo_data: string;
     caption: string | null;
     uploaded_at: string;
