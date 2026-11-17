@@ -8,7 +8,7 @@ import {
   releaseExpiredPendingHolds,
 } from '../orders/availability.helper.js';
 import { runOperationalSweep } from './cron.service.js';
-import { AdminActor } from './admin.middleware.js';
+import { AdminActor, requireAdminOnly } from './admin.middleware.js';
 
 function getIsoWeekNumber(d: Date): number {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -477,8 +477,8 @@ adminReportsRouter.post('/cron/run-sweep', (req: Request, res: Response) => {
   }
 });
 
-// GET /api/admin/audit-logs — Nhật ký kiểm toán hệ thống
-adminReportsRouter.get('/audit-logs', (req: Request, res: Response) => {
+// GET /api/admin/audit-logs — Nhật ký kiểm toán hệ thống (Chỉ dành cho ADMIN)
+adminReportsRouter.get('/audit-logs', requireAdminOnly, (req: Request, res: Response) => {
   try {
     const logs = queryAuditLogs({
       actorType: typeof req.query.actor_type === 'string' ? req.query.actor_type : undefined,

@@ -101,6 +101,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
     }
   }, [isAuthorized]);
 
+  // Tự động chuyển về tab 'overview' nếu tài khoản là STAFF mà đang cố truy cập tab 'audit'
+  useEffect(() => {
+    if (user?.role === 'STAFF' && activeTab === 'audit') {
+      setActiveTab('overview');
+    }
+  }, [user, activeTab, setActiveTab]);
+
   // Đóng popover tài khoản quản trị khi click ra ngoài
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
@@ -187,7 +194,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
     { id: 'catalog', label: 'Danh mục', shortLabel: 'Mẫu', icon: <Camera size={15} /> },
     { id: 'customers', label: 'Khách & KYC', shortLabel: 'Khách', icon: <Users size={15} /> },
     { id: 'finance', label: 'Tài chính', shortLabel: 'Sổ cái', icon: <Wallet size={15} /> },
-    { id: 'audit', label: 'Audit Logs', shortLabel: 'Audit', icon: <ShieldAlert size={15} /> },
+    ...(user?.role === 'ADMIN'
+      ? [{ id: 'audit' as const, label: 'Audit Logs', shortLabel: 'Audit', icon: <ShieldAlert size={15} /> }]
+      : []),
   ];
 
   const initials = (user?.full_name || 'AD')
@@ -440,7 +449,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
                 refreshSignal={refreshSignal}
               />
             )}
-            {activeTab === 'audit' && (
+            {activeTab === 'audit' && user?.role === 'ADMIN' && (
               <AuditLogsTab onNotify={notify} refreshSignal={refreshSignal} />
             )}
           </motion.div>

@@ -267,7 +267,8 @@ adminCustomersRouter.patch('/customers/:id/role', requireAdminOnly, (req: Reques
 });
 
 // PATCH /api/admin/customers/:id/reputation — Điều chỉnh điểm uy tín (tự động khóa nếu < 20)
-adminCustomersRouter.patch('/customers/:id/reputation', (req: Request, res: Response) => {
+// PATCH /api/admin/customers/:id/reputation — Điều chỉnh điểm uy tín thủ công (Chỉ ADMIN)
+adminCustomersRouter.patch('/customers/:id/reputation', requireAdminOnly, (req: Request, res: Response) => {
   try {
     const actor = (req as any).actor as AdminActor;
     const targetId = Number(req.params.id);
