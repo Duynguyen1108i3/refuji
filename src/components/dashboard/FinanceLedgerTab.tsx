@@ -57,6 +57,7 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
   });
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [methodFilter, setMethodFilter] = useState('ALL');
+  const [periodFilter, setPeriodFilter] = useState<'ALL' | 'DAY' | 'WEEK' | 'MONTH' | 'YEAR'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -125,6 +126,47 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
     }
   };
 
+  const filteredTransactions = transactions.filter((t) => {
+    if (periodFilter === 'ALL') return true;
+    const tDate = String(t.created_at || '').slice(0, 10);
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (periodFilter === 'DAY') return tDate === todayStr;
+    if (periodFilter === 'WEEK') {
+      const dayOfWeek = now.getDay();
+      const diffToMon = (dayOfWeek + 6) % 7;
+      const monDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMon);
+      const thisWeekStart = `${monDate.getFullYear()}-${String(monDate.getMonth() + 1).padStart(2, '0')}-${String(monDate.getDate()).padStart(2, '0')}`;
+      return tDate >= thisWeekStart;
+    }
+    if (periodFilter === 'MONTH') {
+      return tDate.startsWith(todayStr.slice(0, 7));
+    }
+    if (periodFilter === 'YEAR') {
+      return tDate.startsWith(todayStr.slice(0, 4));
+    }
+    return true;
+  });
+
+  const activeSummary = periodFilter === 'ALL' ? summary : {
+    totalCollected: filteredTransactions
+      .filter((r) => r.transaction_type !== 'REFUND' && r.status === 'SUCCESS')
+      .reduce((acc, r) => acc + (Number(r.amount) || 0), 0),
+    totalDeposits: filteredTransactions
+      .filter((r) => r.transaction_type === 'DEPOSIT' && r.status === 'SUCCESS')
+      .reduce((acc, r) => acc + (Number(r.amount) || 0), 0),
+    totalRefunds: filteredTransactions
+      .filter((r) => r.transaction_type === 'REFUND')
+      .reduce((acc, r) => acc + (Number(r.amount) || 0), 0),
+    totalPenalties: filteredTransactions
+      .filter((r) => ['LATE_FEE', 'DAMAGE_FEE', 'OTHER_FEE', 'PENALTY_FEE'].includes(r.transaction_type) && r.status === 'SUCCESS')
+      .reduce((acc, r) => acc + (Number(r.amount) || 0), 0),
+    netCashflow: 0,
+  };
+  if (periodFilter !== 'ALL') {
+    activeSummary.netCashflow = activeSummary.totalCollected - activeSummary.totalRefunds;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -161,6 +203,30 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
         </div>
       </div>
 
+      {/* Time Range Filter Pills */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+        {[
+          { id: 'ALL', label: 'Toàn thời gian' },
+          { id: 'DAY', label: 'Hôm nay (Ngày)' },
+          { id: 'WEEK', label: 'Tuần này' },
+          { id: 'MONTH', label: 'Tháng này' },
+          { id: 'YEAR', label: 'Năm nay' },
+        ].map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setPeriodFilter(item.id as any)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              periodFilter === item.id
+                ? 'bg-[#14171f] text-white shadow-xs'
+                : 'bg-white hover:bg-neutral-100 text-[#5a6072] border border-[#14171f]/10'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       {/* 4 Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="liquid-glass rounded-3xl p-5">
@@ -168,7 +234,7 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
             Tổng thu ghi nhận
           </span>
           <div className="text-2xl font-bold text-[#14171f] num mt-2 whitespace-nowrap">
-            {formatVnd(summary.totalCollected)}
+            {formatVnd(activeSummary.totalCollected)}
           </div>
         </div>
         <div className="liquid-glass rounded-3xl p-5">
@@ -176,7 +242,7 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
             Tổng tiền cọc đã nhận
           </span>
           <div className="text-2xl font-bold text-amber-700 num mt-2 whitespace-nowrap">
-            {formatVnd(summary.totalDeposits)}
+            {formatVnd(activeSummary.totalDeposits)}
           </div>
         </div>
         <div className="liquid-glass rounded-3xl p-5">
@@ -184,7 +250,7 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
             Tổng đã hoàn cọc khách
           </span>
           <div className="text-2xl font-bold text-sky-700 num mt-2 whitespace-nowrap">
-            {formatVnd(summary.totalRefunds)}
+            {formatVnd(activeSummary.totalRefunds)}
           </div>
         </div>
         <div className="liquid-glass rounded-3xl p-5">
@@ -192,7 +258,7 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
             Dòng tiền ròng tại quỹ
           </span>
           <div className="text-2xl font-bold text-emerald-700 num mt-2 whitespace-nowrap">
-            {formatVnd(summary.netCashflow)}
+            {formatVnd(activeSummary.netCashflow)}
           </div>
         </div>
       </div>
@@ -261,7 +327,7 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
       {/* Ledger Table */}
       <div className="liquid-glass rounded-3xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full min-w-[960px] text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-[#14171f]/10 bg-[#f7f8fa] text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
                 <th className="py-3.5 px-5">Mã giao dịch</th>
@@ -273,7 +339,7 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#14171f]/8">
-              {transactions.length === 0 ? (
+              {filteredTransactions.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-[#7e8596]">
                     {isLoading
@@ -282,7 +348,7 @@ export const FinanceLedgerTab: React.FC<FinanceLedgerTabProps> = ({
                   </td>
                 </tr>
               ) : (
-                transactions.map((tx) => {
+                filteredTransactions.map((tx) => {
                   const isRefund = tx.transaction_type === 'REFUND';
                   return (
                     <tr key={tx.id} className="hover:bg-[#f7f8fa]/70">

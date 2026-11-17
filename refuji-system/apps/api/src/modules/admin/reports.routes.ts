@@ -10,6 +10,13 @@ import {
 import { runOperationalSweep } from './cron.service.js';
 import { AdminActor } from './admin.middleware.js';
 
+function getIsoWeekNumber(d: Date): number {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
 export const adminReportsRouter = Router();
 
 // GET /api/admin/reports/dashboard
@@ -52,12 +59,12 @@ adminReportsRouter.get('/reports/dashboard', (_req: Request, res: Response) => {
 
     const returnRows = db.prepare('SELECT * FROM return_records').all() as any[];
 
-    // 1. Doanh thu & tài chính thực nhận
+    // 1. Doanh thu & tài chính thực nhận (Bao gồm tiền thuê, phạt trả chậm/hư hỏng, và phạt hủy đơn)
     const confirmedAndDone = orders.filter((o) =>
       ['CONFIRMED', 'DELIVERED', 'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL'].includes(o.order_status)
     );
     const baseRentalRevenue = confirmedAndDone.reduce((acc, o) => acc + (Number(o.total_rent) || 0), 0);
-    const penaltyRevenue = returnRows.reduce(
+    const returnPenaltyTotal = returnRows.reduce(
       (acc, r) =>
         acc +
         (Number(r.total_late_fee) || 0) +
@@ -66,6 +73,10 @@ adminReportsRouter.get('/reports/dashboard', (_req: Request, res: Response) => {
         (Number(r.other_fee) || 0),
       0
     );
+    const penaltyTxTotal = txRows
+      .filter((t) => t.transaction_type === 'PENALTY_FEE' && t.status === 'SUCCESS')
+      .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+    const penaltyRevenue = returnPenaltyTotal + penaltyTxTotal;
     const maintenanceCostTotal = maintRows.reduce((acc, m) => acc + (Number(m.cost) || 0), 0);
     const grossRevenue = baseRentalRevenue + penaltyRevenue;
     const netRevenue = grossRevenue - maintenanceCostTotal;
@@ -119,24 +130,237 @@ adminReportsRouter.get('/reports/dashboard', (_req: Request, res: Response) => {
       )
       .slice(0, 8);
 
-    // 4. Chuỗi biểu đồ 7 mốc ngày gần nhất có dữ liệu (Doanh thu & Số đơn)
-    const dateMap: Record<string, { date: string; revenue: number; orders: number; guestOrders: number }> = {};
+    // 4. Doanh thu theo Kỳ: Ngày, Tuần, Tháng, Năm (Revenue by Period)
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const diffToMon = (dayOfWeek + 6) % 7;
+    const monDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToMon);
+    const thisWeekStart = `${monDate.getFullYear()}-${String(monDate.getMonth() + 1).padStart(2, '0')}-${String(monDate.getDate()).padStart(2, '0')}`;
+    const sunDate = new Date(monDate.getFullYear(), monDate.getMonth(), monDate.getDate() + 6);
+    const thisWeekEnd = `${sunDate.getFullYear()}-${String(sunDate.getMonth() + 1).padStart(2, '0')}-${String(sunDate.getDate()).padStart(2, '0')}`;
+    const thisMonthPrefix = todayStr.slice(0, 7);
+    const thisYearPrefix = todayStr.slice(0, 4);
+
+    const computePeriodStats = (filterFn: (dateStr: string) => boolean) => {
+      const periodOrders = orders.filter((o) =>
+        filterFn(String(o.created_at || o.start_date || todayStr).slice(0, 10))
+      );
+      const validPeriodOrders = periodOrders.filter((o) =>
+        ['CONFIRMED', 'DELIVERED', 'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL'].includes(o.order_status)
+      );
+      const baseRent = validPeriodOrders.reduce((sum, o) => sum + (Number(o.total_rent) || 0), 0);
+
+      const periodReturns = returnRows.filter((r) =>
+        filterFn(String(r.actual_return_date || r.created_at || todayStr).slice(0, 10))
+      );
+      const retPenalties = periodReturns.reduce(
+        (sum, r) =>
+          sum +
+          (Number(r.total_late_fee) || 0) +
+          (Number(r.total_damage_fee) || 0) +
+          (Number(r.total_missing_acc_fee) || 0) +
+          (Number(r.other_fee) || 0),
+        0
+      );
+
+      const periodPenaltyTxs = txRows.filter(
+        (t) =>
+          t.transaction_type === 'PENALTY_FEE' &&
+          t.status === 'SUCCESS' &&
+          filterFn(String(t.created_at || todayStr).slice(0, 10))
+      );
+      const txPenalties = periodPenaltyTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+      const penalties = retPenalties + txPenalties;
+
+      const gross = baseRent + penalties;
+
+      const periodMaint = maintRows.filter((m) =>
+        filterFn(String(m.started_at || m.created_at || todayStr).slice(0, 10))
+      );
+      const maintCost = periodMaint.reduce((sum, m) => sum + (Number(m.cost) || 0), 0);
+      const net = gross - maintCost;
+
+      const deposits = validPeriodOrders.reduce((sum, o) => sum + (Number(o.deposit_amount) || 0), 0);
+      const count = periodOrders.filter(
+        (o) =>
+          o.order_status !== 'CANCELLED' ||
+          periodPenaltyTxs.some((t) => t.order_code === o.order_code)
+      ).length;
+
+      return {
+        grossRevenue: gross,
+        netRevenue: net,
+        baseRentalRevenue: baseRent,
+        penaltyRevenue: penalties,
+        maintenanceCost: maintCost,
+        ordersCount: count,
+        depositAmount: deposits,
+      };
+    };
+
+    const revenueByPeriod = {
+      day: {
+        periodKey: 'day' as const,
+        label: 'Hôm nay',
+        subLabel: `${todayStr.slice(8, 10)}/${todayStr.slice(5, 7)}/${todayStr.slice(0, 4)}`,
+        ...computePeriodStats((d) => d === todayStr),
+      },
+      week: {
+        periodKey: 'week' as const,
+        label: 'Tuần này',
+        subLabel: `${thisWeekStart.slice(8, 10)}/${thisWeekStart.slice(5, 7)} - ${thisWeekEnd.slice(8, 10)}/${thisWeekEnd.slice(5, 7)}/${thisWeekEnd.slice(0, 4)}`,
+        ...computePeriodStats((d) => d >= thisWeekStart && d <= thisWeekEnd),
+      },
+      month: {
+        periodKey: 'month' as const,
+        label: 'Tháng này',
+        subLabel: `Tháng ${parseInt(todayStr.slice(5, 7), 10)}/${todayStr.slice(0, 4)}`,
+        ...computePeriodStats((d) => d.startsWith(thisMonthPrefix)),
+      },
+      year: {
+        periodKey: 'year' as const,
+        label: 'Năm nay',
+        subLabel: `Năm ${thisYearPrefix}`,
+        ...computePeriodStats((d) => d.startsWith(thisYearPrefix)),
+      },
+      all: {
+        periodKey: 'all' as const,
+        label: 'Toàn bộ',
+        subLabel: 'Tổng tích lũy',
+        ...computePeriodStats(() => true),
+      },
+    };
+
+    // 4b. Chuỗi biểu đồ xu hướng theo từng kỳ: Ngày / Tuần / Tháng / Năm
+    // Day series: 10 mốc gần nhất
+    const dayDateMap: Record<string, { key: string; date: string; label: string; fullLabel: string; revenue: number; orders: number; guestOrders: number }> = {};
     for (const o of orders) {
       const d = String(o.created_at || o.start_date || todayStr).slice(0, 10);
-      if (!dateMap[d]) {
-        dateMap[d] = { date: d, revenue: 0, orders: 0, guestOrders: 0 };
+      if (!dayDateMap[d]) {
+        dayDateMap[d] = {
+          key: d,
+          date: d,
+          label: `${d.slice(8, 10)}/${d.slice(5, 7)}`,
+          fullLabel: `Ngày ${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`,
+          revenue: 0,
+          orders: 0,
+          guestOrders: 0,
+        };
       }
       if (o.order_status !== 'CANCELLED') {
-        dateMap[d].orders += 1;
-        if (o.is_guest === 1) dateMap[d].guestOrders += 1;
+        dayDateMap[d].orders += 1;
+        if (o.is_guest === 1) dayDateMap[d].guestOrders += 1;
       }
       if (['CONFIRMED', 'DELIVERED', 'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL'].includes(o.order_status)) {
-        dateMap[d].revenue += Number(o.total_rent) || 0;
+        dayDateMap[d].revenue += Number(o.total_rent) || 0;
       }
     }
-    const trendSeries = Object.values(dateMap)
+    for (const t of txRows) {
+      if (t.transaction_type === 'PENALTY_FEE' && t.status === 'SUCCESS') {
+        const d = String(t.created_at || todayStr).slice(0, 10);
+        if (!dayDateMap[d]) {
+          dayDateMap[d] = {
+            key: d,
+            date: d,
+            label: `${d.slice(8, 10)}/${d.slice(5, 7)}`,
+            fullLabel: `Ngày ${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`,
+            revenue: 0,
+            orders: 0,
+            guestOrders: 0,
+          };
+        }
+        dayDateMap[d].revenue += Number(t.amount) || 0;
+      }
+    }
+    const trendDaySeries = Object.values(dayDateMap)
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(-10);
+
+    // Week series: 6 tuần gần nhất
+    const trendWeekSeries: Array<{ key: string; label: string; fullLabel: string; revenue: number; orders: number }> = [];
+    for (let i = 5; i >= 0; i--) {
+      const targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 7);
+      const dOfWeek = targetDate.getDay();
+      const dMon = (dOfWeek + 6) % 7;
+      const wMon = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() - dMon);
+      const wSun = new Date(wMon.getFullYear(), wMon.getMonth(), wMon.getDate() + 6);
+      const wNo = getIsoWeekNumber(wMon);
+      const wStart = `${wMon.getFullYear()}-${String(wMon.getMonth() + 1).padStart(2, '0')}-${String(wMon.getDate()).padStart(2, '0')}`;
+      const wEnd = `${wSun.getFullYear()}-${String(wSun.getMonth() + 1).padStart(2, '0')}-${String(wSun.getDate()).padStart(2, '0')}`;
+
+      const wOrders = orders.filter((o) => {
+        const d = String(o.created_at || o.start_date || todayStr).slice(0, 10);
+        return d >= wStart && d <= wEnd && ['CONFIRMED', 'DELIVERED', 'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL'].includes(o.order_status);
+      });
+      const wRev = wOrders.reduce((sum, o) => sum + (Number(o.total_rent) || 0), 0);
+      const wPen = txRows
+        .filter((t) => {
+          const d = String(t.created_at || todayStr).slice(0, 10);
+          return d >= wStart && d <= wEnd && t.transaction_type === 'PENALTY_FEE' && t.status === 'SUCCESS';
+        })
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+      trendWeekSeries.push({
+        key: `W${wNo}-${wMon.getFullYear()}`,
+        label: `Tuần ${wNo}`,
+        fullLabel: `Tuần ${wNo} (${wMon.getDate()}/${wMon.getMonth() + 1} - ${wSun.getDate()}/${wSun.getMonth() + 1})`,
+        revenue: wRev + wPen,
+        orders: wOrders.length + (wPen > 0 && wOrders.length === 0 ? 1 : 0),
+      });
+    }
+
+    // Month series: 12 tháng của năm hiện tại
+    const currYearNum = now.getFullYear();
+    const trendMonthSeries: Array<{ key: string; label: string; fullLabel: string; revenue: number; orders: number }> = [];
+    for (let m = 1; m <= 12; m++) {
+      const mPrefix = `${currYearNum}-${String(m).padStart(2, '0')}`;
+      const mOrders = orders.filter((o) => {
+        const d = String(o.created_at || o.start_date || todayStr).slice(0, 10);
+        return d.startsWith(mPrefix) && ['CONFIRMED', 'DELIVERED', 'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL'].includes(o.order_status);
+      });
+      const mRev = mOrders.reduce((sum, o) => sum + (Number(o.total_rent) || 0), 0);
+      const mPen = txRows
+        .filter((t) => {
+          const d = String(t.created_at || todayStr).slice(0, 10);
+          return d.startsWith(mPrefix) && t.transaction_type === 'PENALTY_FEE' && t.status === 'SUCCESS';
+        })
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+      trendMonthSeries.push({
+        key: mPrefix,
+        label: `Thg ${m}`,
+        fullLabel: `Tháng ${m}/${currYearNum}`,
+        revenue: mRev + mPen,
+        orders: mOrders.length + (mPen > 0 && mOrders.length === 0 ? 1 : 0),
+      });
+    }
+
+    // Year series: 3 năm gần nhất
+    const trendYearSeries: Array<{ key: string; label: string; fullLabel: string; revenue: number; orders: number }> = [];
+    for (let y = currYearNum - 2; y <= currYearNum; y++) {
+      const yPrefix = String(y);
+      const yOrders = orders.filter((o) => {
+        const d = String(o.created_at || o.start_date || todayStr).slice(0, 10);
+        return d.startsWith(yPrefix) && ['CONFIRMED', 'DELIVERED', 'RETURNED', 'OVERDUE', 'OVERDUE_CRITICAL'].includes(o.order_status);
+      });
+      const yRev = yOrders.reduce((sum, o) => sum + (Number(o.total_rent) || 0), 0);
+      const yPen = txRows
+        .filter((t) => {
+          const d = String(t.created_at || todayStr).slice(0, 10);
+          return d.startsWith(yPrefix) && t.transaction_type === 'PENALTY_FEE' && t.status === 'SUCCESS';
+        })
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+      trendYearSeries.push({
+        key: yPrefix,
+        label: `Năm ${y}`,
+        fullLabel: `Năm ${y}`,
+        revenue: yRev + yPen,
+        orders: yOrders.length + (yPen > 0 && yOrders.length === 0 ? 1 : 0),
+      });
+    }
+
+    const trendSeries = trendDaySeries;
 
     // 5. Phân bổ doanh thu theo danh mục (BODY / LENS / ACCESSORY)
     const modelCatMap: Record<string, string> = {};
@@ -213,6 +437,13 @@ adminReportsRouter.get('/reports/dashboard', (_req: Request, res: Response) => {
         occupancyPercent,
         statusCounts,
         openMaintenanceCount: maintRows.filter((m) => !m.completed_at).length,
+      },
+      revenueByPeriod,
+      trendSeriesByPeriod: {
+        day: trendDaySeries,
+        week: trendWeekSeries,
+        month: trendMonthSeries,
+        year: trendYearSeries,
       },
       trendSeries,
       categoryBreakdown: Object.values(categoryStats),

@@ -187,6 +187,30 @@ export const ITEM_STATUS_META: Record<
   LOST: { label: 'Thất lạc / Hỏng', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
 };
 
+export type RevenuePeriodKey = 'day' | 'week' | 'month' | 'year' | 'all';
+
+export interface PeriodRevenueSummary {
+  periodKey: RevenuePeriodKey;
+  label: string;
+  subLabel: string;
+  grossRevenue: number;
+  netRevenue: number;
+  baseRentalRevenue: number;
+  penaltyRevenue: number;
+  maintenanceCost: number;
+  ordersCount: number;
+  depositAmount: number;
+}
+
+export interface PeriodTrendPoint {
+  key: string;
+  label: string;
+  fullLabel: string;
+  revenue: number;
+  orders: number;
+  guestOrders?: number;
+}
+
 export interface DashboardOverviewData {
   kpis: {
     grossRevenue: number;
@@ -207,6 +231,13 @@ export interface DashboardOverviewData {
     occupancyPercent: number;
     statusCounts: Record<string, number>;
     openMaintenanceCount: number;
+  };
+  revenueByPeriod?: Record<RevenuePeriodKey, PeriodRevenueSummary>;
+  trendSeriesByPeriod?: {
+    day: PeriodTrendPoint[];
+    week: PeriodTrendPoint[];
+    month: PeriodTrendPoint[];
+    year: PeriodTrendPoint[];
   };
   trendSeries: Array<{ date: string; revenue: number; orders: number; guestOrders: number }>;
   categoryBreakdown: Array<{ category: string; orders: number; revenue: number }>;

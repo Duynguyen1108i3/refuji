@@ -259,7 +259,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
       ) : (
         <div className="liquid-glass rounded-3xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[1080px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#14171f]/10 bg-[#f7f8fa] text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
                   <th className="py-3.5 px-5">Mã đơn &amp; Thời gian</th>
@@ -268,7 +268,7 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                   <th className="py-3.5 px-4">Lịch thuê</th>
                   <th className="py-3.5 px-4 text-right">Tài chính</th>
                   <th className="py-3.5 px-4">Trạng thái</th>
-                  <th className="py-3.5 px-5 text-right">Nghiệp vụ POS</th>
+                  <th className="py-3.5 px-6 text-right whitespace-nowrap min-w-[210px]">Nghiệp vụ POS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#14171f]/8 text-xs">
@@ -369,9 +369,34 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                         <div className="text-[11px] text-[#5a6072]">
                           Cọc: {formatVnd(order.deposit_amount)}
                         </div>
-                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${payMeta.badgeClass}`}>
-                          {payMeta.label}
-                        </span>
+                        {order.order_status === 'CANCELLED' ? (
+                          <div className="mt-1 space-y-0.5">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                                order.payment_status === 'PARTIALLY_REFUNDED'
+                                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                  : order.payment_status === 'REFUNDED' || order.payment_status === 'PAID_FULL'
+                                  ? 'bg-sky-50 text-sky-800 border-sky-200'
+                                  : 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                              }`}
+                            >
+                              {order.payment_status === 'PARTIALLY_REFUNDED'
+                                ? 'Hoàn cọc sau trừ phí'
+                                : order.payment_status === 'REFUNDED' || order.payment_status === 'PAID_FULL'
+                                ? 'Đã hoàn trả 100%'
+                                : 'Chưa thanh toán'}
+                            </span>
+                            {order.cancellation_reason && order.cancellation_reason.includes('Phạt') && (
+                              <p className="text-[9.5px] text-amber-700 font-medium">
+                                Phạt hủy theo chính sách
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${payMeta.badgeClass}`}>
+                            {payMeta.label}
+                          </span>
+                        )}
                       </td>
 
                       {/* Order Status */}
@@ -385,8 +410,8 @@ export const OrdersOperationsTab: React.FC<OrdersOperationsTabProps> = ({
                       </td>
 
                       {/* Actions */}
-                      <td className="py-4 px-5 align-top text-right">
-                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                      <td className="py-4 px-6 align-top text-right">
+                        <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
                           {needsApprove && (
                             <button
                               type="button"

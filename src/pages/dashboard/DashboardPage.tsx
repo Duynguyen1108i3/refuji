@@ -210,10 +210,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
       />
       <div className="fixed inset-x-0 top-0 h-[460px] bg-gradient-to-b from-white/55 via-white/90 to-white z-0 pointer-events-none no-print" />
 
-      {/* Top Floating Home-Parity Liquid Bar (Matching LiquidNavbar.tsx without rigid centering) */}
-      <header className="no-print sticky top-0 z-40 w-full pointer-events-none">
-        <div className="bg-gradient-to-b from-white/95 via-white/80 to-transparent">
-          <div className="w-full h-[84px] px-4 sm:px-6 lg:px-8 min-[1420px]:px-12 2xl:px-14 flex items-center justify-between gap-2.5 lg:gap-3 min-[1420px]:gap-4">
+      {/* Top Floating Dashboard Navbar with Frosted Glass Backdrop to prevent content bleed */}
+      <header className="no-print sticky top-0 z-40 w-full bg-white/92 backdrop-blur-xl border-b border-[#14171f]/8 shadow-[0_2px_12px_rgba(20,24,32,0.03)] transition-all">
+        <div className="w-full h-[84px] px-4 sm:px-6 lg:px-8 min-[1420px]:px-12 2xl:px-14 flex items-center justify-between gap-2.5 lg:gap-3 min-[1420px]:gap-4">
             {/* Left: Brand Wordmark matching Home LiquidNavbar */}
             <div className="flex items-center shrink-0 pointer-events-auto">
               <button
@@ -369,7 +368,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onExitToStorefront
               </div>
             </div>
           </div>
-        </div>
       </header>
 
       {/* Mobile / Tablet Bottom Floating Dock (Matching Storefront LiquidNavbar.tsx) */}

@@ -12,12 +12,19 @@ import {
   AlertTriangle,
   Loader2,
   RefreshCw,
+  Calendar,
+  CalendarDays,
+  CalendarRange,
+  BarChart3,
 } from 'lucide-react';
 import { triggerOperationalSweep } from '../../services/dashboardApi';
 import {
   DashboardOverviewData,
   DashboardTabId,
   ORDER_STATUS_META,
+  RevenuePeriodKey,
+  PeriodRevenueSummary,
+  PeriodTrendPoint,
   formatVnd,
   formatShortDate,
   formatDateTime,
@@ -46,6 +53,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   onNotify,
 }) => {
   const [isSweeping, setIsSweeping] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<RevenuePeriodKey>('all');
+  const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month' | 'year'>('day');
 
   const handleRunCronSweep = async () => {
     setIsSweeping(true);
@@ -85,11 +94,28 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   }
 
   const { kpis, trendSeries, categoryBreakdown, topModels, pickupToday, returnToday, maintenanceDueItems, recentAuditLogs } = data;
-  const maxTrendRev = Math.max(1, ...trendSeries.map((d) => d.revenue));
   const totalCatRev = Math.max(1, categoryBreakdown.reduce((acc, c) => acc + c.revenue, 0));
 
   const guestInqCount = kpis.statusCounts?.GUEST_INQUIRY || 0;
   const overdueCount = (kpis.statusCounts?.OVERDUE || 0) + (kpis.statusCounts?.OVERDUE_CRITICAL || 0);
+
+  const activePeriodSummary: PeriodRevenueSummary =
+    (data.revenueByPeriod && data.revenueByPeriod[selectedPeriod]) || {
+      periodKey: 'all',
+      label: 'Toàn bộ',
+      subLabel: 'Tổng tích lũy',
+      grossRevenue: kpis.grossRevenue,
+      netRevenue: kpis.netRevenue,
+      baseRentalRevenue: kpis.baseRentalRevenue,
+      penaltyRevenue: kpis.penaltyRevenue,
+      maintenanceCost: kpis.maintenanceCostTotal,
+      ordersCount: kpis.totalOrders,
+      depositAmount: kpis.activeDepositHeld,
+    };
+
+  const currentTrendList: Array<any> =
+    (data.trendSeriesByPeriod && data.trendSeriesByPeriod[chartPeriod]) || trendSeries;
+  const maxTrendRev = Math.max(1, ...currentTrendList.map((d: any) => d.revenue || 0));
 
   return (
     <div className="space-y-8">
@@ -142,13 +168,130 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </div>
 
+      {/* Doanh Thu Theo Kỳ: Ngày, Tuần, Tháng, Năm Selector & Quick Glance Cards */}
+      <div className="space-y-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#f7f8fa] p-2.5 sm:px-4 sm:py-2.5 rounded-3xl border border-[#14171f]/8">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#14171f]">
+            <CalendarRange size={16} className="text-[#14171f]" />
+            <span>Kỳ thống kê doanh thu:</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+            {[
+              { key: 'day', label: 'Hôm nay (Ngày)' },
+              { key: 'week', label: 'Tuần này' },
+              { key: 'month', label: 'Tháng này' },
+              { key: 'year', label: 'Năm nay' },
+              { key: 'all', label: 'Toàn bộ' },
+            ].map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => {
+                  setSelectedPeriod(item.key as RevenuePeriodKey);
+                  if (item.key !== 'all') {
+                    setChartPeriod(item.key as 'day' | 'week' | 'month' | 'year');
+                  }
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                  selectedPeriod === item.key
+                    ? 'bg-[#14171f] text-white shadow-xs'
+                    : 'bg-white hover:bg-neutral-100 text-[#5a6072] border border-[#14171f]/10'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 4 Cards Hiện Doanh Thu: Ngày, Tuần, Tháng, Năm */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[
+            {
+              key: 'day',
+              label: 'Hôm nay',
+              icon: <Calendar size={14} />,
+              data: data.revenueByPeriod?.day,
+            },
+            {
+              key: 'week',
+              label: 'Tuần này',
+              icon: <CalendarDays size={14} />,
+              data: data.revenueByPeriod?.week,
+            },
+            {
+              key: 'month',
+              label: 'Tháng này',
+              icon: <CalendarRange size={14} />,
+              data: data.revenueByPeriod?.month,
+            },
+            {
+              key: 'year',
+              label: 'Năm nay',
+              icon: <BarChart3 size={14} />,
+              data: data.revenueByPeriod?.year,
+            },
+          ].map((item) => {
+            const isSelected = selectedPeriod === item.key;
+            const rev = item.data?.grossRevenue || 0;
+            const orders = item.data?.ordersCount || 0;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => {
+                  setSelectedPeriod(item.key as RevenuePeriodKey);
+                  setChartPeriod(item.key as 'day' | 'week' | 'month' | 'year');
+                }}
+                className={`p-4 rounded-2xl text-left transition-all cursor-pointer border flex flex-col justify-between gap-2.5 ${
+                  isSelected
+                    ? 'bg-[#14171f] text-white border-[#14171f] shadow-md scale-[1.01]'
+                    : 'bg-white hover:bg-neutral-50 text-[#14171f] border-[#14171f]/10 hover:border-[#14171f]/25'
+                }`}
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span
+                    className={`font-semibold flex items-center gap-1.5 ${
+                      isSelected ? 'text-white' : 'text-[#5a6072]'
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </span>
+                  <span
+                    className={`text-[10px] num px-2 py-0.5 rounded-full font-bold ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-[#14171f]/[0.06] text-[#14171f]'
+                    }`}
+                  >
+                    {orders} đơn
+                  </span>
+                </div>
+                <div>
+                  <div className="text-base sm:text-xl font-bold num whitespace-nowrap">
+                    {formatVnd(rev)}
+                  </div>
+                  <p
+                    className={`text-[10.5px] num mt-0.5 truncate ${
+                      isSelected ? 'text-white/70' : 'text-[#7e8596]'
+                    }`}
+                  >
+                    {item.data?.subLabel || '—'}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* 4 Editorial KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
-        {/* KPI 1: Revenue */}
+        {/* KPI 1: Revenue (Thích ứng theo kỳ đã chọn) */}
         <div className="liquid-glass rounded-3xl p-6 flex flex-col justify-between gap-4">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5a6072]">
-              Doanh thu thực nhận
+              Doanh thu ({activePeriodSummary.label})
             </span>
             <div className="w-9 h-9 rounded-full bg-[#14171f]/[0.05] flex items-center justify-center text-[#14171f]">
               <TrendingUp size={16} />
@@ -156,13 +299,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-bold text-[#14171f] num whitespace-nowrap">
-              {formatVnd(kpis.grossRevenue)}
+              {formatVnd(activePeriodSummary.grossRevenue)}
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#5a6072] num">
-              <span>Ròng sau bảo dưỡng: <strong className="text-[#14171f]">{formatVnd(kpis.netRevenue)}</strong></span>
-              {kpis.penaltyRevenue > 0 && (
-                <span className="text-amber-700 font-medium">Phạt: +{formatVnd(kpis.penaltyRevenue)}</span>
+              <span>Ròng sau bảo dưỡng: <strong className="text-[#14171f]">{formatVnd(activePeriodSummary.netRevenue)}</strong></span>
+              {activePeriodSummary.penaltyRevenue > 0 && (
+                <span className="text-amber-700 font-medium">Phạt: +{formatVnd(activePeriodSummary.penaltyRevenue)}</span>
               )}
+            </div>
+            <div className="mt-1 text-[10.5px] text-[#7e8596] num">
+              {activePeriodSummary.subLabel} · {activePeriodSummary.ordersCount} đơn phát sinh
             </div>
           </div>
         </div>
@@ -262,28 +408,59 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left 2 cols: Revenue & Orders SVG Chart */}
         <div className="lg:col-span-2 liquid-glass rounded-3xl p-6 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="font-serif text-xl sm:text-2xl text-[#14171f]">
                 Biểu Đồ Doanh Thu &amp; Lượt Thuê
               </h3>
               <p className="text-xs text-[#5a6072]">
-                10 phiên ghi nhận đơn gần nhất từ sổ đơn thực tế
+                {chartPeriod === 'day'
+                  ? 'Diễn biến doanh thu theo các ngày ghi nhận gần nhất'
+                  : chartPeriod === 'week'
+                  ? 'Diễn biến doanh thu theo từng tuần (6 tuần gần đây)'
+                  : chartPeriod === 'month'
+                  ? 'Diễn biến doanh thu theo 12 tháng trong năm hiện tại'
+                  : 'So sánh tổng doanh thu qua các năm hoạt động'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onRefresh}
-              className="glass-button px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 cursor-pointer"
-            >
-              <RefreshCw size={12} className={isLoading ? 'animate-spin' : ''} />
-              <span>Làm mới</span>
-            </button>
+
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-[#f5f6f8] p-1 rounded-full border border-[#14171f]/10">
+                {[
+                  { key: 'day', label: 'Ngày' },
+                  { key: 'week', label: 'Tuần' },
+                  { key: 'month', label: 'Tháng' },
+                  { key: 'year', label: 'Năm' },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setChartPeriod(item.key as any)}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                      chartPeriod === item.key
+                        ? 'bg-[#14171f] text-white shadow-xs'
+                        : 'text-[#5a6072] hover:text-[#14171f]'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={onRefresh}
+                className="glass-button px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <RefreshCw size={12} className={isLoading ? 'animate-spin' : ''} />
+                <span>Làm mới</span>
+              </button>
+            </div>
           </div>
 
-          {trendSeries.length === 0 ? (
+          {currentTrendList.length === 0 ? (
             <div className="h-52 flex items-center justify-center text-xs text-[#7e8596]">
-              Chưa đủ dữ liệu biểu đồ
+              Chưa đủ dữ liệu biểu đồ cho kỳ đã chọn
             </div>
           ) : (
             <div className="space-y-3">
@@ -295,32 +472,33 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   <div className="border-t border-dashed border-[#14171f]/[0.06] w-full" />
                 </div>
 
-                {trendSeries.map((pt) => {
-                  const rawPct = pt.revenue > 0 ? Math.max(12, Math.round((pt.revenue / maxTrendRev) * 100)) : 4;
-                  const mmdd = pt.date.slice(5).split('-');
-                  const shortLabel = mmdd.length === 2 ? `${mmdd[1]}/${mmdd[0]}` : pt.date.slice(5);
-                  const hasRevenue = pt.revenue > 0;
+                {currentTrendList.map((pt: any) => {
+                  const hasRevenue = (pt.revenue || 0) > 0;
+                  const rawPct = hasRevenue ? Math.max(12, Math.round(((pt.revenue || 0) / maxTrendRev) * 100)) : 4;
+                  const displayLabel = pt.label || (pt.date ? pt.date.slice(5) : '');
+                  const displayFullLabel = pt.fullLabel || (pt.date ? formatShortDate(pt.date) : displayLabel);
+                  const ordersCount = pt.orders || 0;
                   return (
                     <div
-                      key={pt.date}
+                      key={pt.key || pt.date || displayLabel}
                       className="relative z-10 flex-1 flex flex-col items-center gap-1.5 group h-full justify-end min-w-0"
                     >
                       {/* Floating Tooltip Pill on Hover */}
                       <div className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 -translate-y-1 group-hover:translate-y-0 transition-all duration-150 z-20 px-2.5 py-1 rounded-full bg-[#14171f] text-white text-[10px] font-semibold num whitespace-nowrap shadow-md">
-                        {formatVnd(pt.revenue)} · {pt.orders} đơn
+                        {displayFullLabel}: {formatVnd(pt.revenue || 0)} · {ordersCount} đơn
                       </div>
 
                       {/* Order Count Badge cleanly ABOVE the bar (never clipped inside low bars) */}
                       <span
                         className={`px-2 py-0.5 rounded-full text-[10px] font-bold num leading-tight transition-colors ${
-                          pt.orders > 0
+                          ordersCount > 0
                             ? hasRevenue
                               ? 'bg-[#14171f]/[0.07] text-[#14171f] group-hover:bg-[#14171f] group-hover:text-white'
                               : 'bg-amber-50 border border-amber-200 text-amber-800'
                             : 'bg-[#14171f]/[0.04] text-[#7e8596]'
                         }`}
                       >
-                        {pt.orders}
+                        {ordersCount}
                       </span>
 
                       <div className="w-full max-w-[38px] flex-1 flex items-end">
@@ -328,16 +506,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                           className={`w-full rounded-t-xl transition-all duration-300 ${
                             hasRevenue
                               ? 'bg-gradient-to-t from-[#14171f]/80 to-[#14171f] group-hover:from-[#14171f] group-hover:to-[#262c3a] shadow-[0_4px_12px_rgba(20,24,32,0.12)]'
-                              : pt.orders > 0
+                              : ordersCount > 0
                               ? 'bg-amber-300/80 group-hover:bg-amber-400 border border-amber-400/60'
                               : 'bg-[#14171f]/20 group-hover:bg-[#14171f]/35 rounded-t-lg'
                           }`}
                           style={{ height: `${rawPct}%`, minHeight: hasRevenue ? '18px' : '10px' }}
-                          title={`${formatShortDate(pt.date)}: ${formatVnd(pt.revenue)} (${pt.orders} đơn)`}
+                          title={`${displayFullLabel}: ${formatVnd(pt.revenue || 0)} (${ordersCount} đơn)`}
                         />
                       </div>
-                      <span className="text-[10.5px] font-medium text-[#5a6072] num truncate w-full text-center pt-0.5">
-                        {shortLabel}
+                      <span className="text-[10px] sm:text-[10.5px] font-medium text-[#5a6072] num truncate w-full text-center pt-0.5" title={displayFullLabel}>
+                        {displayLabel}
                       </span>
                     </div>
                   );
@@ -345,13 +523,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#5a6072]">
                 <span className="flex items-center gap-3">
-                  <span>Nhãn trên cột: tổng số đơn trong ngày</span>
+                  <span>Nhãn trên cột: số đơn ghi nhận</span>
                   <span className="hidden sm:inline-flex items-center gap-1.5 text-[10.5px] text-amber-800">
                     <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                    Cột hổ phách: giữ chỗ/hủy chưa phát sinh doanh thu
+                    Cột hổ phách: có đơn nhưng chưa thu đủ tiền
                   </span>
                 </span>
-                <span className="num">Tổng tiền thuê: <strong className="text-[#14171f]">{formatVnd(kpis.baseRentalRevenue)}</strong></span>
+                <span className="num">
+                  Tổng doanh thu {chartPeriod === 'day' ? 'các ngày' : chartPeriod === 'week' ? 'các tuần' : chartPeriod === 'month' ? 'các tháng' : 'các năm'}: <strong className="text-[#14171f]">{formatVnd(currentTrendList.reduce((s: number, p: any) => s + (Number(p.revenue) || 0), 0))}</strong>
+                </span>
               </div>
             </div>
           )}
