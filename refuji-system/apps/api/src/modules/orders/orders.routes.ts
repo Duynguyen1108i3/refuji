@@ -16,7 +16,7 @@ import {
   RequestedModelItem,
   parseModelId,
 } from './availability.helper.js';
-import { sendOrderToGoogleAppsScript } from './order-notification.service.js';
+import { sendOrderConfirmationEmail } from './order-notification.service.js';
 import { createOrderPaymentLink, getPayOSClient } from './payos.service.js';
 
 export const ordersRouter = Router();
@@ -346,7 +346,7 @@ ordersRouter.post('/', (req: Request, res: Response) => {
       `📦 [Orders] Đã tạo ${isGuest ? 'đơn Khách vãng lai' : `đơn User ${authUser?.userId}`}: ${txResult.orderId} (${txResult.orderStatus})`
     );
 
-    // Bắn thông báo xác nhận đơn hàng ngầm qua Google Apps Script (gửi mail Shop & Khách, ghi Sheets)
+    // Gửi email xác nhận đơn hàng ngầm qua Resend (cho Khách hàng & Shop)
     let custName = validatedGuest?.full_name || '';
     let custPhone = validatedGuest?.phone || '';
     let custEmail = validatedGuest?.email || '';
@@ -362,7 +362,7 @@ ordersRouter.post('/', (req: Request, res: Response) => {
       }
     }
 
-    sendOrderToGoogleAppsScript({
+    sendOrderConfirmationEmail({
       orderCode: txResult.orderId,
       customerName: custName,
       customerPhone: custPhone,

@@ -22,25 +22,26 @@ export interface OrderNotificationPayload {
 const resendClient = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 /**
- * Gửi email xác nhận đơn hàng qua Resend (Đảm bảo vào Inbox 100%)
+ * Gửi email xác nhận đơn hàng qua Resend cho Khách hàng & Cửa hàng.
+ * Chạy hoàn toàn bất đồng bộ (fire-and-forget), không làm nghẽn phản hồi API.
  */
-async function sendResendOrderEmails(payload: OrderNotificationPayload): Promise<void> {
+export async function sendOrderConfirmationEmail(payload: OrderNotificationPayload): Promise<void> {
   if (!resendClient) {
-    console.log('ℹ️ [Resend] Chưa cấu hình RESEND_API_KEY trong .env. Bỏ qua gửi mail qua Resend.');
+    console.log('ℹ️ [Resend] Chưa cấu hình RESEND_API_KEY trong .env. Bỏ qua gửi email.');
     return;
   }
 
   const fromEmail = env.RESEND_FROM_EMAIL || 'ReFuji Camera Rental <onboarding@resend.dev>';
-  const shopEmail = env.SHOP_NOTIFICATION_EMAIL || 'nuibabyno@gmail.com';
+  const shopEmail = env.SHOP_NOTIFICATION_EMAIL || 'duycute11082005@gmail.com';
 
   const rentFormatted = Number(payload.totalRent || 0).toLocaleString('vi-VN');
   const depositFormatted = Number(payload.depositAmount || 0).toLocaleString('vi-VN');
   const totalDueFormatted = Number(payload.totalDue || (payload.totalRent + (payload.depositAmount || 0))).toLocaleString('vi-VN');
 
-  // 1. Gửi email xác nhận cho Khách hàng
+  // 1. Gửi Email xác nhận cho Khách hàng
   if (payload.customerEmail) {
     const customerSubject = `[ReFuji] Xác nhận đơn đặt thuê máy ảnh #${payload.orderCode}`;
-    
+
     const customerPlainText = `Xin chào ${payload.customerName},\n\n`
       + `Cảm ơn bạn đã đặt thuê thiết bị tại ReFuji!\n`
       + `Mã đơn hàng: #${payload.orderCode}\n`
@@ -51,7 +52,7 @@ async function sendResendOrderEmails(payload: OrderNotificationPayload): Promise
       + `Tổng thanh toán: ${totalDueFormatted} đ\n\n`
       + `⏱ Đơn hàng được giữ chỗ trong 15 phút. Quý khách vui lòng hoàn tất thanh toán để hệ thống tự động khóa máy.\n\n`
       + `Hotline hỗ trợ: 0900.000.000\n`
-      + `Địa chỉ: ReFuji Camera Rental`;
+      + `Địa chỉ: ReFuji Camera Rental Studio`;
 
     const customerHtml = `
       <!DOCTYPE html>
@@ -105,7 +106,7 @@ async function sendResendOrderEmails(payload: OrderNotificationPayload): Promise
 
             <div style="background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 14px; margin: 20px 0;">
               <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.5;">
-                ⏱ <strong>Lưu ý giữ chỗ:</strong> Thiết bị được giữ chỗ tự động trong <strong>15 phút</strong>. Quý khách vui lòng hoàn tất chuyển khoản theo hướng dẫn trên website để được đối soát giữ máy chính thức.
+                ⏱ <strong>Lưu ý giữ chỗ:</strong> Thiết bị được giữ chỗ tự động trong <strong>15 phút</strong>. Quý khách vui lòng hoàn tất thanh toán theo hướng dẫn trên website để hệ thống khóa máy trong kho.
               </p>
             </div>
 
@@ -134,7 +135,7 @@ async function sendResendOrderEmails(payload: OrderNotificationPayload): Promise
     }
   }
 
-  // 2. Gửi thông báo đơn mới cho Shop
+  // 2. Gửi Email thông báo đơn mới cho Shop
   if (shopEmail && shopEmail !== payload.customerEmail) {
     try {
       await resendClient.emails.send({
@@ -148,42 +149,4 @@ async function sendResendOrderEmails(payload: OrderNotificationPayload): Promise
       console.error(`❌ [Resend Error] Không gửi được thông báo cho Shop:`, err?.message || err);
     }
   }
-}
-
-/**
- * Ghi đơn hàng vào Google Sheets ngầm qua Google Apps Script Webhook
- */
-function logOrderToGoogleSheet(payload: OrderNotificationPayload): void {
-  const webhookUrl = env.GAS_ORDER_WEBHOOK_URL;
-  if (!webhookUrl) return;
-
-  fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    redirect: 'follow',
-  })
-    .then((res) => {
-      if (res.ok) {
-        console.log(`📊 [Google Sheets] Đã ghi đơn #${payload.orderCode} vào bảng tính thành công.`);
-      }
-    })
-    .catch((err) => {
-      console.error(`⚠️ [Google Sheets Log Error]:`, err?.message || err);
-    });
-}
-
-/**
- * Hàm trung tâm gửi thông báo đơn hàng:
- * 1. Gửi email chuẩn qua Resend (100% vào Inbox).
- * 2. Tự động ghi lại nhật ký vào Google Sheets để shop quản lý.
- */
-export function sendOrderToGoogleAppsScript(payload: OrderNotificationPayload): void {
-  // Gửi qua Resend
-  sendResendOrderEmails(payload).catch((err) => {
-    console.error('❌ [Order Notification] Lỗi Resend:', err);
-  });
-
-  // Ghi đơn vào Google Sheets
-  logOrderToGoogleSheet(payload);
 }

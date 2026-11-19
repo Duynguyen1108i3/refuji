@@ -37,11 +37,9 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().int().positive(),
   SMTP_FROM: z.string().min(1),
 
-  GAS_ORDER_WEBHOOK_URL: z.string().url().optional(),
-
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().default('ReFuji Camera Rental <onboarding@resend.dev>'),
-  SHOP_NOTIFICATION_EMAIL: z.string().default('nuibabyno@gmail.com'),
+  SHOP_NOTIFICATION_EMAIL: z.string().default('duycute11082005@gmail.com'),
 
   PAYOS_CLIENT_ID: z.string().optional(),
   PAYOS_API_KEY: z.string().optional(),
