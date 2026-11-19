@@ -465,6 +465,39 @@ export async function payRentalOrder(
   throw new Error(err.error || err.message || 'Không thể xử lý thanh toán');
 }
 
+// Lấy thông tin mã VietQR MBBank chính xác cho đơn hàng
+export async function getOrderVietQr(orderCode: string): Promise<{
+  qrCodeUrl: string;
+  accountNumber: string;
+  accountName: string;
+  bankName: string;
+  amount: number;
+  description: string;
+}> {
+  const response = await fetch(`/api/orders/${orderCode}/vietqr`);
+  if (response.ok) {
+    return await response.json();
+  }
+  const err = await response.json().catch(() => ({}));
+  throw new Error(err.error || err.message || 'Không thể tạo mã VietQR');
+}
+
+// Kiểm tra trạng thái thanh toán thời gian thực từ MBBank / PayOS
+export async function checkOrderPaymentStatus(orderCode: string): Promise<{
+  isPaid: boolean;
+  isCancelled?: boolean;
+  isExpired?: boolean;
+  orderStatus: string;
+  paymentStatus: string;
+  message: string;
+}> {
+  const response = await fetch(`/api/orders/${orderCode}/payment-status`);
+  if (response.ok) {
+    return await response.json();
+  }
+  return { isPaid: false, orderStatus: 'PENDING_PAYMENT', paymentStatus: 'UNPAID', message: '' };
+}
+
 // Tính năng: Tra cứu đơn hàng khách vãng lai theo cặp Mã đơn + Số điện thoại
 export async function lookupGuestOrder(
   orderCode: string,

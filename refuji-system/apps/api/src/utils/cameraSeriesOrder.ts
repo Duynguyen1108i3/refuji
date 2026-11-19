@@ -88,6 +88,11 @@ export function sortModelsByCameraSeries<
   T extends { category?: string; model_name?: string; id?: number }
 >(models: T[]): T[] {
   return [...models].sort((a, b) => {
+    const isDemoA = (a.model_name || '').includes('[DEMO');
+    const isDemoB = (b.model_name || '').includes('[DEMO');
+    if (isDemoA && !isDemoB) return -1;
+    if (!isDemoA && isDemoB) return 1;
+
     const catDiff = getCategoryOrder(a.category) - getCategoryOrder(b.category);
     if (catDiff !== 0) return catDiff;
 

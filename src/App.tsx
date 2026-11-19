@@ -351,6 +351,11 @@ const MainApp: React.FC = () => {
     const targetKeys = ['X100VI', 'X-S20', 'X-T5', 'X-T50'];
     const result: CameraModel[] = [];
 
+    const demoCam = cameras.find((c) => c.name.includes('[DEMO'));
+    if (demoCam) {
+      result.push(demoCam);
+    }
+
     for (const key of targetKeys) {
       const found = cameras.find((c) => {
         if (key === 'X-T5') {

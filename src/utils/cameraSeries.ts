@@ -148,6 +148,11 @@ export function compareCamerasBySeries<
 >(a: T, b: T): number {
   const nameA = a.name || a.model_name || '';
   const nameB = b.name || b.model_name || '';
+  const isDemoA = nameA.includes('[DEMO');
+  const isDemoB = nameB.includes('[DEMO');
+  if (isDemoA && !isDemoB) return -1;
+  if (!isDemoA && isDemoB) return 1;
+
   const serA = a.series || detectCameraSeries(nameA);
   const serB = b.series || detectCameraSeries(nameB);
   const rankDiff = (SERIES_RANK_MAP[serA] ?? 99) - (SERIES_RANK_MAP[serB] ?? 99);

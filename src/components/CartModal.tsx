@@ -30,6 +30,8 @@ import {
   cancelMyOrder,
   saveRecentGuestOrder,
   updateRecentGuestOrderStatus,
+  checkOrderPaymentStatus,
+  getOrderVietQr,
 } from '../services/authApi';
 import { GuestCustomerStep, GuestCustomerSubmitPayload } from './booking/GuestCustomerStep';
 import { isSmallThumbnailImage } from '../utils/cn';
@@ -103,10 +105,90 @@ export const CartModal: React.FC<CartModalProps> = ({
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'VIETQR' | 'VNPAY' | 'COUNTER'>('VIETQR');
   const [isPaying, setIsPaying] = useState(false);
+  const [isWaitingForBank, setIsWaitingForBank] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaidSuccess, setIsPaidSuccess] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Thông tin VietQR MBBank
+  const [vietQrData, setVietQrData] = useState<{
+    qrCodeUrl: string;
+    accountNumber: string;
+    accountName: string;
+    bankName: string;
+    amount: number;
+    description: string;
+  }>({
+    qrCodeUrl: '',
+    accountNumber: '0107 6483 1289',
+    accountName: 'NGUYEN THANH DUY',
+    bankName: 'MB Bank (Quân Đội)',
+    amount: 0,
+    description: '',
+  });
+
+  // Tự động tải mã VietQR động khi tạo đơn giỏ hàng xong
+  useEffect(() => {
+    if (createdOrderCode) {
+      getOrderVietQr(createdOrderCode)
+        .then((data) => {
+          if (data && data.qrCodeUrl) {
+            setVietQrData({
+              qrCodeUrl: data.qrCodeUrl,
+              accountNumber: data.accountNumber || '0107 6483 1289',
+              accountName: data.accountName || 'NGUYEN THANH DUY',
+              bankName: data.bankName || 'MB Bank (Quân Đội)',
+              amount: data.amount || 0,
+              description: data.description || `REFUJI ${createdOrderCode}`,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [createdOrderCode]);
+
+  // Tự động lắng nghe giao dịch chuyển khoản MBBank ngầm khi đang mở bước thanh toán giỏ hàng
+  useEffect(() => {
+    if (!createdOrderCode || isPaidSuccess || paymentMethod !== 'VIETQR') return;
+
+    const autoPoll = setInterval(async () => {
+      try {
+        const res = await checkOrderPaymentStatus(createdOrderCode);
+        if (res.isPaid) {
+          clearInterval(autoPoll);
+          setIsCounterInquiryResult(false);
+          setIsPaidSuccess(true);
+          setIsWaitingForBank(false);
+          setIsPaying(false);
+          if (activeGuestPhone) {
+            updateRecentGuestOrderStatus(createdOrderCode, 'CONFIRMED');
+          }
+          try {
+            localStorage.removeItem('refuji_active_reservation');
+            window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+          } catch (_) {}
+          onClearCart(true);
+          window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+          if (onCheckoutSuccess) onCheckoutSuccess();
+          if (setToast) {
+            setToast({
+              id: Date.now().toString(),
+              message: `Thanh toán thành công đơn hàng #${createdOrderCode}! Toàn bộ giỏ hàng đã được xác nhận.`,
+              type: 'success',
+            });
+          }
+        } else if (res.isCancelled || res.isExpired || res.orderStatus === 'CANCELLED') {
+          clearInterval(autoPoll);
+          setIsWaitingForBank(false);
+          setIsPaying(false);
+          setPaymentError(res.message || 'Mã QR và thời hạn giữ chỗ 15 phút đã hết hạn. Vui lòng tạo lại đơn.');
+        }
+      } catch (_) {}
+    }, 2500);
+
+    return () => clearInterval(autoPoll);
+  }, [createdOrderCode, isPaidSuccess, paymentMethod, activeGuestPhone, onCheckoutSuccess, onClearCart, setToast]);
 
   // Đếm ngược 15 phút thực tế
   const [timeLeft, setTimeLeft] = useState(900);
@@ -398,8 +480,59 @@ export const CartModal: React.FC<CartModalProps> = ({
 
   const handlePayOrder = async () => {
     if (!createdOrderCode) return;
-    setIsPaying(true);
     setPaymentError(null);
+
+    // Khi chọn VietQR: Chuyển ngay sang tab xác nhận với vòng xoay và kiểm tra liên tục
+    if (paymentMethod === 'VIETQR') {
+      setIsWaitingForBank(true);
+      setIsPaying(true);
+
+      const checkPaymentLoop = async () => {
+        try {
+          const res = await checkOrderPaymentStatus(createdOrderCode);
+          if (res.isPaid) {
+            setIsCounterInquiryResult(false);
+            setIsPaidSuccess(true);
+            setIsWaitingForBank(false);
+            setIsPaying(false);
+            if (activeGuestPhone) {
+              updateRecentGuestOrderStatus(createdOrderCode, 'CONFIRMED');
+            }
+            try {
+              localStorage.removeItem('refuji_active_reservation');
+              window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+            } catch (_) {}
+            onClearCart(true);
+            window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+            if (onCheckoutSuccess) onCheckoutSuccess();
+            if (setToast) {
+              setToast({
+                id: Date.now().toString(),
+                message: `Thanh toán thành công đơn hàng #${createdOrderCode}! Toàn bộ giỏ hàng đã được xác nhận.`,
+                type: 'success',
+              });
+            }
+            return true;
+          }
+        } catch (_) {}
+        return false;
+      };
+
+      const alreadyPaid = await checkPaymentLoop();
+      if (alreadyPaid) return;
+
+      const pollTimer = setInterval(async () => {
+        const isDone = await checkPaymentLoop();
+        if (isDone) {
+          clearInterval(pollTimer);
+        }
+      }, 2000);
+
+      return;
+    }
+
+    // Với hình thức COUNTER hoặc VNPAY
+    setIsPaying(true);
     try {
       const res = await payRentalOrder(createdOrderCode, paymentMethod, activeGuestPhone || undefined);
       const isInquiry = res.orderStatus === 'GUEST_INQUIRY';
@@ -904,31 +1037,75 @@ export const CartModal: React.FC<CartModalProps> = ({
 
             {/* Nội dung thanh toán cuộn */}
             <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-8 py-5 space-y-4">
-              {isPaidSuccess ? (
+              {(isPaidSuccess || isWaitingForBank) ? (
                 <div className="py-10 text-center flex flex-col items-center justify-center space-y-4">
-                  <div
-                    className={`w-16 h-16 rounded-full flex items-center justify-center border shadow-sm ${
-                      isCounterInquiryResult
-                        ? 'bg-violet-100 text-violet-700 border-violet-200'
-                        : 'bg-emerald-100 text-emerald-600 border-emerald-200'
-                    }`}
-                  >
-                    {isCounterInquiryResult ? <Store size={32} /> : <CheckCircle2 size={36} />}
-                  </div>
+                  <AnimatePresence mode="wait">
+                    {isPaidSuccess ? (
+                      <motion.div
+                        key="cart-success-icon"
+                        initial={{ scale: 0, rotate: -30, opacity: 0 }}
+                        animate={{ scale: [0, 1.25, 1], rotate: [-30, 8, 0], opacity: 1 }}
+                        transition={{ type: 'spring', damping: 14, stiffness: 220, duration: 0.7 }}
+                        className="relative flex items-center justify-center my-1"
+                      >
+                        <motion.div
+                          initial={{ scale: 0.8, opacity: 0.7 }}
+                          animate={{ scale: [0.8, 1.8, 2.2], opacity: [0.7, 0.2, 0] }}
+                          transition={{ repeat: Infinity, duration: 2.2, ease: 'easeOut' }}
+                          className="absolute -inset-2 rounded-full bg-emerald-400 pointer-events-none"
+                        />
+                        <div className={`relative w-20 h-20 rounded-full flex items-center justify-center border shadow-xl ${
+                          isCounterInquiryResult
+                            ? 'bg-violet-100 text-violet-700 border-violet-200'
+                            : 'bg-gradient-to-tr from-emerald-600 to-teal-400 text-white border-emerald-300 shadow-emerald-500/25'
+                        }`}>
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.15, type: 'spring', damping: 10 }}
+                          >
+                            {isCounterInquiryResult ? <Store size={36} /> : <CheckCircle2 size={44} className="text-white drop-shadow" />}
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="cart-waiting-icon"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.7, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200 shadow-sm my-1"
+                      >
+                        <Loader2 size={38} className="animate-spin text-amber-600" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <div>
                     <h3 className="font-serif text-2xl font-bold text-[#14171f]">
-                      {isCounterInquiryResult
-                        ? 'Đã Ghi Nhận Yêu Cầu Đặt Tại Quầy!'
-                        : 'Đã Xác Nhận Đơn Thuê Thành Công!'}
+                      {isPaidSuccess ? (
+                        isCounterInquiryResult
+                          ? 'Đã Gửi Yêu Cầu Đặt Tại Quầy!'
+                          : 'Đã Xác Nhận Đơn Thuê Thành Công!'
+                      ) : (
+                        'Đang Kiểm Tra Chuyển Khoản...'
+                      )}
                     </h3>
                     <p className="text-xs sm:text-sm text-[#525868] mt-1.5 max-w-md mx-auto leading-relaxed">
-                      {isCounterInquiryResult ? (
-                        <>
-                          Yêu cầu <strong>#{createdOrderCode}</strong> ({displayCount} thiết bị) đang ở trạng thái <strong>CHỜ NHÂN VIÊN GỌI XÁC NHẬN</strong>. Máy chưa khóa trên kho cho tới khi nhân viên liên hệ số <strong>{activeGuestPhone}</strong>.
-                        </>
+                      {isPaidSuccess ? (
+                        isCounterInquiryResult ? (
+                          <>
+                            Yêu cầu <strong>#{createdOrderCode}</strong> ({displayCount} thiết bị) đang ở trạng thái <strong>CHỜ NHÂN VIÊN GỌI XÁC NHẬN</strong>. Máy chưa khóa trên kho cho tới khi nhân viên liên hệ số <strong>{activeGuestPhone}</strong>.
+                          </>
+                        ) : (
+                          <>
+                            Đơn hàng <strong>#{createdOrderCode}</strong> đã được chuyển sang trạng thái <strong>ĐÃ XÁC NHẬN (CONFIRMED)</strong>. Toàn bộ thiết bị trong giỏ đã được giữ cố định theo lịch của bạn.
+                          </>
+                        )
                       ) : (
                         <>
-                          Đơn hàng <strong>#{createdOrderCode}</strong> đã được chuyển sang trạng thái <strong>ĐÃ XÁC NHẬN (CONFIRMED)</strong>. Thiết bị đã được giữ cố định theo lịch của bạn.
+                          Hệ thống đang kết nối ngân hàng MBBank để đối soát giao dịch cho đơn <strong>#{createdOrderCode}</strong>. Màn hình sẽ <strong>tự động chuyển sang dấu tích xanh</strong> ngay khi nhận được tiền.
                         </>
                       )}
                     </p>
@@ -942,37 +1119,49 @@ export const CartModal: React.FC<CartModalProps> = ({
                   )}
 
                   <div className="flex flex-wrap items-center justify-center gap-2.5">
-                    {isCounterInquiryResult && createdOrderCode && (
+                    {isPaidSuccess ? (
+                      <>
+                        {isCounterInquiryResult && createdOrderCode && (
+                          <button
+                            type="button"
+                            onClick={handleCancelHold}
+                            disabled={isCancelling}
+                            className="px-4 py-2.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                          >
+                            {isCancelling ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
+                            <span>{isCancelling ? 'Đang hủy...' : 'Hủy yêu cầu'}</span>
+                          </button>
+                        )}
+                        {onOpenGuestLookup && activeGuestPhone && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              onOpenGuestLookup();
+                            }}
+                            className="px-5 py-2.5 rounded-full border border-[#14171f]/20 bg-white hover:bg-neutral-50 text-[#14171f] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Search size={14} />
+                            <span>Tra cứu / Tự hủy đơn</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={onClose}
+                          className="px-6 py-2.5 rounded-full bg-[#14171f] text-white text-xs sm:text-sm font-bold shadow-md hover:bg-[#252a37] transition-all cursor-pointer"
+                        >
+                          Hoàn tất &amp; Đóng
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        onClick={handleCancelHold}
-                        disabled={isCancelling}
-                        className="px-4 py-2.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                        onClick={() => setIsWaitingForBank(false)}
+                        className="px-5 py-2 rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100 text-xs font-semibold transition-all cursor-pointer"
                       >
-                        {isCancelling ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
-                        <span>{isCancelling ? 'Đang hủy...' : 'Hủy yêu cầu'}</span>
+                        Quay lại xem mã QR
                       </button>
                     )}
-                    {onOpenGuestLookup && activeGuestPhone && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          onOpenGuestLookup();
-                        }}
-                        className="px-5 py-2.5 rounded-full border border-[#14171f]/20 bg-white hover:bg-neutral-50 text-[#14171f] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Search size={14} />
-                        <span>Tra cứu / Tự hủy đơn</span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-6 py-2.5 rounded-full bg-[#14171f] text-white text-xs sm:text-sm font-bold shadow-md hover:bg-[#252a37] transition-all cursor-pointer"
-                    >
-                      Hoàn tất &amp; Đóng
-                    </button>
                   </div>
                   {paymentError && (
                     <div className="w-full max-w-md p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs text-left">
@@ -1060,7 +1249,7 @@ export const CartModal: React.FC<CartModalProps> = ({
                       <div className="flex flex-col sm:flex-row items-center gap-4">
                         <div className="bg-white p-2 rounded-2xl border border-neutral-200 shadow-sm shrink-0">
                           <img
-                            src={vietQrUrl}
+                            src={vietQrData.qrCodeUrl || vietQrUrl}
                             alt="VietQR Mã thanh toán"
                             className="w-36 h-36 object-contain"
                           />
@@ -1068,20 +1257,24 @@ export const CartModal: React.FC<CartModalProps> = ({
                         <div className="space-y-2 text-xs flex-1 w-full">
                           <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                             <span className="text-neutral-500">Ngân hàng:</span>
-                            <span className="font-bold text-[#14171f]">MB Bank (Quân Đội)</span>
+                            <span className="font-bold text-[#14171f]">{vietQrData.bankName}</span>
                           </div>
                           <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                             <span className="text-neutral-500">Số tài khoản:</span>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-sans font-bold text-[#14171f]">0901234567</span>
+                              <span className="font-sans font-bold text-[#14171f]">{vietQrData.accountNumber}</span>
                               <button
                                 type="button"
-                                onClick={() => copyToClipboard('0901234567', 'acc')}
+                                onClick={() => copyToClipboard(vietQrData.accountNumber.replace(/\s+/g, ''), 'acc')}
                                 className="w-7 h-7 rounded-full inline-flex items-center justify-center text-neutral-500 hover:text-[#14171f] hover:bg-neutral-200/70 transition-colors cursor-pointer"
                               >
                                 {copiedField === 'acc' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
                               </button>
                             </div>
+                          </div>
+                          <div className="flex items-center justify-between py-1 border-b border-neutral-200">
+                            <span className="text-neutral-500">Chủ tài khoản:</span>
+                            <span className="font-semibold text-[#14171f]">{vietQrData.accountName}</span>
                           </div>
                           <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                             <span className="text-neutral-500">Số tiền:</span>
@@ -1099,10 +1292,10 @@ export const CartModal: React.FC<CartModalProps> = ({
                           <div className="flex items-center justify-between py-1">
                             <span className="text-neutral-500">Nội dung CK:</span>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-sans tracking-wide font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200/60">REFUJI {createdOrderCode}</span>
+                              <span className="font-sans tracking-wide font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200/60">{vietQrData.description || `REFUJI ${createdOrderCode}`}</span>
                               <button
                                 type="button"
-                                onClick={() => copyToClipboard(`REFUJI ${createdOrderCode}`, 'memo')}
+                                onClick={() => copyToClipboard(vietQrData.description || `REFUJI ${createdOrderCode}`, 'memo')}
                                 className="w-7 h-7 rounded-full inline-flex items-center justify-center text-neutral-500 hover:text-[#14171f] hover:bg-neutral-200/70 transition-colors cursor-pointer"
                               >
                                 {copiedField === 'memo' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
@@ -1157,7 +1350,7 @@ export const CartModal: React.FC<CartModalProps> = ({
             </div>
 
             {/* Chức năng: Bổ sung nút Hủy giữ chỗ trên thanh thao tác bước thanh toán giỏ hàng */}
-            {!isPaidSuccess && (
+            {!isPaidSuccess && !isWaitingForBank && (
               <div className="px-6 sm:px-8 py-4 border-t border-[#14171f]/10 bg-white shrink-0 flex flex-wrap items-center justify-between gap-2.5">
                 <button
                   type="button"

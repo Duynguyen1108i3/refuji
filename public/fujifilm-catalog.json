@@ -43,6 +43,52 @@
   ],
   "productModels": [
     {
+      "model_name": "[DEMO 20K] Gói Test Thanh Toán VietQR",
+      "category": "BODY",
+      "mount_type": "NONE",
+      "brand": "Fujifilm Demo",
+      "base_rental_price_per_day": 0,
+      "deposit_amount": 20000,
+      "description": "Gói thiết bị demo dùng thử nghiệm quét mã VietQR MBBank tự động 20.000 VNĐ. Tiền cọc test cố định 20.000₫ cho mọi ngày chọn.",
+      "specs_json": {
+        "sensor": "Cảm biến Demo Test 20K",
+        "megapixels": 24,
+        "processor": "X-Processor Demo",
+        "ibis": "Chống rung 5 trục",
+        "video": "4K/30p",
+        "burst_rate": "11fps cơ học",
+        "battery": "NP-W126S",
+        "official_url": "https://refuji.vn"
+      },
+      "image_url": "https://asset.fujifilm.com/www/vn/files/styles/600x400/public/2025-03/d886c603bee589f68069257c3bc07164/pic_xsystem_70.jpg?itok=TbE1aCtZ",
+      "items": [
+        {
+          "serial_number": "DEMO-MB-20K-01",
+          "shutter_count": 10,
+          "condition_percent": 100,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-11-19",
+          "purchase_price": 20000,
+          "total_rental_count": 0,
+          "last_maintenance_date": "2026-11-19",
+          "next_maintenance_date": "2027-11-19",
+          "note": "Máy demo thử nghiệm thanh toán MBBank 20K"
+        },
+        {
+          "serial_number": "DEMO-MB-20K-02",
+          "shutter_count": 10,
+          "condition_percent": 100,
+          "status": "AVAILABLE",
+          "purchase_date": "2026-11-19",
+          "purchase_price": 20000,
+          "total_rental_count": 0,
+          "last_maintenance_date": "2026-11-19",
+          "next_maintenance_date": "2027-11-19",
+          "note": "Máy demo thử nghiệm thanh toán MBBank 20K"
+        }
+      ]
+    },
+    {
       "model_name": "FUJIFILM X100VI Limited",
       "category": "BODY",
       "mount_type": "NONE",

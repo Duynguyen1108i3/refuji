@@ -19,6 +19,8 @@ import {
   Loader2,
   CalendarDays,
   AlertCircle,
+  AlertTriangle,
+  RotateCcw,
   Search,
   Ban
 } from 'lucide-react';
@@ -31,6 +33,8 @@ import {
   cancelMyOrder,
   saveRecentGuestOrder,
   updateRecentGuestOrderStatus,
+  checkOrderPaymentStatus,
+  getOrderVietQr,
 } from '../services/authApi';
 import { GuestCustomerStep, GuestCustomerSubmitPayload } from './booking/GuestCustomerStep';
 import { isSmallThumbnailImage } from '../utils/cn';
@@ -105,10 +109,31 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'VIETQR' | 'VNPAY' | 'COUNTER'>('VIETQR');
   const [isPaying, setIsPaying] = useState(false);
+  const [isWaitingForBank, setIsWaitingForBank] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaidSuccess, setIsPaidSuccess] = useState(false);
+  const [isOrderExpired, setIsOrderExpired] = useState(false);
+  const [isRenewing, setIsRenewing] = useState(false);
+  const [lastGuestPayload, setLastGuestPayload] = useState<any>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Thông tin VietQR MBBank
+  const [vietQrData, setVietQrData] = useState<{
+    qrCodeUrl: string;
+    accountNumber: string;
+    accountName: string;
+    bankName: string;
+    amount: number;
+    description: string;
+  }>({
+    qrCodeUrl: '',
+    accountNumber: '0107 6483 1289',
+    accountName: 'NGUYEN THANH DUY',
+    bankName: 'MB Bank (Quân Đội)',
+    amount: 0,
+    description: '',
+  });
 
   // Đồng hồ đếm ngược 15 phút (900 giây) thực tế
   const [timeLeft, setTimeLeft] = useState(900);
@@ -124,6 +149,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     setCreatedOrderCode(null);
     setAssignedSerials([]);
     setIsPaidSuccess(false);
+    setIsOrderExpired(false);
+    setIsWaitingForBank(false);
     setPaymentError(null);
     setIsCancelling(false);
     setTimeLeft(900);
@@ -155,6 +182,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
+          setIsOrderExpired(true);
+          setIsWaitingForBank(false);
+          setIsPaying(false);
           return 0;
         }
         return prev - 1;
@@ -171,9 +201,72 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   const effectiveTier = isAuthenticated ? (user?.membership_tier || membershipTier) : 'BRONZE';
   const discountRate = effectiveTier === 'PLATINUM' ? 0.15 : effectiveTier === 'GOLD' ? 0.10 : effectiveTier === 'SILVER' ? 0.05 : 0;
-  const discountedDeposit = Math.round(item.depositRate * (1 - discountRate));
+  const isDemoItem = item.name.includes('[DEMO') || String(item.id).includes('166');
+  const discountedDeposit = isDemoItem ? 20000 : Math.round(item.depositRate * (1 - discountRate));
   const totalRent = item.dailyRate * days;
   const totalDue = totalRent + discountedDeposit;
+
+  // Tự động tải mã VietQR động khi tạo đơn xong
+  useEffect(() => {
+    if (createdOrderCode) {
+      getOrderVietQr(createdOrderCode)
+        .then((data) => {
+          if (data && data.qrCodeUrl) {
+            setVietQrData({
+              qrCodeUrl: data.qrCodeUrl,
+              accountNumber: data.accountNumber || '0107 6483 1289',
+              accountName: data.accountName || 'NGUYEN THANH DUY',
+              bankName: data.bankName || 'MB Bank (Quân Đội)',
+              amount: data.amount || totalDue,
+              description: data.description || `REFUJI ${createdOrderCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase()}`,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [createdOrderCode, totalDue]);
+
+  // Tự động lắng nghe giao dịch chuyển khoản MBBank ngầm khi đang mở bước thanh toán
+  useEffect(() => {
+    if (!createdOrderCode || isPaidSuccess || paymentMethod !== 'VIETQR') return;
+
+    const autoPoll = setInterval(async () => {
+      try {
+        const res = await checkOrderPaymentStatus(createdOrderCode);
+        if (res.isPaid) {
+          clearInterval(autoPoll);
+          setIsCounterInquiryResult(false);
+          setIsPaidSuccess(true);
+          setIsWaitingForBank(false);
+          setIsPaying(false);
+          setIsOrderExpired(false);
+          if (activeGuestPhone) {
+            updateRecentGuestOrderStatus(createdOrderCode, 'CONFIRMED');
+          }
+          try {
+            localStorage.removeItem('refuji_active_reservation');
+            window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+          } catch (_) {}
+          window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+          if (setToast) {
+            setToast({
+              id: Date.now().toString(),
+              message: `Thanh toán thành công đơn hàng #${createdOrderCode}! Thiết bị đã sẵn sàng.`,
+              type: 'success',
+            });
+          }
+        } else if (res.isCancelled || res.isExpired || res.orderStatus === 'CANCELLED') {
+          clearInterval(autoPoll);
+          setIsOrderExpired(true);
+          setIsWaitingForBank(false);
+          setIsPaying(false);
+          setPaymentError(res.message || 'Mã QR và thời hạn giữ chỗ 15 phút đã hết hạn.');
+        }
+      } catch (_) {}
+    }, 2500);
+
+    return () => clearInterval(autoPoll);
+  }, [createdOrderCode, isPaidSuccess, paymentMethod, activeGuestPhone, setToast]);
 
   // Xử lý khi chọn nhanh thời lượng ngày (1, 3, 5, 7, 14)
   const handleQuickDays = (d: number) => {
@@ -292,7 +385,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   // Tính năng: Gửi thông tin khách vãng lai tạo đơn Online (15p) hoặc Yêu cầu tại quầy (GUEST_INQUIRY)
   const handleGuestCustomerSubmit = async (payload: GuestCustomerSubmitPayload) => {
+    setLastGuestPayload(payload);
     setIsCreatingOrder(true);
+    setIsOrderExpired(false);
     setPaymentError(null);
     try {
       const res = await createRentalOrder(
@@ -401,11 +496,80 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     }
   };
 
+  // Tính năng: Làm mới mã QR & tạo lại giữ chỗ ngay khi hết hạn
+  const handleRenewOrder = async () => {
+    setIsRenewing(true);
+    setPaymentError(null);
+    setIsOrderExpired(false);
+    setIsWaitingForBank(false);
+    try {
+      if (!isAuthenticated && lastGuestPayload) {
+        await handleGuestCustomerSubmit(lastGuestPayload);
+      } else {
+        await handleConfirm();
+      }
+    } catch (err: any) {
+      setPaymentError(err.message || 'Không thể tạo lại mã QR mới');
+      setIsOrderExpired(true);
+    } finally {
+      setIsRenewing(false);
+    }
+  };
+
   // Xử lý thanh toán cọc
   const handlePayOrder = async () => {
     if (!createdOrderCode) return;
-    setIsPaying(true);
     setPaymentError(null);
+
+    // Khi chọn VietQR: Chuyển ngay sang tab xác nhận với vòng xoay và kiểm tra liên tục
+    if (paymentMethod === 'VIETQR') {
+      setIsWaitingForBank(true);
+      setIsPaying(true);
+
+      const checkPaymentLoop = async () => {
+        try {
+          const res = await checkOrderPaymentStatus(createdOrderCode);
+          if (res.isPaid) {
+            setIsCounterInquiryResult(false);
+            setIsPaidSuccess(true);
+            setIsWaitingForBank(false);
+            setIsPaying(false);
+            if (activeGuestPhone) {
+              updateRecentGuestOrderStatus(createdOrderCode, 'CONFIRMED');
+            }
+            try {
+              localStorage.removeItem('refuji_active_reservation');
+              window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+            } catch (_) {}
+            window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+            if (setToast) {
+              setToast({
+                id: Date.now().toString(),
+                message: `Thanh toán thành công đơn hàng #${createdOrderCode}! Thiết bị đã sẵn sàng.`,
+                type: 'success',
+              });
+            }
+            return true;
+          }
+        } catch (_) {}
+        return false;
+      };
+
+      const alreadyPaid = await checkPaymentLoop();
+      if (alreadyPaid) return;
+
+      const pollTimer = setInterval(async () => {
+        const isDone = await checkPaymentLoop();
+        if (isDone) {
+          clearInterval(pollTimer);
+        }
+      }, 2000);
+
+      return;
+    }
+
+    // Với hình thức COUNTER hoặc VNPAY
+    setIsPaying(true);
     try {
       const res = await payRentalOrder(createdOrderCode, paymentMethod, activeGuestPhone || undefined);
       const isInquiry = res.orderStatus === 'GUEST_INQUIRY';
@@ -1018,15 +1182,35 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
             {/* THANH ĐẾM NGƯỢC THỜI HẠN GIỮ CHỖ 15 PHÚT */}
             {!isPaidSuccess && (
-              <div className="px-6 sm:px-8 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between text-xs text-amber-900 shrink-0">
+              <div className={`px-6 sm:px-8 py-2.5 border-b flex items-center justify-between text-xs shrink-0 transition-colors ${
+                isOrderExpired || timeLeft <= 0
+                  ? 'bg-rose-50 border-rose-200 text-rose-900'
+                  : 'bg-amber-50 border-amber-200 text-amber-900'
+              }`}>
                 <div className="flex items-center gap-2 font-medium">
-                  <Clock size={16} className="text-amber-700 animate-pulse" />
-                  <span>Thời hạn giữ chỗ 15 phút chống đặt trùng:</span>
+                  {isOrderExpired || timeLeft <= 0 ? (
+                    <AlertTriangle size={16} className="text-rose-600" />
+                  ) : (
+                    <Clock size={16} className="text-amber-700 animate-pulse" />
+                  )}
+                  <span>
+                    {isOrderExpired || timeLeft <= 0
+                      ? 'Thời hạn giữ chỗ 15 phút đã hết hạn:'
+                      : 'Thời hạn giữ chỗ 15 phút chống đặt trùng:'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] uppercase tracking-wider text-amber-800">Còn lại:</span>
-                  <span className="font-sans num font-bold text-sm bg-amber-200/80 px-3 py-0.5 rounded-full text-amber-950 shadow-inner">
-                    {timerDisplay}
+                  <span className={`text-[11px] uppercase tracking-wider ${
+                    isOrderExpired || timeLeft <= 0 ? 'text-rose-700 font-semibold' : 'text-amber-800'
+                  }`}>
+                    {isOrderExpired || timeLeft <= 0 ? 'Trạng thái:' : 'Còn lại:'}
+                  </span>
+                  <span className={`font-sans num font-bold text-sm px-3 py-0.5 rounded-full shadow-inner ${
+                    isOrderExpired || timeLeft <= 0
+                      ? 'bg-rose-200 text-rose-950 font-black'
+                      : 'bg-amber-200/80 text-amber-950'
+                  }`}>
+                    {isOrderExpired || timeLeft <= 0 ? 'HẾT HẠN' : timerDisplay}
                   </span>
                 </div>
               </div>
@@ -1034,36 +1218,137 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
             {/* Nội dung thanh toán cuộn */}
             <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-8 py-5 space-y-4">
-              {isPaidSuccess ? (
-                /* THÀNH CÔNG HOÀN TẤT */
+              {isOrderExpired || timeLeft <= 0 ? (
+                /* MÀN HÌNH MÃ QR HẾT HẠN & NÚT LÀM MỚI NGAY */
                 <div className="py-8 text-center flex flex-col items-center justify-center space-y-4">
-                  <div
-                    className={`w-16 h-16 rounded-full flex items-center justify-center border shadow-sm ${
-                      isCounterInquiryResult
-                        ? 'bg-violet-100 text-violet-700 border-violet-200'
-                        : 'bg-emerald-100 text-emerald-600 border-emerald-200'
-                    }`}
-                  >
-                    {isCounterInquiryResult ? <Store size={32} /> : <CheckCircle2 size={36} />}
+                  <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200 shadow-sm">
+                    <AlertTriangle size={36} className="text-rose-600" />
                   </div>
+
                   <div>
-                    <h3 className="font-serif text-2xl font-bold text-[#14171f]">
-                      {isCounterInquiryResult
-                        ? 'Đã Ghi Nhận Yêu Cầu Đặt Tại Quầy!'
-                        : 'Đã Xác Nhận Đơn Thuê Thành Công!'}
+                    <h3 className="font-serif text-2xl font-bold text-rose-950">
+                      Mã QR Đã Hết Hạn Giữ Chỗ
                     </h3>
                     <p className="text-xs sm:text-sm text-[#525868] mt-1.5 max-w-md mx-auto leading-relaxed">
-                      {isCounterInquiryResult ? (
-                        <>
-                          Yêu cầu <strong>#{createdOrderCode}</strong> cho thiết bị <strong>{item.name}</strong> đang ở trạng thái <strong>CHỜ NHÂN VIÊN GỌI XÁC NHẬN</strong>. Máy <strong>chưa khóa Serial trên kho</strong> cho tới khi nhân viên liên hệ số <strong>{activeGuestPhone}</strong> và xác nhận giữ máy.
-                        </>
-                      ) : (
-                        <>
-                          Đơn hàng <strong>#{createdOrderCode}</strong> cho thiết bị <strong>{item.name}</strong> đã được chuyển sang trạng thái <strong>ĐÃ XÁC NHẬN (CONFIRMED)</strong>. Thiết bị được giữ cố định theo lịch của bạn.
-                        </>
-                      )}
+                      Thời hạn 15 phút cho đơn hàng <strong>#{createdOrderCode}</strong> đã kết thúc để nhường quyền ưu tiên cho khách khác. Vui lòng bấm bên dưới để cấp mã QR mới và giữ chỗ lại ngay lập tức.
                     </p>
                   </div>
+
+                  <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleRenewOrder}
+                      disabled={isRenewing}
+                      className="px-6 py-3 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-2"
+                    >
+                      {isRenewing ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <RotateCcw size={16} />
+                      )}
+                      <span>{isRenewing ? 'Đang tạo mã mới...' : 'Làm mới mã QR & Giữ chỗ lại'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="px-5 py-3 rounded-full border border-gray-300 hover:bg-gray-100 text-xs sm:text-sm font-medium transition-all"
+                    >
+                      Đóng
+                    </button>
+                  </div>
+                </div>
+              ) : (isPaidSuccess || isWaitingForBank) ? (
+                /* THÀNH CÔNG HOÀN TẤT HOẶC ĐANG CHỜ NGÂN HÀNG */
+                <div className="py-8 text-center flex flex-col items-center justify-center space-y-4">
+                  <AnimatePresence mode="wait">
+                    {isPaidSuccess ? (
+                      <motion.div
+                        key="success-icon"
+                        initial={{ scale: 0, rotate: -30, opacity: 0 }}
+                        animate={{ scale: [0, 1.25, 1], rotate: [-30, 8, 0], opacity: 1 }}
+                        transition={{ type: 'spring', damping: 14, stiffness: 220, duration: 0.7 }}
+                        className="relative flex items-center justify-center my-1"
+                      >
+                        {/* Vòng hào quang lan tỏa (Celebratory Pulse Ring) */}
+                        <motion.div
+                          initial={{ scale: 0.8, opacity: 0.7 }}
+                          animate={{ scale: [0.8, 1.8, 2.2], opacity: [0.7, 0.2, 0] }}
+                          transition={{ repeat: Infinity, duration: 2.2, ease: 'easeOut' }}
+                          className="absolute -inset-2 rounded-full bg-emerald-400 pointer-events-none"
+                        />
+                        <div className={`relative w-20 h-20 rounded-full flex items-center justify-center border shadow-xl ${
+                          isCounterInquiryResult
+                            ? 'bg-violet-100 text-violet-700 border-violet-200'
+                            : 'bg-gradient-to-tr from-emerald-600 to-teal-400 text-white border-emerald-300 shadow-emerald-500/25'
+                        }`}>
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.15, type: 'spring', damping: 10 }}
+                          >
+                            {isCounterInquiryResult ? <Store size={36} /> : <CheckCircle2 size={44} className="text-white drop-shadow" />}
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="waiting-icon"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.7, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200 shadow-sm my-1"
+                      >
+                        <Loader2 size={38} className="animate-spin text-amber-600" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <AnimatePresence mode="wait">
+                    {isPaidSuccess ? (
+                      <motion.div
+                        key="success-text"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1, duration: 0.4 }}
+                      >
+                        <h3 className="font-serif text-2xl font-bold text-emerald-950 flex items-center justify-center gap-2">
+                          <span>🎉</span>
+                          <span>
+                            {isCounterInquiryResult
+                              ? 'Đã Ghi Nhận Yêu Cầu Đặt Tại Quầy!'
+                              : 'Đã Xác Nhận Đơn Thuê Thành Công!'}
+                          </span>
+                        </h3>
+                        <p className="text-xs sm:text-sm text-[#525868] mt-1.5 max-w-md mx-auto leading-relaxed">
+                          {isCounterInquiryResult ? (
+                            <>
+                              Yêu cầu <strong>#{createdOrderCode}</strong> cho thiết bị <strong>{item.name}</strong> đang ở trạng thái <strong>CHỜ NHÂN VIÊN GỌI XÁC NHẬN</strong>.
+                            </>
+                          ) : (
+                            <>
+                              Đơn hàng <strong>#{createdOrderCode}</strong> cho thiết bị <strong>{item.name}</strong> đã nhận đủ tiền và được chuyển sang trạng thái <strong>ĐÃ XÁC NHẬN (CONFIRMED)</strong>. Thiết bị được giữ cố định theo lịch của bạn.
+                            </>
+                          )}
+                        </p>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="waiting-text"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        <h3 className="font-serif text-2xl font-bold text-[#14171f]">
+                          Đang Kiểm Tra Chuyển Khoản...
+                        </h3>
+                        <p className="text-xs sm:text-sm text-[#525868] mt-1.5 max-w-md mx-auto leading-relaxed">
+                          Hệ thống đang kết nối ngân hàng MBBank để đối soát giao dịch cho đơn <strong>#{createdOrderCode}</strong>. Màn hình sẽ <strong>tự động chuyển sang dấu tích xanh</strong> ngay khi nhận được tiền.
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   <div className="w-full max-w-md bg-[#f7f8fa] border border-[#14171f]/10 rounded-3xl p-4 text-xs space-y-2 text-left num">
                     <div className="flex justify-between">
@@ -1096,40 +1381,69 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         {totalDue.toLocaleString('vi-VN')} ₫
                       </span>
                     </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-neutral-200/60">
+                      <span className="text-neutral-500 font-medium">Trạng thái:</span>
+                      {isPaidSuccess ? (
+                        <motion.span 
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="font-sans font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-3 py-1 rounded-full flex items-center gap-1.5 text-xs shadow-sm"
+                        >
+                          <Check size={14} className="text-emerald-700" /> Đã xác nhận thành công (CONFIRMED)
+                        </motion.span>
+                      ) : (
+                        <span className="font-sans font-bold text-amber-800 bg-amber-100/80 border border-amber-300 px-3 py-1 rounded-full flex items-center gap-1.5 text-xs">
+                          <Loader2 size={13} className="animate-spin text-amber-600" /> Đang chờ ngân hàng báo có...
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-center gap-2.5">
-                    {isCounterInquiryResult && createdOrderCode && (
+                  <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+                    {isPaidSuccess ? (
+                      <>
+                        {isCounterInquiryResult && createdOrderCode && (
+                          <button
+                            type="button"
+                            onClick={handleCancelHold}
+                            disabled={isCancelling}
+                            className="px-4 py-2.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                          >
+                            {isCancelling ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
+                            <span>{isCancelling ? 'Đang hủy...' : 'Hủy yêu cầu'}</span>
+                          </button>
+                        )}
+                        {onOpenGuestLookup && activeGuestPhone && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              onOpenGuestLookup();
+                            }}
+                            className="px-5 py-2.5 rounded-full border border-[#14171f]/20 bg-white hover:bg-neutral-50 text-[#14171f] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Search size={14} />
+                            <span>Tra cứu / Tự hủy đơn</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={onClose}
+                          className="px-8 py-3 rounded-full bg-[#14171f] text-white text-xs sm:text-sm font-bold shadow-lg hover:bg-[#252a37] transition-all cursor-pointer flex items-center gap-2"
+                        >
+                          <Check size={16} />
+                          <span>Hoàn tất &amp; Đóng</span>
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        onClick={handleCancelHold}
-                        disabled={isCancelling}
-                        className="px-4 py-2.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                        onClick={() => setIsWaitingForBank(false)}
+                        className="px-5 py-2 rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100 text-xs font-semibold transition-all cursor-pointer"
                       >
-                        {isCancelling ? <Loader2 size={14} className="animate-spin" /> : <Ban size={14} />}
-                        <span>{isCancelling ? 'Đang hủy...' : 'Hủy yêu cầu'}</span>
+                        Quay lại xem mã QR
                       </button>
                     )}
-                    {onOpenGuestLookup && activeGuestPhone && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onClose();
-                          onOpenGuestLookup();
-                        }}
-                        className="px-5 py-2.5 rounded-full border border-[#14171f]/20 bg-white hover:bg-neutral-50 text-[#14171f] text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Search size={14} />
-                        <span>Tra cứu / Tự hủy đơn</span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-6 py-2.5 rounded-full bg-[#14171f] text-white text-xs sm:text-sm font-bold shadow-md hover:bg-[#252a37] transition-all cursor-pointer"
-                    >
-                      Hoàn tất &amp; Đóng
-                    </button>
                   </div>
                   {paymentError && (
                     <div className="w-full max-w-md p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs text-left">
@@ -1225,7 +1539,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       <div className="flex flex-col sm:flex-row items-center gap-4">
                         <div className="bg-white p-2 rounded-2xl border border-neutral-200 shadow-sm shrink-0">
                           <img
-                            src={vietQrUrl}
+                            src={vietQrData.qrCodeUrl || vietQrUrl}
                             alt="VietQR Mã thanh toán"
                             className="w-36 h-36 object-contain"
                           />
@@ -1233,21 +1547,25 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         <div className="space-y-2 text-xs flex-1 w-full">
                           <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                             <span className="text-neutral-500">Ngân hàng:</span>
-                            <span className="font-bold text-[#14171f]">MB Bank (Quân Đội)</span>
+                            <span className="font-bold text-[#14171f]">{vietQrData.bankName}</span>
                           </div>
                           <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                             <span className="text-neutral-500">Số tài khoản:</span>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-sans font-bold text-[#14171f]">0901234567</span>
+                              <span className="font-sans font-bold text-[#14171f]">{vietQrData.accountNumber}</span>
                               <button
                                 type="button"
-                                onClick={() => copyToClipboard('0901234567', 'acc')}
+                                onClick={() => copyToClipboard(vietQrData.accountNumber.replace(/\s+/g, ''), 'acc')}
                                 className="w-7 h-7 rounded-full inline-flex items-center justify-center text-neutral-500 hover:text-[#14171f] hover:bg-neutral-200/70 transition-colors cursor-pointer"
                                 title="Sao chép số tài khoản"
                               >
                                 {copiedField === 'acc' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
                               </button>
                             </div>
+                          </div>
+                          <div className="flex items-center justify-between py-1 border-b border-neutral-200">
+                            <span className="text-neutral-500">Chủ tài khoản:</span>
+                            <span className="font-semibold text-[#14171f]">{vietQrData.accountName}</span>
                           </div>
                           <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                             <span className="text-neutral-500">Số tiền:</span>
@@ -1266,10 +1584,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           <div className="flex items-center justify-between py-1">
                             <span className="text-neutral-500">Nội dung CK:</span>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-sans tracking-wide font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full">REFUJI {createdOrderCode}</span>
+                              <span className="font-sans tracking-wide num font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full">{vietQrData.description || `REFUJI ${createdOrderCode}`}</span>
                               <button
                                 type="button"
-                                onClick={() => copyToClipboard(`REFUJI ${createdOrderCode}`, 'memo')}
+                                onClick={() => copyToClipboard(vietQrData.description || `REFUJI ${createdOrderCode}`, 'memo')}
                                 className="w-7 h-7 rounded-full inline-flex items-center justify-center text-neutral-500 hover:text-[#14171f] hover:bg-neutral-200/70 transition-colors cursor-pointer"
                                 title="Sao chép nội dung chuyển khoản"
                               >
@@ -1328,53 +1646,80 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
 
             {/* Chức năng: Bổ sung nút Hủy giữ chỗ trên thanh thao tác bước thanh toán đặt máy */}
-            {!isPaidSuccess && (
+            {!isPaidSuccess && !isWaitingForBank && (
               <div className="px-6 sm:px-8 py-4 border-t border-[#14171f]/10 bg-white shrink-0 flex flex-wrap items-center justify-between gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleCancelHold}
-                  disabled={isCancelling || isPaying}
-                  className="px-3.5 py-2.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-xs font-semibold text-rose-700 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {isCancelling ? <Loader2 size={13} className="animate-spin" /> : <Ban size={13} />}
-                  <span>{isCancelling ? 'Đang hủy...' : 'Hủy giữ chỗ'}</span>
-                </button>
+                {isOrderExpired || timeLeft <= 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-100 text-xs font-semibold text-[#14171f] transition-all cursor-pointer"
+                    >
+                      Đóng
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRenewOrder}
+                      disabled={isRenewing}
+                      className="flex-1 min-w-[200px] py-3 px-4 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      {isRenewing ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <RotateCcw size={16} />
+                      )}
+                      <span>{isRenewing ? 'Đang tạo lại mã mới...' : 'Làm mới mã QR ngay'}</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleCancelHold}
+                      disabled={isCancelling || isPaying}
+                      className="px-3.5 py-2.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-xs font-semibold text-rose-700 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {isCancelling ? <Loader2 size={13} className="animate-spin" /> : <Ban size={13} />}
+                      <span>{isCancelling ? 'Đang hủy...' : 'Hủy giữ chỗ'}</span>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={isCancelling}
-                  className="px-4 py-2.5 rounded-full border border-[#14171f]/20 hover:bg-neutral-50 text-xs font-semibold text-[#14171f] transition-all cursor-pointer disabled:opacity-50"
-                >
-                  Để thanh toán sau
-                </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      disabled={isCancelling}
+                      className="px-4 py-2.5 rounded-full border border-[#14171f]/20 hover:bg-neutral-50 text-xs font-semibold text-[#14171f] transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      Để thanh toán sau
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={handlePayOrder}
-                  disabled={isPaying || isCancelling || timeLeft <= 0}
-                  className="flex-1 min-w-[200px] py-3 px-4 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isPaying ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Đang xác nhận giao dịch...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Check size={16} />
-                      <span>
-                        {paymentMethod === 'VIETQR'
-                          ? 'Tôi đã chuyển khoản xong'
-                          : paymentMethod === 'VNPAY'
-                          ? 'Thanh toán qua VNPAY'
-                          : activeGuestPhone
-                          ? 'Chuyển sang yêu cầu tại quầy'
-                          : 'Xác nhận cọc & thanh toán tại quầy'}
-                      </span>
-                    </>
-                  )}
-                </button>
+                    <button
+                      type="button"
+                      onClick={handlePayOrder}
+                      disabled={isPaying || isCancelling || timeLeft <= 0}
+                      className="flex-1 min-w-[200px] py-3 px-4 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isPaying ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>Đang xác nhận giao dịch...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check size={16} />
+                          <span>
+                            {paymentMethod === 'VIETQR'
+                              ? 'Tôi đã chuyển khoản xong'
+                              : paymentMethod === 'VNPAY'
+                              ? 'Thanh toán qua VNPAY'
+                              : activeGuestPhone
+                              ? 'Chuyển sang yêu cầu tại quầy'
+                              : 'Xác nhận cọc & thanh toán tại quầy'}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </motion.div>

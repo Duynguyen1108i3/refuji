@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { initDatabase, db } from './db.js';
 import { authRouter, meRouter } from './modules/auth/auth.routes.js';
 import { ordersRouter, adminOrdersRouter } from './modules/orders/orders.routes.js';
+import { handlePayOSWebhook } from './modules/orders/payment.webhook.js';
 import { catalogRouter } from './modules/catalog/catalog.routes.js';
 import { cartRouter } from './modules/cart/cart.routes.js';
 import { adminRouter } from './modules/admin/index.js';
@@ -43,10 +44,13 @@ app.use(express.json({ limit: '15mb' }));
 initDatabase();
 startBackgroundCronScheduler();
 
-// 1. Health check
+// 1. Health check & Payment Webhook
 app.get(['/api/health', '/api/v1/health'], (_req, res) => {
   res.json({ status: 'ok', service: 'refuji-api', timestamp: new Date().toISOString() });
 });
+
+// Endpoint nhận Webhook từ PayOS (kết nối MBBank)
+app.post(['/api/payment/webhook', '/api/v1/payment/webhook', '/api/payos/webhook'], handlePayOSWebhook);
 
 // 2. Định tuyến các phân hệ (Hỗ trợ cả /api và /api/v1)
 app.use(['/api/auth', '/api/v1/auth'], authRouter);

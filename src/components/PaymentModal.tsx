@@ -15,7 +15,12 @@ import {
   Ban,
   AlertCircle
 } from 'lucide-react';
-import { payRentalOrder, updateRecentGuestOrderStatus } from '../services/authApi';
+import { 
+  payRentalOrder, 
+  updateRecentGuestOrderStatus,
+  getOrderVietQr,
+  checkOrderPaymentStatus 
+} from '../services/authApi';
 import {
   POPUP_BACKDROP_CLASS,
   POPUP_FRAME_CLASS,
@@ -67,16 +72,95 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'VIETQR' | 'VNPAY' | 'COUNTER'>('VIETQR');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isWaitingForBank, setIsWaitingForBank] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [resultStatus, setResultStatus] = useState<'CONFIRMED' | 'GUEST_INQUIRY'>('CONFIRMED');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft !== undefined ? initialTimeLeft : 900); // 15 phút = 900 giây
 
+  // Thông tin mã VietQR động từ MBBank / PayOS
+  const [vietQrData, setVietQrData] = useState<{
+    qrCodeUrl: string;
+    accountNumber: string;
+    accountName: string;
+    bankName: string;
+    amount: number;
+    description: string;
+  }>({
+    qrCodeUrl: `https://img.vietqr.io/image/970422-010764831289-compact2.png?amount=${totalDue}&addInfo=REFUJI%20${orderCode}&accountName=NGUYEN%20THANH%20DUY`,
+    accountNumber: '0107 6483 1289',
+    accountName: 'NGUYEN THANH DUY',
+    bankName: 'MB Bank (Quân Đội)',
+    amount: totalDue,
+    description: `REFUJI ${orderCode}`,
+  });
+
+  // Tải mã VietQR động chuẩn từ backend
+  useEffect(() => {
+    if (isOpen && orderCode) {
+      getOrderVietQr(orderCode)
+        .then((data) => {
+          if (data && data.qrCodeUrl) {
+            setVietQrData({
+              qrCodeUrl: data.qrCodeUrl,
+              accountNumber: data.accountNumber || '0107 6483 1289',
+              accountName: data.accountName || 'NGUYEN THANH DUY',
+              bankName: data.bankName || 'MB Bank (Quân Đội)',
+              amount: data.amount || totalDue,
+              description: data.description || `REFUJI ${orderCode}`,
+            });
+          }
+        })
+        .catch((_) => {});
+    }
+  }, [isOpen, orderCode, totalDue]);
+
+  // Tự động lắng nghe giao dịch chuyển khoản MBBank ngầm (cứ 2.5s check 1 lần)
+  useEffect(() => {
+    if (!isOpen || isPaid || paymentMethod !== 'VIETQR') return;
+
+    const autoCheckTimer = setInterval(async () => {
+      try {
+        const res = await checkOrderPaymentStatus(orderCode);
+        if (res.isPaid) {
+          clearInterval(autoCheckTimer);
+          setResultStatus('CONFIRMED');
+          setIsPaid(true);
+          setIsWaitingForBank(false);
+          setIsProcessing(false);
+          updateRecentGuestOrderStatus(orderCode, 'CONFIRMED');
+          window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+          try {
+            const rawRes = localStorage.getItem('refuji_active_reservation');
+            if (rawRes) {
+              const parsed = JSON.parse(rawRes);
+              if (parsed.orderCode === orderCode) {
+                localStorage.removeItem('refuji_active_reservation');
+                window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+              }
+            }
+          } catch (_) {}
+          if (onPaymentSuccess) {
+            onPaymentSuccess();
+          }
+        } else if (res.isCancelled || res.isExpired || res.orderStatus === 'CANCELLED') {
+          clearInterval(autoCheckTimer);
+          setIsWaitingForBank(false);
+          setIsProcessing(false);
+          setErrorMsg(res.message || 'Mã QR và thời hạn giữ chỗ 15 phút đã hết hạn.');
+        }
+      } catch (_) {}
+    }, 2500);
+
+    return () => clearInterval(autoCheckTimer);
+  }, [isOpen, isPaid, paymentMethod, orderCode, onPaymentSuccess]);
+
   useEffect(() => {
     if (isOpen) {
       setIsCancelling(false);
       setIsProcessing(false);
+      setIsWaitingForBank(false);
       setIsPaid(false);
       setErrorMsg(null);
     }
@@ -111,6 +195,58 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleConfirmPayment = async () => {
     setErrorMsg(null);
+
+    // Khi chọn VietQR: Kiểm tra xem tiền đã vào tài khoản MBBank chưa
+    // Nếu chưa: VẪN TIẾP TỤC LOAD (giữ trạng thái kiểm tra) cho đến khi thành công!
+    if (paymentMethod === 'VIETQR') {
+      setIsWaitingForBank(true);
+      setIsProcessing(true);
+
+      const checkPaymentLoop = async () => {
+        try {
+          const res = await checkOrderPaymentStatus(orderCode);
+          if (res.isPaid) {
+            setResultStatus('CONFIRMED');
+            setIsPaid(true);
+            setIsWaitingForBank(false);
+            setIsProcessing(false);
+            updateRecentGuestOrderStatus(orderCode, 'CONFIRMED');
+            window.dispatchEvent(new CustomEvent('refuji_catalog_refresh'));
+            try {
+              const rawRes = localStorage.getItem('refuji_active_reservation');
+              if (rawRes) {
+                const parsed = JSON.parse(rawRes);
+                if (parsed.orderCode === orderCode) {
+                  localStorage.removeItem('refuji_active_reservation');
+                  window.dispatchEvent(new CustomEvent('refuji_reservation_updated', { detail: null }));
+                }
+              }
+            } catch (_) {}
+            if (onPaymentSuccess) {
+              onPaymentSuccess();
+            }
+            return true;
+          }
+        } catch (_) {}
+        return false;
+      };
+
+      // Thử check ngay lập tức
+      const alreadyPaid = await checkPaymentLoop();
+      if (alreadyPaid) return;
+
+      // Nếu chưa nhận được: Giữ nguyên hiệu ứng load và kiểm tra định kỳ mỗi 2 giây
+      const pollTimer = setInterval(async () => {
+        const isDone = await checkPaymentLoop();
+        if (isDone) {
+          clearInterval(pollTimer);
+        }
+      }, 2000);
+
+      return;
+    }
+
+    // Với hình thức COUNTER hoặc VNPAY
     setIsProcessing(true);
     try {
       const res = await payRentalOrder(orderCode, paymentMethod, guestPhone);
@@ -227,26 +363,48 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* VÙNG NỘI DUNG CUỘN */}
         <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-8 py-4 space-y-4">
-          {isPaid ? (
-            /* TRẠNG THÁI ĐÃ THANH TOÁN THÀNH CÔNG */
+          {(isPaid || isWaitingForBank) ? (
+            /* TRẠNG THÁI KIỂM TRA CHUYỂN KHOẢN HOẶC ĐÃ THÀNH CÔNG */
             <div className="py-10 text-center flex flex-col items-center justify-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-sm">
-                <CheckCircle2 size={36} />
-              </div>
+              {isPaid ? (
+                /* 1. DẤU TÍCH XANH KHI ĐÃ NHẬN TIỀN THÀNH CÔNG */
+                <motion.div
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', damping: 15, stiffness: 300 }}
+                  className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center border border-emerald-200 shadow-sm"
+                >
+                  <CheckCircle2 size={38} className="text-emerald-600" />
+                </motion.div>
+              ) : (
+                /* 2. VÒNG TRÒN XOAY KHI ĐANG CHỜ XÁC NHẬN TỪ MBBANK */
+                <div className="w-16 h-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200 shadow-sm">
+                  <Loader2 size={38} className="animate-spin text-amber-600" />
+                </div>
+              )}
+
               <div>
                 <h3 className="font-serif text-2xl font-bold text-[#14171f]">
-                  {resultStatus === 'GUEST_INQUIRY'
-                    ? 'Đã Chuyển Sang Yêu Cầu Tại Quầy'
-                    : 'Xác Nhận Thanh Toán Thành Công!'}
+                  {isPaid
+                    ? resultStatus === 'GUEST_INQUIRY'
+                      ? 'Đã Chuyển Sang Yêu Cầu Tại Quầy'
+                      : 'Xác Nhận Thanh Toán Thành Công!'
+                    : 'Đang Kiểm Tra Chuyển Khoản...'}
                 </h3>
                 <p className="text-xs sm:text-sm text-[#525868] mt-1.5 max-w-sm mx-auto leading-relaxed">
-                  {resultStatus === 'GUEST_INQUIRY' ? (
-                    <>
-                      Đơn <strong>#{orderCode}</strong> đã được chuyển sang <strong>ĐẶT TẠI QUẦY (CHƯA KHÓA KHO)</strong>. Nhân viên ReFuji sẽ gọi xác nhận trước khi giữ máy.
-                    </>
+                  {isPaid ? (
+                    resultStatus === 'GUEST_INQUIRY' ? (
+                      <>
+                        Đơn <strong>#{orderCode}</strong> đã được chuyển sang <strong>ĐẶT TẠI QUẦY (CHƯA KHÓA KHO)</strong>. Nhân viên ReFuji sẽ gọi xác nhận trước khi giữ máy.
+                      </>
+                    ) : (
+                      <>
+                        Đơn hàng <strong>#{orderCode}</strong> đã được chuyển sang trạng thái <strong>ĐÃ XÁC NHẬN (CONFIRMED)</strong>. Thiết bị đã sẵn sàng cho ngày nhận máy của bạn.
+                      </>
+                    )
                   ) : (
                     <>
-                      Đơn hàng <strong>#{orderCode}</strong> đã được chuyển sang trạng thái <strong>ĐÃ XÁC NHẬN (CONFIRMED)</strong>. Thiết bị đã sẵn sàng cho ngày nhận máy của bạn.
+                      Hệ thống đang kết nối ngân hàng MBBank để đối soát giao dịch cho đơn <strong>#{orderCode}</strong>. Màn hình sẽ <strong>tự động chuyển sang dấu tích xanh</strong> ngay khi nhận được tiền.
                     </>
                   )}
                 </p>
@@ -279,18 +437,43 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Hình thức:</span>
                   <span className="font-medium text-[#14171f]">
-                    {paymentMethod === 'VIETQR' ? 'Chuyển khoản VietQR' : paymentMethod === 'VNPAY' ? 'Cổng VNPAY' : 'Thanh toán tại quầy'}
+                    {paymentMethod === 'VIETQR' ? 'Chuyển khoản VietQR MBBank' : paymentMethod === 'VNPAY' ? 'Cổng VNPAY' : 'Thanh toán tại quầy'}
                   </span>
+                </div>
+                <div className="flex justify-between items-center pt-1 border-t border-neutral-200/60">
+                  <span className="text-neutral-500">Trạng thái:</span>
+                  {isPaid ? (
+                    <span className="font-sans font-bold text-emerald-700 flex items-center gap-1">
+                      <Check size={14} /> Đã nhận tiền thành công
+                    </span>
+                  ) : (
+                    <span className="font-sans font-bold text-amber-700 flex items-center gap-1.5">
+                      <Loader2 size={13} className="animate-spin text-amber-600" /> Đang chờ ngân hàng báo có...
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-2.5 rounded-full bg-[#14171f] text-white text-xs sm:text-sm font-bold shadow-md hover:bg-[#252a37] transition-all cursor-pointer"
-              >
-                Hoàn tất &amp; Đóng
-              </button>
+              {/* Nút hành động */}
+              {isPaid ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-6 py-2.5 rounded-full bg-[#14171f] text-white text-xs sm:text-sm font-bold shadow-md hover:bg-[#252a37] transition-all cursor-pointer"
+                >
+                  Hoàn tất &amp; Đóng
+                </button>
+              ) : (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsWaitingForBank(false)}
+                    className="px-5 py-2 rounded-full border border-neutral-300 text-neutral-600 hover:bg-neutral-100 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    Quay lại xem mã QR
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -412,10 +595,23 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               {/* Nội dung chi tiết từng phương thức */}
               {paymentMethod === 'VIETQR' && (
                 <div className="p-4 rounded-3xl border border-[#14171f]/10 bg-[#f9fafb] space-y-3.5 num">
+                  {/* Trạng thái đang đợi ngân hàng xác nhận */}
+                  {isWaitingForBank && (
+                    <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 text-xs flex items-center gap-3 animate-pulse">
+                      <Loader2 size={20} className="animate-spin text-amber-600 shrink-0" />
+                      <div>
+                        <p className="font-bold text-amber-950">Đang lắng nghe chuyển khoản từ MBBank...</p>
+                        <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                          Hệ thống đang tự động kiểm tra giao dịch thời gian thực. Sau khi bạn chuyển khoản, màn hình sẽ tự động chuyển sang <strong>Thành công</strong>.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     <div className="bg-white p-2 rounded-2xl border border-neutral-200 shadow-sm shrink-0">
                       <img
-                        src={vietQrUrl}
+                        src={vietQrData.qrCodeUrl}
                         alt="VietQR Mã thanh toán"
                         className="w-36 h-36 object-contain"
                       />
@@ -423,15 +619,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <div className="space-y-2 text-xs flex-1 w-full">
                       <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                         <span className="text-neutral-500">Ngân hàng:</span>
-                        <span className="font-bold text-[#14171f]">MB Bank (Quân Đội)</span>
+                        <span className="font-bold text-[#14171f]">{vietQrData.bankName}</span>
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                         <span className="text-neutral-500">Số tài khoản:</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-sans font-bold text-[#14171f]">0901234567</span>
+                          <span className="font-sans font-bold text-[#14171f]">{vietQrData.accountNumber}</span>
                           <button
                             type="button"
-                            onClick={() => copyToClipboard('0901234567', 'acc')}
+                            onClick={() => copyToClipboard(vietQrData.accountNumber.replace(/\s+/g, ''), 'acc')}
                             className="w-7 h-7 rounded-full inline-flex items-center justify-center text-neutral-500 hover:text-[#14171f] hover:bg-neutral-200/70 transition-colors cursor-pointer"
                             title="Sao chép số tài khoản"
                           >
@@ -441,7 +637,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                         <span className="text-neutral-500">Chủ tài khoản:</span>
-                        <span className="font-semibold text-[#14171f]">CONG TY TNHH REFUJI</span>
+                        <span className="font-semibold text-[#14171f]">{vietQrData.accountName}</span>
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-neutral-200">
                         <span className="text-neutral-500">Số tiền:</span>
@@ -460,10 +656,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       <div className="flex items-center justify-between py-1">
                         <span className="text-neutral-500">Nội dung CK:</span>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-sans tracking-wide num font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full">REFUJI {orderCode}</span>
+                          <span className="font-sans tracking-wide num font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full">{vietQrData.description}</span>
                           <button
                             type="button"
-                            onClick={() => copyToClipboard(`REFUJI ${orderCode}`, 'memo')}
+                            onClick={() => copyToClipboard(vietQrData.description, 'memo')}
                             className="w-7 h-7 rounded-full inline-flex items-center justify-center text-neutral-500 hover:text-[#14171f] hover:bg-neutral-200/70 transition-colors cursor-pointer"
                             title="Sao chép nội dung chuyển khoản"
                           >
@@ -522,7 +718,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
 
         {/* Footer */}
-        {!isPaid && (
+        {!isPaid && !isWaitingForBank && (
           <div className="px-6 sm:px-8 py-4 border-t border-[#14171f]/10 bg-white shrink-0 flex flex-wrap items-center justify-between gap-2.5">
             {onCancelHold && (
               <button
@@ -547,10 +743,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               type="button"
               onClick={handleConfirmPayment}
-              disabled={isProcessing || isCancelling}
-              className="flex-1 min-w-[200px] py-3 px-4 rounded-full bg-[#14171f] hover:bg-[#252a37] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              disabled={isProcessing || isCancelling || isWaitingForBank}
+              className={`flex-1 min-w-[200px] py-3 px-4 rounded-full text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 ${
+                isWaitingForBank ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#14171f] hover:bg-[#252a37]'
+              }`}
             >
-              {isProcessing ? (
+              {isWaitingForBank ? (
+                <>
+                  <Loader2 size={16} className="animate-spin text-white" />
+                  <span>Đang chờ tiền về MBBank...</span>
+                </>
+              ) : isProcessing ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
                   <span>Đang ghi nhận giao dịch...</span>

@@ -16,6 +16,8 @@ import {
   RequestedModelItem,
   parseModelId,
 } from './availability.helper.js';
+import { sendOrderToGoogleAppsScript } from './order-notification.service.js';
+import { createOrderPaymentLink, getPayOSClient } from './payos.service.js';
 
 export const ordersRouter = Router();
 export const adminOrdersRouter = Router();
@@ -327,6 +329,7 @@ ordersRouter.post('/', (req: Request, res: Response) => {
         assignedSerials: isCounterInquiry ? [] : allocation.allAssignedSerials,
         finalRent,
         finalDeposit,
+        displayModelName,
       };
     });
 
@@ -342,6 +345,40 @@ ordersRouter.post('/', (req: Request, res: Response) => {
     console.log(
       `📦 [Orders] Đã tạo ${isGuest ? 'đơn Khách vãng lai' : `đơn User ${authUser?.userId}`}: ${txResult.orderId} (${txResult.orderStatus})`
     );
+
+    // Bắn thông báo xác nhận đơn hàng ngầm qua Google Apps Script (gửi mail Shop & Khách, ghi Sheets)
+    let custName = validatedGuest?.full_name || '';
+    let custPhone = validatedGuest?.phone || '';
+    let custEmail = validatedGuest?.email || '';
+
+    if (!isGuest && authUser) {
+      const member = db
+        .prepare('SELECT full_name, phone, email FROM users WHERE id = ?')
+        .get(authUser.userId) as any;
+      if (member) {
+        custName = member.full_name || custName;
+        custPhone = member.phone || custPhone;
+        custEmail = member.email || authUser.email;
+      }
+    }
+
+    sendOrderToGoogleAppsScript({
+      orderCode: txResult.orderId,
+      customerName: custName,
+      customerPhone: custPhone,
+      customerEmail: custEmail,
+      modelName: txResult.displayModelName,
+      startDate: startDateStr,
+      expectedReturnDate: endDateStr,
+      rentalDays,
+      totalRent: txResult.finalRent,
+      depositAmount: txResult.finalDeposit,
+      totalDue: txResult.finalRent + txResult.finalDeposit,
+      paymentMethod: resolvedPaymentMethod,
+      orderStatus: txResult.orderStatus,
+      assignedSerials: txResult.assignedSerials,
+      note: validatedGuest?.note || req.body.guest_note || req.body.note || '',
+    });
 
     return res.status(201).json({
       success: true,
@@ -693,7 +730,7 @@ ordersRouter.post('/:orderCode/cancel', (req: Request, res: Response) => {
 });
 
 // Tính năng: Thanh toán giữ chỗ (Kiểm tra chủ sở hữu; khách vãng lai chọn COUNTER chuyển thành GUEST_INQUIRY không khóa Serial)
-ordersRouter.post('/:orderCode/pay', (req: Request, res: Response) => {
+ordersRouter.post('/:orderCode/pay', async (req: Request, res: Response) => {
   try {
     const orderCode = normalizeOrderCode(String(req.params.orderCode));
     const rawMethod = String(req.body.payment_method || 'VIETQR').toUpperCase();
@@ -755,6 +792,35 @@ ordersRouter.post('/:orderCode/pay', (req: Request, res: Response) => {
         orderStatus: 'GUEST_INQUIRY',
         message: `Đã chuyển đơn #${order.order_code} sang yêu cầu đặt tại quầy (chưa khóa máy). Nhân viên ReFuji sẽ gọi xác nhận với bạn.`,
       });
+    }
+
+    // Nếu chọn thanh toán VietQR: BẮT BUỘC CHECK XEM TIỀN ĐÃ VÀO MBBANK CHƯA
+    if (paymentMethod === 'VIETQR') {
+      if (order.order_status !== 'CONFIRMED' && order.payment_status !== 'PAID_FULL') {
+        const payos = getPayOSClient();
+        let isPaidOnPayOS = false;
+        if (payos) {
+          try {
+            const numericPart = parseInt(order.order_code.replace(/\D/g, ''), 10);
+            if (!isNaN(numericPart) && numericPart > 0) {
+              const payosReq = await payos.paymentRequests.get(numericPart);
+              if (payosReq && payosReq.status === 'PAID') {
+                isPaidOnPayOS = true;
+              }
+            }
+          } catch (_) {}
+        }
+
+        // Chưa nhận được tiền -> Không xác nhận, báo client tiếp tục chờ/load
+        if (!isPaidOnPayOS) {
+          return res.json({
+            success: false,
+            isPaid: false,
+            orderStatus: order.order_status,
+            message: 'Hệ thống đang chờ nhận tiền vào tài khoản MBBank. Vui lòng chuyển khoản đúng số tiền và nội dung.',
+          });
+        }
+      }
     }
 
     if (order.order_status === 'GUEST_INQUIRY') {
@@ -976,6 +1042,139 @@ ordersRouter.get('/:orderCode', (req: Request, res: Response) => {
     return res.json(order);
   } catch (err) {
     return res.status(500).json({ error: 'Lỗi máy chủ khi lấy chi tiết đơn' });
+  }
+});
+
+// Endpoint lấy thông tin và ảnh mã VietQR MBBank cho đơn hàng
+ordersRouter.get('/:orderCode/vietqr', async (req: Request, res: Response) => {
+  try {
+    const orderCode = normalizeOrderCode(String(req.params.orderCode));
+    const order = db.prepare('SELECT * FROM rental_orders WHERE UPPER(order_code) = ?').get(orderCode) as any;
+    if (!order) {
+      return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+    }
+
+    const totalDue = (Number(order.total_rent) || 0) + (Number(order.deposit_amount) || 0);
+    const paymentLinkInfo = await createOrderPaymentLink(order.order_code, totalDue);
+
+    return res.json({
+      success: true,
+      orderCode: order.order_code,
+      totalDue,
+      ...paymentLinkInfo,
+    });
+  } catch (err: any) {
+    console.error('Lỗi lấy VietQR:', err);
+    return res.status(500).json({ error: 'Không thể tạo mã VietQR: ' + err.message });
+  }
+});
+
+// Endpoint kiểm tra trạng thái thanh toán thời gian thực (Polling từ Frontend)
+ordersRouter.get('/:orderCode/payment-status', async (req: Request, res: Response) => {
+  try {
+    const orderCode = normalizeOrderCode(String(req.params.orderCode));
+    const order = db.prepare('SELECT * FROM rental_orders WHERE UPPER(order_code) = ?').get(orderCode) as any;
+    if (!order) {
+      return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+    }
+
+    // 1. Kiểm tra nếu DB đã xác nhận rồi
+    if (order.order_status === 'CONFIRMED' || order.payment_status === 'PAID_FULL') {
+      return res.json({
+        isPaid: true,
+        orderStatus: order.order_status,
+        paymentStatus: order.payment_status,
+        message: 'Đơn hàng đã được thanh toán thành công!',
+      });
+    }
+
+    // 1.1. Nếu đơn đã bị hủy
+    if (order.order_status === 'CANCELLED') {
+      return res.json({
+        isPaid: false,
+        isCancelled: true,
+        isExpired: true,
+        orderStatus: 'CANCELLED',
+        paymentStatus: order.payment_status,
+        message: order.cancellation_reason || 'Đơn hàng hoặc thời hạn giữ chỗ 15 phút đã hết hạn.',
+      });
+    }
+
+    // 1.2. Nếu đã quá hạn giữ chỗ 15 phút
+    if (order.payment_deadline && new Date(order.payment_deadline).getTime() < Date.now()) {
+      if (order.order_status === 'PENDING_PAYMENT') {
+        db.prepare(`
+          UPDATE rental_orders
+          SET order_status = 'CANCELLED', cancellation_reason = 'Hết hạn giữ chỗ 15 phút', cancelled_at = ?
+          WHERE id = ?
+        `).run(new Date().toISOString(), order.id);
+        freeOrderSerials(order.id, order.assigned_serials);
+      }
+      return res.json({
+        isPaid: false,
+        isCancelled: true,
+        isExpired: true,
+        orderStatus: 'CANCELLED',
+        paymentStatus: 'UNPAID',
+        message: 'Thời hạn giữ chỗ 15 phút cho mã QR này đã hết hạn.',
+      });
+    }
+
+    // 2. Nếu chưa, chủ động tra soát với PayOS
+    const payos = getPayOSClient();
+    if (payos) {
+      try {
+        const numericPart = parseInt(order.order_code.replace(/\D/g, ''), 10);
+        if (!isNaN(numericPart) && numericPart > 0) {
+          const payosReq = await payos.paymentRequests.get(numericPart);
+          const totalDue = (Number(order.total_rent) || 0) + (Number(order.deposit_amount) || 0);
+          if (payosReq && (payosReq.status === 'PAID' || (Number(payosReq.amountPaid) || 0) >= totalDue)) {
+            // Cập nhật ngay vào DB
+            db.prepare(`
+              UPDATE rental_orders
+              SET order_status = 'CONFIRMED', payment_method = 'VIETQR', payment_status = 'PAID_FULL', payment_deadline = NULL
+              WHERE id = ?
+            `).run(order.id);
+
+            try {
+              const existingTx = db.prepare('SELECT id FROM payment_transactions WHERE order_id = ?').get(order.id);
+              if (!existingTx) {
+                db.prepare(`
+                  INSERT INTO payment_transactions (
+                    order_id, order_code, transaction_code, amount, payment_method,
+                    transaction_type, gateway_transaction_id, status, note, created_at
+                  ) VALUES (?, ?, ?, ?, 'VIETQR', 'PAYMENT', ?, 'SUCCESS', ?, ?)
+                `).run(
+                  order.id,
+                  order.order_code,
+                  `TXN-POS-${order.id}-${Date.now().toString(36)}`,
+                  payosReq.amountPaid || totalDue,
+                  payosReq.id || `PAYOS-${numericPart}`,
+                  'Thanh toán thành công qua PayOS MBBank VietQR (tra soát realtime)',
+                  new Date().toISOString()
+                );
+              }
+            } catch (_) {}
+
+            return res.json({
+              isPaid: true,
+              orderStatus: 'CONFIRMED',
+              paymentStatus: 'PAID_FULL',
+              message: 'Đã nhận được tiền thanh toán qua PayOS MBBank!',
+            });
+          }
+        }
+      } catch (_) {}
+    }
+
+    return res.json({
+      isPaid: false,
+      orderStatus: order.order_status,
+      paymentStatus: order.payment_status,
+      message: 'Đang chờ nhận tiền chuyển khoản...',
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Lỗi kiểm tra trạng thái thanh toán' });
   }
 });
 

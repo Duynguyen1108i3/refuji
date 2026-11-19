@@ -375,7 +375,8 @@ export function checkAndAllocateModelsForRange(
 
     const dailyRate = Number(model.base_rental_price_per_day) || 0;
     const baseDeposit = Number(model.deposit_amount) || 0;
-    const discountedDepositPerUnit = Math.round(baseDeposit * (1 - discountRate));
+    const isDemo = String(model.model_name || '').includes('[DEMO');
+    const discountedDepositPerUnit = isDemo ? baseDeposit : Math.round(baseDeposit * (1 - discountRate));
 
     serverTotalRent += dailyRate * rentalDays * it.quantity;
     serverTotalDeposit += discountedDepositPerUnit * it.quantity;
